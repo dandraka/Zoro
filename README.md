@@ -27,3 +27,7 @@ E.g. ```Zoro.exe c:\temp\mask.xml```
   <Delimiter>;</Delimiter>
 </MaskConfig>
 ```
+
+### Note:
+
+Although not required by the license, the author kindly asks that you share any improvements you made.
