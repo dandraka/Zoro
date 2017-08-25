@@ -4,7 +4,7 @@
 Zoro is a data masking/anonymization utility. It processes CSV files.
 
 ### Usage:
-Zoro.exe <path to config file>
+Zoro.exe path_to_config_file
 
 E.g. ```Zoro.exe c:\temp\mask.xml```
 
