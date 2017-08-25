@@ -30,13 +30,13 @@ namespace Zoro.Processor
 
         public static Char GetRandomVowel()
         {
-            Char[] vowels = new Char[] {'e', 'a', 'o', 'i', 'u', 'ä', 'ö', 'ü'};
+            Char[] vowels = new Char[] { 'e', 'a', 'o', 'i', 'u', 'ä', 'ö', 'ü' };
             return vowels[rnd.Next(0, vowels.Length)];
         }
 
         public static Char GetRandomConsonant()
         {
-            Char[] consonants = new Char[] {'b','c','d','f','g','h','j','k','l','m','n','p','q','r','s','t','v','w','x','z'};
+            Char[] consonants = new Char[] { 'b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'q', 'r', 's', 't', 'v', 'w', 'x', 'z' };
             return consonants[rnd.Next(0, consonants.Length)];
         }
     }
@@ -93,7 +93,7 @@ namespace Zoro.Processor
                 default:
                     return data;
             }
-        }        
+        }
 
         private string GetSimilarString(string data)
         {
@@ -141,14 +141,14 @@ namespace Zoro.Processor
             var tbl = new DataTable();
 
             using (var parser = new GenericParser())
-            {                
+            {
                 parser.TextFieldType = FieldType.Delimited;
                 parser.ColumnDelimiter = config.Delimiter[0];
                 parser.FirstRowHasHeader = true;
                 parser.FirstRowSetsExpectedColumnCount = true;
                 parser.TrimResults = false;
                 //parser.SkipStartingDataRows = 10;
-                //parser.MaxBufferSize = 4096;
+                parser.MaxBufferSize = 1048576;
                 //parser.MaxRows = 500;
                 parser.TextQualifier = '\"';
                 parser.EscapeCharacter = null;
@@ -159,6 +159,7 @@ namespace Zoro.Processor
 
                 while (parser.Read())
                 {
+
                     if (doSetup)
                     {
                         for (int i = 0; i < parser.ColumnCount; i++)
@@ -187,10 +188,10 @@ namespace Zoro.Processor
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < dt.Columns.Count; i++)
             {
-                sb.AppendFormat("{0}{1}", 
-                    dt.Columns[i].ColumnName, 
+                sb.AppendFormat("{0}{1}",
+                    dt.Columns[i].ColumnName,
                     i < dt.Columns.Count - 1 ? config.Delimiter : string.Empty);
-            }            
+            }
             sb.Append("\r\n");
 
             for (int r = 0; r < dt.Rows.Count; r++)
@@ -203,9 +204,9 @@ namespace Zoro.Processor
                         content = string.Format("\"{0}\"", content);
                     }
 
-                sb.AppendFormat("{0}{1}", 
-                        content,
-                        i < dt.Columns.Count - 1 ? config.Delimiter : string.Empty);
+                    sb.AppendFormat("{0}{1}",
+                            content,
+                            i < dt.Columns.Count - 1 ? config.Delimiter : string.Empty);
                 }
                 sb.Append("\r\n");
             }
