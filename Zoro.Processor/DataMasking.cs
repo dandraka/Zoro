@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Data;
+using System.Data.SqlClient;
 using System.IO;
+using System.Security.Principal;
 using System.Text;
+using System.Text.RegularExpressions;
 using GenericParsing;
 
 namespace Zoro.Processor
@@ -54,11 +57,88 @@ namespace Zoro.Processor
 
         public void Mask()
         {
-            var dt = ReadDataFromFile();
+            var dt = GetData();
 
             AnonymizeTable(dt);
 
             SaveDataToFile(dt);
+        }
+
+        private DataTable GetData()
+        {
+            switch (config.DataSource)
+            {
+                case DataSource.CsvFile:
+                    return ReadDataFromFile();
+                case DataSource.Database:
+                    return ReadDataFromDb();
+                default:
+                    throw new NotSupportedException();
+            }
+        }
+
+        private DataTable ReadDataFromDb()
+        {
+            if (string.IsNullOrEmpty(config.ConnectionString))
+            {
+                throw new InvalidDataException("Connection string must be filled when using the DB option");
+            }
+
+            if (string.IsNullOrEmpty(config.SqlSelect))
+            {
+                throw new InvalidDataException("SQL Select statement must be filled when using the DB option");
+            }
+
+            DataTable dt = new DataTable("data");
+
+            Action doDbSelect = new Action(() =>
+            {
+                using (var dbConn = new SqlConnection(config.ConnectionString))
+                {
+                    dbConn.Open();
+                    var dbCmd = dbConn.CreateCommand();
+                    dbCmd.CommandType = CommandType.Text;
+                    dbCmd.CommandText = config.SqlSelect;
+
+                    using (var dbReader = dbCmd.ExecuteReader(CommandBehavior.CloseConnection))
+                    {
+                        dt.Load(dbReader);
+                        dbReader.Close();
+                    }
+                }
+
+                foreach (DataColumn dataColumn in dt.Columns)
+                {
+                    dataColumn.ReadOnly = false;
+                }
+            });
+
+            Console.WriteLine("Enter username (Enter to use currently logged in user or connection string credentials):");
+            string user = Console.ReadLine();
+
+            if (string.IsNullOrEmpty(user))
+            {
+                doDbSelect();
+            }
+            else
+            {
+                Console.WriteLine("Enter domain (hit Enter to use the current one):");
+                string domain = Console.ReadLine();
+                if (string.IsNullOrEmpty(domain))
+                {
+                    domain = Environment.UserDomainName;
+                }
+
+                Console.WriteLine("Enter password:");
+                string pwd = Console.ReadLine();
+                Console.Clear();
+
+                using (var impersonator = new XperiCode.Impersonator.Impersonator(domain, user, pwd))
+                {
+                    doDbSelect();
+                }
+            }            
+            return dt;
         }
 
         private void AnonymizeTable(DataTable dt)
@@ -84,15 +164,50 @@ namespace Zoro.Processor
 
         private string GetMaskedString(string data, FieldMask fieldMask)
         {
-            switch (fieldMask.MaskType)
+            if (string.IsNullOrEmpty(data))
+                return data;
+            if (!string.IsNullOrEmpty(fieldMask.RegExMatch))
             {
-                case MaskType.Asterisk:
-                    return new string(fieldMask.Asterisk[0], data.Length);
-                case MaskType.Similar:
-                    return GetSimilarString(data);
-                default:
-                    return data;
+                Regex rgx = new Regex(fieldMask.RegExMatch);
+                switch (fieldMask.MaskType)
+                {
+                    case MaskType.Asterisk:
+                        return rgx.Replace(data, fieldMask.Asterisk);
+                    case MaskType.Similar:
+                        var match = rgx.Match(data);
+                        string matchData = match.Groups[fieldMask.RegExGroupToReplace].Value;
+                        string replaceStr = string.Empty;
+                        for (int i = 1; i < match.Groups.Count; i++)
+                        {
+                            string s;
+                            if (i != fieldMask.RegExGroupToReplace)
+                            {
+                                s = "${"+ i + "}";
+                            }
+                            else
+                            {
+                                s = GetSimilarString(matchData);
+                            }
+                            replaceStr += s;
+                        }
+                        string repl = rgx.Replace(data, replaceStr);
+                        return repl;
+                    default:
+                        return data;
+                }
             }
+            else
+            {
+                switch (fieldMask.MaskType)
+                {
+                    case MaskType.Asterisk:
+                        return new string(fieldMask.Asterisk[0], data.Length);
+                    case MaskType.Similar:
+                        return GetSimilarString(data);
+                    default:
+                        return data;
+                }
+            }            
         }
 
         private string GetSimilarString(string data)

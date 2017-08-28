@@ -36,8 +36,18 @@ namespace Zoro.Processor
 
         public MaskConfig()
         {
+            this.DataSource = DataSource.CsvFile;
+            this.ConnectionString = string.Empty;
+            this.SqlSelect = string.Empty;
             this.Delimiter = ";";
         }
+
+        /// <summary>
+        /// Determines how the data is obtained. 
+        /// If the source is a file, the <c>InputFile</c> field needs to be filled.
+        /// If the source is a DB query, the <c>ConnectionString</c> and <c>SqlSelect</c> fields need to be filled.
+        /// </summary>
+        public DataSource DataSource { get; set; }
 
         /// <summary>
         /// The input file.
@@ -48,6 +58,16 @@ namespace Zoro.Processor
         /// The ourput file.
         /// </summary>
         public string OutputFile { get; set; }
+
+        /// <summary>
+        /// The DB connection string.
+        /// </summary>
+        public string ConnectionString { get; set; }
+
+        /// <summary>
+        /// The DB query statement.
+        /// </summary>
+        public string SqlSelect { get; set; }
 
         /// <summary>
         /// The CSV file delimiter. By default, a semicolon.

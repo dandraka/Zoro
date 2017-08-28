@@ -31,7 +31,10 @@ namespace Zoro.Tests
             var config = new MaskConfig()
             {
                 InputFile = testDir + "data.csv",
-                OutputFile = testDir + "maskeddata.csv"
+                OutputFile = testDir + "maskeddata.csv",
+                DataSource = DataSource.CsvFile,
+                ConnectionString = "(none)",
+                SqlSelect = "(none)"
             };
 
             config.FieldMasks = new List<FieldMask>();
