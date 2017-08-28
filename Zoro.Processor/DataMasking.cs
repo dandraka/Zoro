@@ -122,7 +122,7 @@ namespace Zoro.Processor
             }
             else
             {
-                Console.WriteLine("Enter domain (hit Enter to use the current one):");
+                Console.WriteLine("Enter domain (Enter to use the current one):");
                 string domain = Console.ReadLine();
                 if (string.IsNullOrEmpty(domain))
                 {
@@ -137,7 +137,7 @@ namespace Zoro.Processor
                 {
                     doDbSelect();
                 }
-            }            
+            }
             return dt;
         }
 
@@ -169,32 +169,33 @@ namespace Zoro.Processor
             if (!string.IsNullOrEmpty(fieldMask.RegExMatch))
             {
                 Regex rgx = new Regex(fieldMask.RegExMatch);
-                switch (fieldMask.MaskType)
+
+                var match = rgx.Match(data);
+                string matchData = match.Groups[fieldMask.RegExGroupToReplace].Value;
+                string replaceStr = string.Empty;
+                for (int i = 1; i < match.Groups.Count; i++)
                 {
-                    case MaskType.Asterisk:
-                        return rgx.Replace(data, fieldMask.Asterisk);
-                    case MaskType.Similar:
-                        var match = rgx.Match(data);
-                        string matchData = match.Groups[fieldMask.RegExGroupToReplace].Value;
-                        string replaceStr = string.Empty;
-                        for (int i = 1; i < match.Groups.Count; i++)
+                    string s;
+                    if (i != fieldMask.RegExGroupToReplace)
+                    {
+                        s = "${" + i + "}";
+                    }
+                    else
+                    {
+                        switch (fieldMask.MaskType)
                         {
-                            string s;
-                            if (i != fieldMask.RegExGroupToReplace)
-                            {
-                                s = "${"+ i + "}";
-                            }
-                            else
-                            {
+                            case MaskType.Similar:
                                 s = GetSimilarString(matchData);
-                            }
-                            replaceStr += s;
+                                break;
+                            default:
+                                s = new string(fieldMask.Asterisk[0], matchData.Length);
+                                break;
                         }
-                        string repl = rgx.Replace(data, replaceStr);
-                        return repl;
-                    default:
-                        return data;
+                    }
+                    replaceStr += s;
                 }
+                string repl = rgx.Replace(data, replaceStr);
+                return repl;
             }
             else
             {
@@ -207,7 +208,7 @@ namespace Zoro.Processor
                     default:
                         return data;
                 }
-            }            
+            }
         }
 
         private string GetSimilarString(string data)
