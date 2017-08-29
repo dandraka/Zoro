@@ -1,14 +1,14 @@
 # Zoro
 ### The masked avenger
 
-Zoro is a data masking/anonymization utility. It processes CSV files.
+Zoro is a data masking/anonymization utility. It fetches data from a database or a CSV file, and creates a CSV file with masked data.
 
 ### Usage:
 Zoro.exe path_to_config_file
 
 E.g. ```Zoro.exe c:\temp\mask.xml```
 
-### Sample config file:
+### Sample config files:
 ```
 <?xml version="1.0"?>
 <MaskConfig xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -25,6 +25,26 @@ E.g. ```Zoro.exe c:\temp\mask.xml```
   <InputFile>C:\temp\Zorotests\data.csv</InputFile>
   <OutputFile>C:\temp\Zorotests\maskeddata.csv</OutputFile>
   <Delimiter>;</Delimiter>
+</MaskConfig>
+```
+
+```
+<?xml version="1.0"?>
+<MaskConfig xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <FieldMasks>
+    <FieldMask>
+      <FieldName>MainPhone</FieldName>
+      <MaskType>Similar</MaskType>
+      <RegExMatch>^(\+\d\d)?(.*)$</RegExMatch>
+      <RegExGroupToReplace>2</RegExGroupToReplace>
+    </FieldMask>
+  </FieldMasks>
+  <InputFile></InputFile>
+  <OutputFile>C:\temp\Zorotests\maskeddata.csv</OutputFile>
+  <Delimiter>;</Delimiter>
+  <DataSource>Database</DataSource>
+  <ConnectionString>Server=DBSRV1;Database=appdb;Trusted_Connection=yes;</ConnectionString>
+  <SqlSelect>SELECT * FROM customers</SqlSelect>
 </MaskConfig>
 ```
 
