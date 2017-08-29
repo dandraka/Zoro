@@ -188,7 +188,7 @@ namespace Zoro.Processor
                                 s = GetSimilarString(matchData);
                                 break;
                             default:
-                                s = new string(fieldMask.Asterisk[0], matchData.Length);
+                                s = GetAsteriskString(matchData, fieldMask.Asterisk[0]);
                                 break;
                         }
                     }
@@ -202,7 +202,7 @@ namespace Zoro.Processor
                 switch (fieldMask.MaskType)
                 {
                     case MaskType.Asterisk:
-                        return new string(fieldMask.Asterisk[0], data.Length);
+                        return GetAsteriskString(data, fieldMask.Asterisk[0]);
                     case MaskType.Similar:
                         return GetSimilarString(data);
                     default:
@@ -212,6 +212,42 @@ namespace Zoro.Processor
         }
 
         private string GetSimilarString(string data)
+        {
+            Func<char, char> method = (c) =>
+            {
+                if (Char.IsDigit(c))
+                {
+                    return rnd.Next(0, 9).ToString()[0];
+                }
+                if (c.IsVowel())
+                {
+                    Char a = CharExtension.GetRandomVowel();
+                    if (Char.IsUpper(c))
+                    {
+                        a = Char.ToUpper(a);
+                    }
+                    return a;
+                }
+                else
+                {
+                    Char a = CharExtension.GetRandomConsonant();
+                    if (Char.IsUpper(c))
+                    {
+                        a = Char.ToUpper(a);
+                    }
+                    return a;
+                }
+            };
+            return getReplacedString(data, method);
+        }
+
+        private string GetAsteriskString(string data, char asterisk)
+        {
+            Func<char, char> method = (c) => { return asterisk; };
+            return getReplacedString(data, method);
+        }
+
+        private string getReplacedString(string data, Func<char, char> method)
         {
             string anon = string.Empty;
 
@@ -224,29 +260,7 @@ namespace Zoro.Processor
                     continue;
                 }
 
-                if (Char.IsDigit(c))
-                {
-                    anon += rnd.Next(0, 9).ToString()[0];
-                    continue;
-                }
-                if (c.IsVowel())
-                {
-                    Char a = CharExtension.GetRandomVowel();
-                    if (Char.IsUpper(c))
-                    {
-                        a = Char.ToUpper(a);
-                    }
-                    anon += a;
-                }
-                else
-                {
-                    Char a = CharExtension.GetRandomConsonant();
-                    if (Char.IsUpper(c))
-                    {
-                        a = Char.ToUpper(a);
-                    }
-                    anon += a;
-                }
+                anon += method(c);
             }
 
             return anon;
