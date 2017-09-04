@@ -37,7 +37,17 @@ namespace Zoro
                 Console.WriteLine(@"    <FieldMask>");
                 Console.WriteLine(@"      <FieldName>BankAccount</FieldName>");
                 Console.WriteLine(@"      <MaskType>Asterisk</MaskType>");
-                Console.WriteLine(@"      <Asterisk>0</Asterisk>");
+                Console.WriteLine(@"      <Asterisk>9</Asterisk>");
+                Console.WriteLine(@"    </FieldMask>");
+                Console.WriteLine(@"    <FieldMask>");
+                Console.WriteLine(@"      <FieldName>Street</FieldName>");
+                Console.WriteLine(@"      <MaskType>List</MaskType>");
+                Console.WriteLine(@"      <ListOfPossibleReplacements>");
+                Console.WriteLine(@"        <Replacement Selector=""Country=Netherlands"" List=""Nootdorpstraat,Nolensstraat,Statensingel"" />");
+                Console.WriteLine(@"        <Replacement Selector=""Country=Germany"" List=""Bahnhofstraße,Freigaße,Hauptstraße"" />");
+                Console.WriteLine(@"        <Replacement Selector=""Country=France"" List=""Rue Nationale,Boulevard Vauban,Rue des Stations"" />");
+                Console.WriteLine(@"        <Replacement Selector="""" List=""Bedford Gardens,Sheffield Terrace,Kensington Palace Gardens"" />");
+                Console.WriteLine(@"      </ListOfPossibleReplacements>");
                 Console.WriteLine(@"    </FieldMask>");
                 Console.WriteLine(@"  </FieldMasks>");
                 Console.WriteLine(@"  <InputFile>C:\\temp\\Zorotests\\data.csv</InputFile>");

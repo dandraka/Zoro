@@ -1,49 +1,15 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.IO;
-using System.Security.Principal;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using GenericParsing;
 
 namespace Zoro.Processor
 {
-    public static class CharExtension
-    {
-        private static Random rnd = new Random(DateTime.Now.Millisecond);
-
-        public static bool IsVowel(this Char c)
-        {
-            return c == 'e' ||
-                   c == 'a' ||
-                   c == 'o' ||
-                   c == 'i' ||
-                   c == 'u' ||
-                   c == 'y' ||
-                   c == 'ä' ||
-                   c == 'ö' ||
-                   c == 'ü';
-        }
-
-        public static bool IsConsonant(this Char c)
-        {
-            return !c.IsVowel();
-        }
-
-        public static Char GetRandomVowel()
-        {
-            Char[] vowels = new Char[] { 'e', 'a', 'o', 'i', 'u', 'ä', 'ö', 'ü' };
-            return vowels[rnd.Next(0, vowels.Length)];
-        }
-
-        public static Char GetRandomConsonant()
-        {
-            Char[] consonants = new Char[] { 'b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'q', 'r', 's', 't', 'v', 'w', 'x', 'z' };
-            return consonants[rnd.Next(0, consonants.Length)];
-        }
-    }
-
     public class DataMasking
     {
         private readonly MaskConfig config;
@@ -157,12 +123,12 @@ namespace Zoro.Processor
                         }
                     }
 
-                    dt.Rows[r][colName] = GetMaskedString(Convert.ToString(dt.Rows[r][colName]), config.FieldMasks[c]);
+                    dt.Rows[r][colName] = GetMaskedString(Convert.ToString(dt.Rows[r][colName]), config.FieldMasks[c], dt.Rows[r]);
                 }
             }
         }
 
-        private string GetMaskedString(string data, FieldMask fieldMask)
+        private string GetMaskedString(string data, FieldMask fieldMask, DataRow row)
         {
             if (string.IsNullOrEmpty(data))
                 return data;
@@ -184,11 +150,17 @@ namespace Zoro.Processor
                     {
                         switch (fieldMask.MaskType)
                         {
+                            case MaskType.Asterisk:
+                                s = GetAsteriskString(matchData, fieldMask.Asterisk[0]);
+                                break;
                             case MaskType.Similar:
                                 s = GetSimilarString(matchData);
                                 break;
+                                case MaskType.List:
+                                    s = GetStringFromList(row, fieldMask.ListOfPossibleReplacements);
+                                    break;
                             default:
-                                s = GetAsteriskString(matchData, fieldMask.Asterisk[0]);
+                                s = matchData;
                                 break;
                         }
                     }
@@ -205,6 +177,8 @@ namespace Zoro.Processor
                         return GetAsteriskString(data, fieldMask.Asterisk[0]);
                     case MaskType.Similar:
                         return GetSimilarString(data);
+                    case MaskType.List:
+                        return GetStringFromList(row, fieldMask.ListOfPossibleReplacements);
                     default:
                         return data;
                 }
@@ -245,6 +219,44 @@ namespace Zoro.Processor
         {
             Func<char, char> method = (c) => { return asterisk; };
             return getReplacedString(data, method);
+        }
+
+        private string GetStringFromList(DataRow row, List<Replacement> listOfReplacements)
+        {
+            // get the right list
+            string replacementStr = null;
+            foreach (var r in listOfReplacements)
+            {
+                // to have as a default
+                if (string.IsNullOrEmpty(r.FieldValue))
+                {
+                    replacementStr = r.ReplacementList;
+                    break;
+                }
+
+                string selectorField = r.FieldValue.Split('=')[0].Trim();
+                string selectorValue = r.FieldValue.Split('=')[1].Trim().ToLower();                
+
+                if (!row.Table.Columns.Contains(selectorField))
+                {
+                    throw new DataException($"Field {selectorField} was not found in data.");
+                }
+
+                string dataValue = Convert.ToString(row[selectorField]).Trim().ToLower();
+                if (dataValue == selectorValue)
+                {
+                    replacementStr = r.ReplacementList;
+                    break;
+                }
+            }
+            if (replacementStr == null)
+            {
+                // warning, nothing found
+                throw new DataException($"No match could be located for data row\r\n{string.Join(",",row.ItemArray)}");
+            }
+            var list = replacementStr.Split(',').Select(x => x.Trim()).ToList();
+            string str = list[rnd.Next(0, list.Count - 1)];
+            return str;
         }
 
         private string getReplacedString(string data, Func<char, char> method)

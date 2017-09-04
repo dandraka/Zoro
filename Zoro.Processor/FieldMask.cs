@@ -1,8 +1,29 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Xml.Schema;
+using System.Xml.Serialization;
 
 namespace Zoro.Processor
 {
+    /// <summary>
+    /// Possible replacement, in case of <c>MaskType.List</c>.
+    /// </summary>
+    [Serializable]
+    public class Replacement
+    {
+        /// <summary>
+        /// E.g. "Sex=F"
+        /// </summary>
+        [XmlAttribute(AttributeName = "Selector")]
+        public string FieldValue { get; set; }
+
+        /// <summary>
+        /// Replacement list.
+        /// </summary>
+        [XmlAttribute(AttributeName = "List")]
+        public string ReplacementList { get; set; }
+    }
+
     [Serializable]
     public class FieldMask
     {
@@ -36,5 +57,10 @@ namespace Zoro.Processor
         /// Valid only if <c>RegExMatch</c> is filled.
         /// </summary>
         public int RegExGroupToReplace { get; set; }
+
+        /// <summary>
+        /// In case of <c>MaskType.List</c>, the comma-separated list of items to choose from.
+        /// </summary>
+        public List<Replacement> ListOfPossibleReplacements { get; set; }
     }
 }

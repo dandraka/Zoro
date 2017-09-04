@@ -19,6 +19,11 @@ namespace Zoro.Processor
         /// <summary>
         /// The field contents are substituted with a character, e.g. asterisks or spaces.
         /// </summary>
-        Asterisk
+        Asterisk,
+
+        /// <summary>
+        /// The field contents are substituted with a randomly picked item of a given list.
+        /// </summary>
+        List
     }
 }

@@ -40,7 +40,7 @@ namespace Zoro.Tests
             config.FieldMasks = new List<FieldMask>();
             string[] fields = new[]
             {
-                "NAME", "CHRISTIANNAME", "BIRTHDAY", "BANKACCOUNTNR", "FINANCIALINSTITUTE", "BANKZIPNR", "STREET1",
+                "BIRTHDAY", "BANKACCOUNTNR", "FINANCIALINSTITUTE", "BANKZIPNR", "STREET1",
                 "ZIP1", "STREET2", "ZIP2", "STREET3", "ZIP3", "PHONEID1", "PHONEFIELDSTR1", "PHONEID2",
                 "PHONEFIELDSTR2", "PHONEID3", "PHONEFIELDSTR3", "PHONEID4", "PHONEFIELDSTR4", "PHONEID5",
                 "PHONEFIELDSTR5", "PHONEID6", "PHONEFIELDSTR6", "PHONEID7", "PHONEFIELDSTR7", "PHONEID8",
@@ -53,6 +53,25 @@ namespace Zoro.Tests
                 config.FieldMasks.Add(new FieldMask() { FieldName = field, MaskType = MaskType.Similar });
             }
 
+            string[] nameFields = new[]
+            {
+                "NAME", "CHRISTIANNAME"
+            };
+            foreach (string field in nameFields)
+            {
+                config.FieldMasks.Add(new FieldMask()
+                {
+                    FieldName = field,
+                    MaskType = MaskType.List,
+                    // TODO
+                    ListOfPossibleReplacements = new List<Replacement>()
+                    {
+                        new Replacement() { FieldValue = "Sex=M", ReplacementList = "Nick,John,Papadopoulos,Smith" },
+                        new Replacement() { FieldValue = "Sex=F", ReplacementList = "Kerry,Laura" }
+
+                    }  
+                });
+            }
             MaskConfig.SaveConfig(configfile, config);
 
             Assert.IsTrue(File.Exists(configfile));
@@ -63,7 +82,7 @@ namespace Zoro.Tests
         {
             var config = MaskConfig.ReadConfig(configfile);
 
-            Assert.AreEqual(3, config.FieldMasks.Count);
+            Assert.AreEqual(44, config.FieldMasks.Count);
         }
     }
 }
