@@ -38,6 +38,19 @@ E.g. ```Zoro.exe c:\temp\mask.xml```
       <RegExMatch>^(\+\d\d)?(.*)$</RegExMatch>
       <RegExGroupToReplace>2</RegExGroupToReplace>
     </FieldMask>
+    <FieldMask>
+      <FieldName>Street</FieldName>
+      <MaskType>List</MaskType>
+			<ListOfPossibleReplacements>
+				<Replacement Selector="Country=Niederlande" List="Bergselaan,Schieweg,Nootdorpstraat,Nolensstraat" />
+				<Replacement Selector="Country=Schweiz" List="Bahnhofstrasse,Clarahofweg,Sperrstrasse,Erlenstrasse" />
+				<Replacement Selector="Country=Liechtenstein" List="Lettstrasse,Bangarten,Beckagässli,Haldenweg" />
+				<Replacement Selector="Country=Deutschland" List="Bahnhofstraße,Freigaße,Hauptstraße" />
+				<Replacement Selector="Country=Belgien" List="Rue d'Argent,Rue d'Assaut,Rue de l'Ecuyer,Rue du Persil" />
+				<Replacement Selector="Country=Österreich" List="Miesbachgasse,Kleine Pfarrgasse,Heinestraße" />
+				<Replacement Selector="Country=Frankreich" List="Rue Nationale,Boulevard Vauban,Rue des Stations,Boulevard de la Liberté" />
+			</ListOfPossibleReplacements>
+    </FieldMask>
   </FieldMasks>
   <InputFile></InputFile>
   <OutputFile>C:\temp\Zorotests\maskeddata.csv</OutputFile>
