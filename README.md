@@ -49,7 +49,7 @@ E.g. ```Zoro.exe c:\temp\mask.xml```
           <Replacement Selector="Country=Belgium" List="Rue d'Argent,Rue d'Assaut,Rue de l'Ecuyer,Rue du Persil" />
           <Replacement Selector="Country=Austria" List="Miesbachgasse,Kleine Pfarrgasse,Heinestraße" />
           <Replacement Selector="Country=France" List="Rue Nationale,Boulevard Vauban,Rue des Stations,Boulevard de la Liberté" />
-          <!--- fallback when nothing matches --->
+          <!--- fallback when nothing matches; MUST be the last one --->
           <Replacement Selector="" List="Bedford Gardens,Sheffield Terrace,Kensington Palace Gardens" />
         </ListOfPossibleReplacements>
     </FieldMask>
