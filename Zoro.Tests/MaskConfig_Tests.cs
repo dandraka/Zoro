@@ -65,10 +65,9 @@ namespace Zoro.Tests
                     MaskType = MaskType.List,
                     // TODO
                     ListOfPossibleReplacements = new List<Replacement>()
-                    {
-                        new Replacement() { FieldValue = "Sex=M", ReplacementList = "Nick,John,Papadopoulos,Smith" },
-                        new Replacement() { FieldValue = "Sex=F", ReplacementList = "Kerry,Laura" }
-
+                    {                        
+                        new Replacement() { FieldValue = "GWGENDER=weiblich", ReplacementList = "Kerry,Laura" },
+                        new Replacement() { FieldValue = "", ReplacementList = "Nick,John,Papadopoulos,Smith" }
                     }  
                 });
             }

@@ -12,7 +12,6 @@ namespace Zoro.Tests
     {
         private const string testDir = @"C:\temp\Zorotests\";
         private const string configfile = testDir + "test1.xml";
-        private const string datafile = testDir + "data.xml";
 
         [TestMethod]
         public void T01_Mask_Test()
