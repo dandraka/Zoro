@@ -41,17 +41,17 @@ E.g. ```Zoro.exe c:\temp\mask.xml```
     <FieldMask>
       <FieldName>Street</FieldName>
       <MaskType>List</MaskType>
-			<ListOfPossibleReplacements>
-				<Replacement Selector="Country=Netherlands" List="Bergselaan,Schieweg,Nootdorpstraat,Nolensstraat" />
-				<Replacement Selector="Country=Switzerland" List="Bahnhofstrasse,Clarahofweg,Sperrstrasse,Erlenstrasse" />
-				<Replacement Selector="Country=Liechtenstein" List="Lettstrasse,Bangarten,Beckagässli,Haldenweg" />
-				<Replacement Selector="Country=Germany" List="Bahnhofstraße,Freigaße,Hauptstraße" />
-				<Replacement Selector="Country=Belgium" List="Rue d'Argent,Rue d'Assaut,Rue de l'Ecuyer,Rue du Persil" />
-				<Replacement Selector="Country=Austria" List="Miesbachgasse,Kleine Pfarrgasse,Heinestraße" />
-				<Replacement Selector="Country=France" List="Rue Nationale,Boulevard Vauban,Rue des Stations,Boulevard de la Liberté" />
-				<!--- fallback when nothing matches --->
-				<Replacement Selector="" List="Bedford Gardens,Sheffield Terrace,Kensington Palace Gardens" />
-			</ListOfPossibleReplacements>
+        <ListOfPossibleReplacements>
+          <Replacement Selector="Country=Netherlands" List="Bergselaan,Schieweg,Nootdorpstraat,Nolensstraat" />
+          <Replacement Selector="Country=Switzerland" List="Bahnhofstrasse,Clarahofweg,Sperrstrasse,Erlenstrasse" />
+          <Replacement Selector="Country=Liechtenstein" List="Lettstrasse,Bangarten,Beckagässli,Haldenweg" />
+          <Replacement Selector="Country=Germany" List="Bahnhofstraße,Freigaße,Hauptstraße" />
+          <Replacement Selector="Country=Belgium" List="Rue d'Argent,Rue d'Assaut,Rue de l'Ecuyer,Rue du Persil" />
+          <Replacement Selector="Country=Austria" List="Miesbachgasse,Kleine Pfarrgasse,Heinestraße" />
+          <Replacement Selector="Country=France" List="Rue Nationale,Boulevard Vauban,Rue des Stations,Boulevard de la Liberté" />
+          <!--- fallback when nothing matches --->
+          <Replacement Selector="" List="Bedford Gardens,Sheffield Terrace,Kensington Palace Gardens" />
+        </ListOfPossibleReplacements>
     </FieldMask>
   </FieldMasks>
   <InputFile></InputFile>
