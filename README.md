@@ -1,5 +1,9 @@
-# Zoro
-### The masked avenger
+# ⚠️ IMPORTANT NOTE ⚠️
+The project is being converted to Dotnet Core 5.0. Branch `master` doesn't build yet. For a successful build, get the branch `dotnet-461`.
+
+***
+
+# Zoro - The masked avenger
 
 Zoro is a data masking/anonymization utility. It fetches data from a database or a CSV file, and creates a CSV file with masked data.
 
