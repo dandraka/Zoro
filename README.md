@@ -1,5 +1,5 @@
 # ⚠️ IMPORTANT NOTE ⚠️
-The project is being converted to Dotnet Core 5.0. Branch `master` doesn't build yet. For a successful build, get the branch `dotnet-461`.
+The project is in the process of being converted to Dotnet Core 5.0. Branch `master` doesn't build yet. For a successful build, get the branch `dotnet-461`.
 
 ***
 
