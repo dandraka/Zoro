@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="GenericParser" Version="1.1.6" />
+    <PackageReference Include="XperiCode.Impersonator" Version="1.0.0" />
+  </ItemGroup>
+
+</Project>
