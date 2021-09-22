@@ -6,29 +6,31 @@ on:
   pull_request:
     branches: [ dotnet-461 ]
  
-jobs:
-  build:
- 
+jobs:  
+  build:    
     runs-on: windows-latest
- 
-    steps:
-    - uses: actions/checkout@main
-      name: Checkout Code
-     
-    - name: Setup MSBuild Path
-      uses: warrenbuckley/Setup-MSBuild@master
-       
-    - name: Setup NuGet
-      uses: NuGet/setup-nuget@v1.0.5
-     
-    - name: Restore NuGet Packages
-      run: nuget restore Zoro.sln
- 
-    - name: Build and Publish App
-      run: msbuild Zoro.sln /p:Configuration=Release /p:DeployOnBuild=true /p:PublishProfile=FolderProfile
- 
-    - name: Upload Artifact
-      uses: actions/upload-artifact@main
-      with:
-        name: published_app
-        path: bin\Release\Publish
+    
+    steps:      
+      - uses: actions/checkout@v2
+      
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v1
+
+      - name: Setup NuGet
+        uses: NuGet/setup-nuget@v1.0.5
+        
+      - name: Setup VSTest
+        uses: darenm/Setup-VSTest@v1
+
+      - name: Navigate to Workspace
+        run: cd $GITHUB_WORKSPACE
+
+      - name: Restore Packages
+        run: nuget restore Zoro.sln
+
+      - name: Build Solution
+        run: |
+          msbuild.exe Zoro.sln /p:platform="Any CPU" /p:configuration="Release"
+        
+      - name: Run Tests
+        run: vstest.console.exe .\tests\Zoro.Tests\bin\Release\Zoro.Tests.dll
