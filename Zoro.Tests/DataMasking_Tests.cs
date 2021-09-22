@@ -13,6 +13,11 @@ namespace Zoro.Tests
         private const string testDir = @"C:\temp\Zorotests\";
         private const string configfile = testDir + "test1.xml";
 
+        public DataMasking_Tests()
+        {
+
+        }
+
         [Fact]
         public void T01_Mask_Test()
         {
@@ -20,7 +25,8 @@ namespace Zoro.Tests
             var masker = new DataMasking(config);
             masker.Mask();
 
-            Assert.IsTrue(File.Exists(config.OutputFile));
+            //Assert.IsTrue
+            Assert.True(File.Exists(config.OutputFile));
         }
     }
 }

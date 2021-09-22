@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <PackageReference Include="GenericParser" Version="1.1.6" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.8.3" />
     <PackageReference Include="XperiCode.Impersonator" Version="1.0.0" />
   </ItemGroup>
 

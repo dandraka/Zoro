@@ -11,18 +11,12 @@ namespace Zoro.Tests
         private const string testDir = @"C:\temp\Zorotests\";
         private const string configfile = testDir + "test1.xml";
 
-        //[ClassInitialize]
-        public static void Prep(TestContext context)
+        public MaskConfig_Tests()
         {
             if (!Directory.Exists(testDir))
             {
                 Directory.CreateDirectory(testDir);
             }
-
-            /*foreach (var file in Directory.GetFiles(testDir))
-            {
-                File.Delete(file);
-            }*/
         }
 
         [Fact]
@@ -73,7 +67,7 @@ namespace Zoro.Tests
             }
             MaskConfig.SaveConfig(configfile, config);
 
-            Assert.IsTrue(File.Exists(configfile));
+            Assert.True(File.Exists(configfile));
         }
 
         [Fact]
@@ -81,7 +75,7 @@ namespace Zoro.Tests
         {
             var config = MaskConfig.ReadConfig(configfile);
 
-            Assert.AreEqual(44, config.FieldMasks.Count);
+            Assert.Equal(44, config.FieldMasks.Count);
         }
     }
 }
