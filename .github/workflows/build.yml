@@ -12,14 +12,14 @@ jobs:
     runs-on: windows-latest
  
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@latest
       name: Checkout Code
      
     - name: Setup MSBuild Path
-      uses: warrenbuckley/Setup-MSBuild@v1
+      uses: warrenbuckley/Setup-MSBuild@main
        
     - name: Setup NuGet
-      uses: NuGet/setup-nuget@v1.0.2
+      uses: NuGet/setup-nuget@vmain
      
     - name: Restore NuGet Packages
       run: nuget restore Zoro.sln
@@ -28,7 +28,7 @@ jobs:
       run: msbuild Zoro.sln /p:Configuration=Release /p:DeployOnBuild=true /p:PublishProfile=FolderProfile
  
     - name: Upload Artifact
-      uses: actions/upload-artifact@v1.0.0
+      uses: actions/upload-artifact@main
       with:
         name: published_app
         path: bin\Release\Publish
