@@ -33,4 +33,4 @@ jobs:
           msbuild.exe Zoro.sln /p:platform="Any CPU" /p:configuration="Release"
         
       - name: Run Tests
-        run: vstest.console.exe .\tests\Zoro.Tests\bin\Release\Zoro.Tests.dll
+        run: vstest.console.exe Zoro.Tests\bin\Release\Zoro.Tests.dll
