@@ -12,14 +12,14 @@ jobs:
     runs-on: windows-latest
  
     steps:
-    - uses: actions/checkout@latest
+    - uses: actions/checkout@main
       name: Checkout Code
      
     - name: Setup MSBuild Path
-      uses: warrenbuckley/Setup-MSBuild@main
+      uses: warrenbuckley/Setup-MSBuild@v1
        
     - name: Setup NuGet
-      uses: NuGet/setup-nuget@vmain
+      uses: NuGet/setup-nuget@v1.0.5
      
     - name: Restore NuGet Packages
       run: nuget restore Zoro.sln
