@@ -5,27 +5,22 @@ using Zoro.Processor;
 
 namespace Zoro.Tests
 {
-    //[TestClass]
     public class MaskConfig_Tests
     {
-        private const string testDir = @"C:\temp\Zorotests\";
-        private const string configfile = testDir + "test1.xml";
+        private static string testConfigFile;
 
         public MaskConfig_Tests()
         {
-            if (!Directory.Exists(testDir))
-            {
-                Directory.CreateDirectory(testDir);
-            }
+            Utility.PrepareTestInstanceDir();
         }
 
         [Fact]
-        public void T01_SaveConfig_Test()
+        public void T01_Save_Read_Config_Test()
         {
             var config = new MaskConfig()
             {
-                InputFile = testDir + "data.csv",
-                OutputFile = testDir + "maskeddata.csv",
+                InputFile = Utility.TestInstanceDir + "data2.csv",
+                OutputFile = Utility.TestInstanceDir + "maskeddata2.csv",
                 DataSource = DataSource.CsvFile,
                 ConnectionString = "(none)",
                 SqlSelect = "(none)"
@@ -65,17 +60,24 @@ namespace Zoro.Tests
                     }  
                 });
             }
-            MaskConfig.SaveConfig(configfile, config);
 
-            Assert.True(File.Exists(configfile));
+            testConfigFile = Path.Combine(Utility.TestInstanceDir, "testconfig2.xml");
+            MaskConfig.SaveConfig(testConfigFile, config);
+
+            // test writing
+            Assert.True(File.Exists(Utility.TestInstanceConfigfile));
+
+            // test reading
+            var config2 = MaskConfig.ReadConfig(testConfigFile);
+            Assert.Equal(44, config2.FieldMasks.Count);
         }
 
         [Fact]
-        public void T02_ReadConfig_Test()
+        public void T02_Read_Config_Test()
         {
-            var config = MaskConfig.ReadConfig(configfile);
+            var config = MaskConfig.ReadConfig(Utility.TestInstanceConfigfile);
 
-            Assert.Equal(44, config.FieldMasks.Count);
+            Assert.Equal(2, config.FieldMasks.Count);
         }
     }
 }

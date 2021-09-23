@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Xunit;
 using Zoro.Processor;
@@ -6,27 +7,25 @@ using Zoro.Processor;
 namespace Zoro.Tests
 {
     /// <summary>
-    /// Summary description for DataMasking_Tests
+    /// Tests for the <c>DataMasking</c> class.
     /// </summary>
     public class DataMasking_Tests
     {
-        private const string testDir = @"C:\temp\Zorotests\";
-        private const string configfile = testDir + "test1.xml";
-
         public DataMasking_Tests()
         {
-
+            Utility.PrepareTestInstanceDir();
         }
 
         [Fact]
         public void T01_Mask_Test()
         {
-            var config = MaskConfig.ReadConfig(configfile);
+            var config = MaskConfig.ReadConfig(Utility.TestInstanceConfigfile);
             var masker = new DataMasking(config);
             masker.Mask();
 
-            //Assert.IsTrue
+            var contents = new List<string>(File.ReadLines(config.OutputFile));
             Assert.True(File.Exists(config.OutputFile));
+            Assert.Equal(5, contents.Count);
         }
     }
 }

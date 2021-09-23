@@ -6,7 +6,8 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using GenericParsing;
+// TODO workaround for dotnet core
+//using GenericParsing;
 
 namespace Zoro.Processor
 {
@@ -99,10 +100,14 @@ namespace Zoro.Processor
                 string pwd = Console.ReadLine();
                 Console.Clear();
 
+                // TODO find workaround
+                throw new NotSupportedException("Impersonation not supported yet");
+                /*
                 using (var impersonator = new XperiCode.Impersonator.Impersonator(domain, user, pwd))
                 {
                     doDbSelect();
                 }
+                */
             }
             return dt;
         }
@@ -282,6 +287,8 @@ namespace Zoro.Processor
         {
             var tbl = new DataTable();
 
+            // TODO find workaround
+            /*
             using (var parser = new GenericParser())
             {
                 parser.TextFieldType = FieldType.Delimited;
@@ -321,6 +328,7 @@ namespace Zoro.Processor
                     tbl.Rows.Add(row);
                 }
             }
+            */
 
             return tbl;
         }

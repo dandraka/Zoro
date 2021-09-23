@@ -10,7 +10,7 @@
       <MaskType>Asterisk</MaskType>
     </FieldMask>
   </FieldMasks>
-  <InputFile>C:\temp\Zorotests\data.csv</InputFile>
-  <OutputFile>C:\temp\Zorotests\maskeddata.csv</OutputFile>
+  <InputFile>%testdir%\data1.csv</InputFile>
+  <OutputFile>%testdir%\maskeddata1.csv</OutputFile>
   <Delimiter>;</Delimiter>
 </MaskConfig>
