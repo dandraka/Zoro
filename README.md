@@ -1,7 +1,7 @@
-# ⚠️ IMPORTANT NOTE ⚠️
-The project is in the process of being converted to Dotnet Core 5.0.
-Branch `master` works only partially: CSV input works, DB input doesn't.
-For a complete build, get the branch `dotnet-461` which must be built with .Net Framework 4.6.1.
+# 🎉 IMPORTANT NOTE 🥳
+The project has been converted to Dotnet Core 5.0.
+* Branch `master` now fully works, both for CSV and MS SQL data. This is the code that is maintained and will be published as a Nuget package.
+* The branch `dotnet-461` is the legacy version, which must be built with .Net Framework 4.6.1. It works, but it's not maintained.
 
 ***
 
