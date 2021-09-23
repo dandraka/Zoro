@@ -73,6 +73,8 @@ namespace Zoro.Processor
                         dt.Load(dbReader);
                         dbReader.Close();
                     }
+
+                    dbConn.Close();
                 }
 
                 foreach (DataColumn dataColumn in dt.Columns)
