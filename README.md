@@ -1,5 +1,7 @@
 # ⚠️ IMPORTANT NOTE ⚠️
-The project is in the process of being converted to Dotnet Core 5.0. Branch `master` doesn't work yet. For a successful build, get the branch `dotnet-461`.
+The project is in the process of being converted to Dotnet Core 5.0.
+Branch `master` works only partially: CSV input works, DB input doesn't.
+For a complete build, get the branch `dotnet-461` which must be built with .Net Framework 4.6.1.
 
 ***
 
