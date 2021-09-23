@@ -1,3 +1,24 @@
+use master
+go
+/*
+create login vscode with PASSWORD='SOMEPASSWORD'
+go
+*/
+/*
+create database zorotestdb
+go
+*/
+
+use zorotestdb
+go
+
+/*
+create user vscode for login vscode
+go
+sp_addrolemember 'DB_DATAREADER', 'vscode'
+go
+*/
+
 /*
 create TABLE testdata
 (
@@ -7,8 +28,7 @@ create TABLE testdata
     address NVARCHAR(100) not NULL
 );
 go
-*/
-/*
+
 insert into testdata
 (name, iban, country, address)
 VALUES
@@ -23,4 +43,5 @@ VALUES
 ('Transporto di Roma','IT36K0890150920000000550061','IT','Via Milano 5');
 go
 */
+
 select * from testdata;

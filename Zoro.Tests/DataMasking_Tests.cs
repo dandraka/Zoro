@@ -19,7 +19,15 @@ namespace Zoro.Tests
         }
 
         [Fact]
-        public void T01_Mask_CSV_Test()
+        public void T01_TestSecret()
+        {
+            // test github secrets
+            var secret = Environment.GetEnvironmentVariable("TESTSECRET");
+            Assert.Equal("LALALA", secret);
+        }
+
+        [Fact]
+        public void T02_Mask_CSV_Test()
         {
             var config = MaskConfig.ReadConfig(utility.TestInstanceConfigfile);
             Console.WriteLine($"Config: InputFile = {config.InputFile}");
@@ -33,15 +41,7 @@ namespace Zoro.Tests
         }
 
         [Fact]
-        public void T00_TestSecret()
-        {
-            // test github secrets
-            var secret = Environment.GetEnvironmentVariable("TESTSECRET");
-            Assert.Equal("LALALA", secret);
-        }
-
-        [Fact]
-        public void T02_Mask_DB_Test()
+        public void T03_Mask_DB_Test()
         {
             var connstr = Environment.GetEnvironmentVariable("SQLCONNSTRING");
             var config = new MaskConfig()
