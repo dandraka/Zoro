@@ -19,6 +19,7 @@ jobs:
         dotnet-version: 5.0.x
       env:
         TESTSECRET: ${{secrets.TESTSECRET}}        
+        SQLCONNSTRING: ${{secrets.SQLCONNSTRING}} 
     - name: Restore dependencies
       run: dotnet restore
     - name: Build
