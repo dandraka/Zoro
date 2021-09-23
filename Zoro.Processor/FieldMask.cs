@@ -15,7 +15,7 @@ namespace Zoro.Processor
         /// E.g. "Sex=F"
         /// </summary>
         [XmlAttribute(AttributeName = "Selector")]
-        public string FieldValue { get; set; }
+        public string Selector { get; set; }
 
         /// <summary>
         /// Replacement list.

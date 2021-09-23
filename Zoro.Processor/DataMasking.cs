@@ -81,35 +81,38 @@ namespace Zoro.Processor
                 }
             });
 
-            Console.WriteLine("Enter username (Enter to use currently logged in user or connection string credentials):");
-            string user = Console.ReadLine();
+            doDbSelect();
 
-            if (string.IsNullOrEmpty(user))
-            {
-                doDbSelect();
-            }
-            else
-            {
-                Console.WriteLine("Enter domain (Enter to use the current one):");
-                string domain = Console.ReadLine();
-                if (string.IsNullOrEmpty(domain))
-                {
-                    domain = Environment.UserDomainName;
-                }
+            //Console.WriteLine("Enter username (Enter to use currently logged in user or connection string credentials):");
+            //string user = Console.ReadLine();
+            //
+            //if (string.IsNullOrEmpty(user))
+            //{
+            //    doDbSelect();
+            //}
+            //else
+            //{
+            //    Console.WriteLine("Enter domain (Enter to use the current one):");
+            //    string domain = Console.ReadLine();
+            //    if (string.IsNullOrEmpty(domain))
+            //    {
+            //        domain = Environment.UserDomainName;
+            //    }
+            //
+            //    Console.WriteLine("Enter password:");
+            //    string pwd = Console.ReadLine();
+            //    Console.Clear();
+            //
+            //    // TODO find workaround
+            //    throw new NotSupportedException("Impersonation not supported yet");
+            //    /*
+            //    using (var impersonator = new XperiCode.Impersonator.Impersonator(domain, user, pwd))
+            //    {
+            //        doDbSelect();
+            //    }
+            //    */
+            //}
 
-                Console.WriteLine("Enter password:");
-                string pwd = Console.ReadLine();
-                Console.Clear();
-
-                // TODO find workaround
-                throw new NotSupportedException("Impersonation not supported yet");
-                /*
-                using (var impersonator = new XperiCode.Impersonator.Impersonator(domain, user, pwd))
-                {
-                    doDbSelect();
-                }
-                */
-            }
             return dt;
         }
 
@@ -234,14 +237,14 @@ namespace Zoro.Processor
             foreach (var r in listOfReplacements)
             {
                 // to have as a default
-                if (string.IsNullOrEmpty(r.FieldValue))
+                if (string.IsNullOrEmpty(r.Selector))
                 {
                     replacementStr = r.ReplacementList;
                     break;
                 }
 
-                string selectorField = r.FieldValue.Split('=')[0].Trim();
-                string selectorValue = r.FieldValue.Split('=')[1].Trim().ToLower();                
+                string selectorField = r.Selector.Split('=')[0].Trim();
+                string selectorValue = r.Selector.Split('=')[1].Trim().ToLower();                
 
                 if (!row.Table.Columns.Contains(selectorField))
                 {
