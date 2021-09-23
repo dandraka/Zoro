@@ -22,8 +22,8 @@ namespace Zoro.Tests
         {
             var config = new MaskConfig()
             {
-                InputFile = utility.TestInstanceDir + "data2.csv",
-                OutputFile = utility.TestInstanceDir + "maskeddata2.csv",
+                InputFile = Path.Combine(utility.TestInstanceDir, "data2.csv"),
+                OutputFile = Path.Combine(utility.TestInstanceDir, "maskeddata2.csv"),
                 DataSource = DataSource.CsvFile,
                 ConnectionString = "(none)",
                 SqlSelect = "(none)"
