@@ -1,4 +1,4 @@
-name: Build dotnet app
+name: Build .Net 4.6.1 app
  
 on:
   push:
