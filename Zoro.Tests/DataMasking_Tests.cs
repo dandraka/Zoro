@@ -11,15 +11,17 @@ namespace Zoro.Tests
     /// </summary>
     public class DataMasking_Tests
     {
+        private Utility utility = new Utility();
+
         public DataMasking_Tests()
         {
-            Utility.PrepareTestInstanceDir();
+            utility.PrepareTestInstanceDir();
         }
 
         [Fact]
         public void T01_Mask_Test()
         {
-            var config = MaskConfig.ReadConfig(Utility.TestInstanceConfigfile);
+            var config = MaskConfig.ReadConfig(utility.TestInstanceConfigfile);
             var masker = new DataMasking(config);
             masker.Mask();
 

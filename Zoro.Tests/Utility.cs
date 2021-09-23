@@ -5,13 +5,13 @@ using System.Reflection;
 namespace Zoro.Tests
 {
 
-    internal static class Utility
+    internal class Utility
     {
-        public static string TestInstanceDir;
-        public static string TestInstanceConfigfile;
-        public static string TestDataDir => Path.Combine(Utility.AssemblyDirectory, "data");
+        public string TestInstanceDir;
+        public string TestInstanceConfigfile;
+        public string TestDataDir => Path.Combine(Utility.AssemblyDirectory, "data");
 
-        public static void PrepareTestInstanceDir()
+        public void PrepareTestInstanceDir()
         {
             TestInstanceDir = Path.Combine(Path.GetTempPath(), "Zorotests_" + (Guid.NewGuid().ToString()));
             Directory.CreateDirectory(TestInstanceDir);
@@ -30,7 +30,7 @@ namespace Zoro.Tests
             configContents = configContents.Replace("%TestInstanceDir%", TestInstanceDir);
             File.WriteAllText(TestInstanceConfigfile, configContents);
         }
-        public static string AssemblyDirectory
+        private static string AssemblyDirectory
         {
             get
             {

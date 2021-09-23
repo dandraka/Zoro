@@ -9,9 +9,11 @@ namespace Zoro.Tests
     {
         private static string testConfigFile;
 
+        private Utility utility = new Utility();
+        
         public MaskConfig_Tests()
         {
-            Utility.PrepareTestInstanceDir();
+            utility.PrepareTestInstanceDir();
         }
 
         [Fact]
@@ -19,8 +21,8 @@ namespace Zoro.Tests
         {
             var config = new MaskConfig()
             {
-                InputFile = Utility.TestInstanceDir + "data2.csv",
-                OutputFile = Utility.TestInstanceDir + "maskeddata2.csv",
+                InputFile = utility.TestInstanceDir + "data2.csv",
+                OutputFile = utility.TestInstanceDir + "maskeddata2.csv",
                 DataSource = DataSource.CsvFile,
                 ConnectionString = "(none)",
                 SqlSelect = "(none)"
@@ -61,11 +63,11 @@ namespace Zoro.Tests
                 });
             }
 
-            testConfigFile = Path.Combine(Utility.TestInstanceDir, "testconfig2.xml");
+            testConfigFile = Path.Combine(utility.TestInstanceDir, "testconfig2.xml");
             MaskConfig.SaveConfig(testConfigFile, config);
 
             // test writing
-            Assert.True(File.Exists(Utility.TestInstanceConfigfile));
+            Assert.True(File.Exists(utility.TestInstanceConfigfile));
 
             // test reading
             var config2 = MaskConfig.ReadConfig(testConfigFile);
@@ -75,7 +77,7 @@ namespace Zoro.Tests
         [Fact]
         public void T02_Read_Config_Test()
         {
-            var config = MaskConfig.ReadConfig(Utility.TestInstanceConfigfile);
+            var config = MaskConfig.ReadConfig(utility.TestInstanceConfigfile);
 
             Assert.Equal(2, config.FieldMasks.Count);
         }
