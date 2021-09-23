@@ -1,4 +1,4 @@
-name: Build and test dotnet core app
+name: Build and test .Net Core app
 
 on:
   push:
