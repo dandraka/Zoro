@@ -19,6 +19,7 @@ namespace Zoro.Tests
             foreach (string filename in Directory.EnumerateFiles(TestDataDir))
             {
                 File.Copy(filename, Path.Combine(TestInstanceDir, Path.GetFileName(filename)), true);
+                Console.WriteLine($"Copied {filename} to {TestInstanceDir}");
             }
 
             TestInstanceConfigfile = Path.Combine(TestInstanceDir, "testconfig.xml");

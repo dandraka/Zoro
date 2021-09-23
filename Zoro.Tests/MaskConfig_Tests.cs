@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using Xunit;
@@ -10,7 +11,7 @@ namespace Zoro.Tests
         private static string testConfigFile;
 
         private Utility utility = new Utility();
-        
+
         public MaskConfig_Tests()
         {
             utility.PrepareTestInstanceDir();
@@ -56,10 +57,10 @@ namespace Zoro.Tests
                     MaskType = MaskType.List,
                     // TODO
                     ListOfPossibleReplacements = new List<Replacement>()
-                    {                        
+                    {
                         new Replacement() { FieldValue = "GWGENDER=weiblich", ReplacementList = "Kerry,Laura" },
                         new Replacement() { FieldValue = "", ReplacementList = "Nick,John,Papadopoulos,Smith" }
-                    }  
+                    }
                 });
             }
 
@@ -71,6 +72,8 @@ namespace Zoro.Tests
 
             // test reading
             var config2 = MaskConfig.ReadConfig(testConfigFile);
+            Console.WriteLine($"Config: InputFile = {config2.InputFile}");
+            Console.WriteLine($"Config: OutputFile = {config2.OutputFile}");
             Assert.Equal(44, config2.FieldMasks.Count);
         }
 

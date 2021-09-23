@@ -22,6 +22,8 @@ namespace Zoro.Tests
         public void T01_Mask_Test()
         {
             var config = MaskConfig.ReadConfig(utility.TestInstanceConfigfile);
+            Console.WriteLine($"Config: InputFile = {config.InputFile}");
+            Console.WriteLine($"Config: OutputFile = {config.OutputFile}");
             var masker = new DataMasking(config);
             masker.Mask();
 
