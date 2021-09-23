@@ -49,15 +49,35 @@ namespace Zoro.Processor
         /// </summary>
         public DataSource DataSource { get; set; }
 
+        private string _inputFile;
         /// <summary>
         /// The input file.
         /// </summary>
-        public string InputFile { get; set; }
+        public string InputFile 
+        {
+            get => _inputFile;
+            set 
+            { 
+                _inputFile = value
+                    .Replace('\\', System.IO.Path.DirectorySeparatorChar)
+                    .Replace('/', System.IO.Path.DirectorySeparatorChar);
+            }
+        }
 
+        private string _outputFile;
         /// <summary>
-        /// The ourput file.
+        /// The output file.
         /// </summary>
-        public string OutputFile { get; set; }
+        public string OutputFile 
+        {
+            get => _outputFile;
+            set 
+            { 
+                _outputFile = value
+                    .Replace('\\', System.IO.Path.DirectorySeparatorChar)
+                    .Replace('/', System.IO.Path.DirectorySeparatorChar);
+            }
+        }
 
         /// <summary>
         /// The DB connection string.
