@@ -10,7 +10,7 @@
       <MaskType>Asterisk</MaskType>
     </FieldMask>
   </FieldMasks>
-  <InputFile>%testdir%\data1.csv</InputFile>
-  <OutputFile>%testdir%\maskeddata1.csv</OutputFile>
+  <InputFile>%TestInstanceDir%\data1.csv</InputFile>
+  <OutputFile>%TestInstanceDir%\maskeddata1.csv</OutputFile>
   <Delimiter>;</Delimiter>
 </MaskConfig>
