@@ -6,8 +6,9 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using GenericParsing;
 // TODO workaround for dotnet core
-//using GenericParsing;
+//using XperiCode.Impersonator
 
 namespace Zoro.Processor
 {
@@ -287,8 +288,6 @@ namespace Zoro.Processor
         {
             var tbl = new DataTable();
 
-            // TODO find workaround
-            /*
             using (var parser = new GenericParser())
             {
                 parser.TextFieldType = FieldType.Delimited;
@@ -327,8 +326,7 @@ namespace Zoro.Processor
                     }
                     tbl.Rows.Add(row);
                 }
-            }
-            */
+            }            
 
             return tbl;
         }

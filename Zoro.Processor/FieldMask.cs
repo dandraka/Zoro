@@ -30,6 +30,7 @@ namespace Zoro.Processor
         public FieldMask()
         {
             this.MaskType = MaskType.None;
+            this.Asterisk = "*";
         }
 
         /// <summary>
