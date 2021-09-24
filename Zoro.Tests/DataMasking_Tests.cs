@@ -75,7 +75,14 @@ namespace Zoro.Tests
                 { Selector = "", ReplacementList="Main Street 9,Fifth Avenue 104,Ranch rd. 1" });                
 
             var masker = new DataMasking(config);
-            masker.Mask();
+            try
+            {
+                 masker.Mask();
+            }
+            catch (System.Data.SqlClient.SqlException ex)
+            {
+                Skip.If(true, $"Database seems not to respond, check if your SQL Server is running. {ex.Message}");
+            }            
 
             Assert.True(File.Exists(config.OutputFile));
             var contents = new List<string>(File.ReadLines(config.OutputFile));            
