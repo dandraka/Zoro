@@ -31,6 +31,7 @@ namespace Zoro.Processor
         {
             this.MaskType = MaskType.None;
             this.Asterisk = "*";
+            this.ListOfPossibleReplacements = new List<Replacement>();
         }
 
         /// <summary>

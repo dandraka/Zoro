@@ -40,6 +40,7 @@ namespace Zoro.Processor
             this.ConnectionString = string.Empty;
             this.SqlSelect = string.Empty;
             this.Delimiter = ";";
+            this.FieldMasks = new List<FieldMask>();
         }
 
         /// <summary>
