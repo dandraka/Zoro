@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<MaskConfig xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <FieldMasks>
+    <FieldMask>
+      <FieldName>Name</FieldName>
+      <MaskType>Similar</MaskType>
+    </FieldMask>
+    <FieldMask>
+      <FieldName>BankAccount</FieldName>
+      <MaskType>Asterisk</MaskType>
+    </FieldMask>
+  </FieldMasks>
+  <InputFile>../Zoro.Tests/data/data1.csv</InputFile>
+  <OutputFile>../Zoro.Tests/data/maskeddata1.csv</OutputFile>
+  <Delimiter>;</Delimiter>
+</MaskConfig>

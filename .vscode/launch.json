@@ -9,9 +9,9 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/Zoro.Tests/bin/Debug/net5.0/Zoro.Tests.dll",
-            "args": [],
-            "cwd": "${workspaceFolder}/Zoro.Tests",
+            "program": "${workspaceFolder}/Zoro/bin/Debug/net5.0/Zoro.dll",
+            "args": ["../Zoro.Tests/data/debugconfig.xml"],
+            "cwd": "${workspaceFolder}/Zoro",
             "console": "internalConsole",
             "stopAtEntry": false
         },

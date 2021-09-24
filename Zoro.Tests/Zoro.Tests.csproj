@@ -22,6 +22,7 @@
 
   <ItemGroup>
     <None Update="data/testconfig.xml" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="data/debugconfig.xml" CopyToOutputDirectory="PreserveNewest" />
     <None Update="data/data1.csv" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 

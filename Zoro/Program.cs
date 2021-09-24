@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using Zoro.Processor;
 
 namespace Zoro
@@ -54,13 +55,21 @@ namespace Zoro
                 Console.WriteLine(@"  <OutputFile>C:\\temp\\Zorotests\\maskeddata.csv</OutputFile>");
                 Console.WriteLine(@"  <Delimiter>;</Delimiter>");
                 Console.WriteLine(@"</MaskConfig>");
-                Console.WriteLine(@"Press Enter to exit...");
-                Console.ReadLine();
 
                 return;
             }
 
-            configfile = args[0];
+            // cross platform
+            configfile = Path.GetFullPath(args[0]
+                .Replace('/', Path.DirectorySeparatorChar)
+                .Replace('\\', Path.DirectorySeparatorChar));
+
+            if (!File.Exists(configfile))
+            {
+                Console.WriteLine($"WARNING: Config file {configfile} was not found, exiting.");
+                Console.WriteLine(@"Usage: Zoro.exe <path to config file>");              
+                return;
+            }
 
             try
             {
@@ -72,8 +81,6 @@ namespace Zoro
             {
                 Console.WriteLine("An error occured:");
                 Console.WriteLine("{0}: {1}\r\n{2}", ex.GetType(), ex.Message, ex.StackTrace);
-                Console.WriteLine("Press Enter to exit...");
-                Console.ReadLine();
             }
         }
     }

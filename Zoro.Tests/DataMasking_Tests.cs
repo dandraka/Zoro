@@ -81,7 +81,8 @@ namespace Zoro.Tests
             }
             catch (System.Data.SqlClient.SqlException ex)
             {
-                Skip.If(true, $"Database seems not to respond, check if your SQL Server is running. {ex.Message}");
+                // error 40 - could not open connection to sql server
+                Skip.If(ex.Message.Contains("40"), $"Database seems not to respond, check if your SQL Server is running. {ex.Message}");
             }            
 
             Assert.True(File.Exists(config.OutputFile));
