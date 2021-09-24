@@ -3,8 +3,22 @@ name: Build and test .Net Core app
 on:
   push:
     branches: [ master ]
+    paths-ignore:
+    - "README.md"
+    - "LICENSE"
+    - ".gitattributes"
+    - ".gitignore"
+    - ".github/**"
+    - ".vscode/**"
   pull_request:
     branches: [ master ]
+    paths-ignore:
+    - "README.md"
+    - "LICENSE"
+    - ".gitattributes"
+    - ".gitignore"
+    - ".github/**"
+    - ".vscode/**"    
 
 jobs:
   build:
