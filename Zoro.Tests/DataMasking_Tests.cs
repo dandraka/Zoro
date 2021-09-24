@@ -9,7 +9,7 @@ namespace Zoro.Tests
     /// <summary>
     /// Tests for the <c>DataMasking</c> class.
     /// </summary>
-    public class DataMasking_Tests
+    public class DataMasking_Tests: IDisposable
     {
         private Utility utility = new Utility();
 
@@ -18,11 +18,17 @@ namespace Zoro.Tests
             utility.PrepareTestInstanceDir();
         }
 
-        [Fact]
+        public void Dispose()
+        {
+            this.utility.Dispose();
+        }
+
+        [SkippableFact]
         public void T01_TestSecret()
         {
             // test github secrets
             var secret = Environment.GetEnvironmentVariable("TESTSECRET");
+            Skip.If(string.IsNullOrWhiteSpace(secret), "No secret info found, is the environment variable 'TESTSECRET' set?");
             Assert.Equal("LALALA", secret);
         }
 
@@ -40,10 +46,14 @@ namespace Zoro.Tests
             Assert.Equal(5, contents.Count);
         }
 
-        [Fact]
+        [SkippableFact]
         public void T03_Mask_DB_Test()
         {
             var connstr = Environment.GetEnvironmentVariable("SQLCONNSTRING");
+
+            // skip if no db config found
+            Skip.If(string.IsNullOrWhiteSpace(connstr), "No database connection info found, is the environment variable 'SQLCONNSTRING' set?");
+
             var config = new MaskConfig()
             {
                 ConnectionString = connstr,

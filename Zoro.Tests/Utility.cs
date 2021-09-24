@@ -5,7 +5,7 @@ using System.Reflection;
 namespace Zoro.Tests
 {
 
-    internal class Utility
+    internal class Utility: IDisposable
     {
         public string TestInstanceDir;
         public string TestInstanceConfigfile;
@@ -31,6 +31,23 @@ namespace Zoro.Tests
             configContents = configContents.Replace("%TestInstanceDir%", TestInstanceDir);
             File.WriteAllText(TestInstanceConfigfile, configContents);
         }
+
+        // clean up
+        public void Dispose()
+        {
+            try
+            {
+                if (Directory.Exists(this.TestInstanceDir))
+                {
+                    Directory.Delete(this.TestInstanceDir, true);
+                }
+            }
+            catch
+            {
+                // ugh, never mind, nbd
+            }
+        }
+
         private static string AssemblyDirectory
         {
             get

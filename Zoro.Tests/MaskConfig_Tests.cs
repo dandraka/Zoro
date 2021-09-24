@@ -6,7 +6,7 @@ using Zoro.Processor;
 
 namespace Zoro.Tests
 {
-    public class MaskConfig_Tests
+    public class MaskConfig_Tests: IDisposable
     {
         private static string testConfigFile;
 
@@ -15,6 +15,11 @@ namespace Zoro.Tests
         public MaskConfig_Tests()
         {
             utility.PrepareTestInstanceDir();
+        }
+
+        public void Dispose()
+        {
+            this.utility.Dispose();
         }
 
         [Fact]
