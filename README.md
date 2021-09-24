@@ -1,15 +1,13 @@
-## 🎉 IMPORTANT NOTE 🥳
-The project has been converted to Dotnet Core 5.0.
-* Branch `master` now fully works, both for CSV and MS SQL data. This is the code that is maintained and will be published as a Nuget package.
-* The branch `dotnet-461` is the legacy version, which must be built with .Net Framework 4.6.1. It works, but it's not maintained.
-
-***
-
 # Zoro - The masked avenger
 
 Zoro is a data masking/anonymization utility. It fetches data from a database or a CSV file, and creates a CSV file with masked data.
 
-It can be used as a command line program (zoro.exe) or as a dotnet standard library.
+It can be used as a command line program (zoro.exe) or as a dotnet standard library. To run the command line program, simply copy the ```tools``` dir from the Nuget package.
+
+## Note on the code repository
+The library has been converted to DotNet Standard 2.0; the command line utility and the test project has been converted to Dotnet Core 5.0.
+* Branch `master` is the current code which fully works, both for CSV and MS SQL data. This is the code that is maintained and is published as a Nuget package.
+* The branch `dotnet-461` is the legacy version, which must be built with .Net Framework 4.6.1. It works, but it's not maintained.
 
 ## Usage:
 
@@ -49,7 +47,8 @@ var masker = new Zoro.Processor.DataMasking(config);
 masker.Mask();
 ```
 
-Sample config files:
+**Sample config file:**
+
 ```
 <?xml version="1.0"?>
 <MaskConfig xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -68,6 +67,28 @@ Sample config files:
   <Delimiter>;</Delimiter>
 </MaskConfig>
 ```
+
+The above config file can process for example the following CSV:
+
+```
+ID;Name;BankAccount
+1;KM-elektronik;CH9880808007645910141
+2;Cretaneshop;GR4701102050000020547061026
+3;VELOPLUSs.r.l;IT36K0890150920000000550061
+4;natuurhulpcentrum.be;BE79235040722733
+```
+
+and the result will be something like the following:
+
+```
+ID;Name;BankAccount
+1;RJ-egitrjitiz;*********************
+2;Lqebuhuzfic;***************************
+3;NKWNQWWBg.g.q;***************************
+4;botaahjazlvojknub.qi;****************
+```
+
+**A more complete sample of a config file is the following:**
 
 ```
 <?xml version="1.0"?>

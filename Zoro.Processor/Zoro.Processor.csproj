@@ -5,7 +5,7 @@
     <Authors>Jim (Dimitrios) Andrakakis</Authors>
     <Company>dandraka.com</Company>
     <Description>Zoro is a data masking and anonymization library for .Net. 
-      The library can be used both in a .Net program ans also as a command line utility.
+      The library can be used both in a .Net program and also as a command line utility.
       You can copy the tools directory to use the tool as a standalone utility.
     </Description>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>    
@@ -15,7 +15,7 @@
     <Copyright>Copyright (c) 2017 Jim (Dimitrios) Andrakakis</Copyright>
     <PackageIcon>icon.png</PackageIcon>
     <PackageId>Dandraka.Zoro</PackageId>
-    <Version>1.0.1</Version>
+    <Version>1.0.2</Version>
     <!-- <PackageReleaseNotes></PackageReleaseNotes> -->
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <PackageTags>data anonymization masking gdpr</PackageTags>  
