@@ -34,7 +34,6 @@ namespace Zoro.Tests
                 SqlSelect = "(none)"
             };
 
-            config.FieldMasks = new List<FieldMask>();
             string[] fields = new[]
             {
                 "BIRTHDAY", "BANKACCOUNTNR", "FINANCIALINSTITUTE", "BANKZIPNR", "STREET1",
@@ -60,7 +59,6 @@ namespace Zoro.Tests
                 {
                     FieldName = field,
                     MaskType = MaskType.List,
-                    // TODO
                     ListOfPossibleReplacements = new List<Replacement>()
                     {
                         new Replacement() { Selector = "GWGENDER=weiblich", ReplacementList = "Kerry,Laura" },
