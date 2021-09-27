@@ -19,8 +19,13 @@
     <!-- <PackageReleaseNotes></PackageReleaseNotes> -->
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <PackageTags>data anonymization masking gdpr</PackageTags>  
-    <PackageReadmeFile>../README.md</PackageReadmeFile>  
+    <PackageReadmeFile>README.md</PackageReadmeFile>  
   </PropertyGroup>
+
+  <Target Name="CopyCustomContent" BeforeTargets="Build">
+    <Copy SourceFiles="../README.md" DestinationFolder="$(OutDir)" />
+    <Copy SourceFiles="../README.md" DestinationFolder="$(ProjectDir)" />
+  </Target>    
 
   <ItemGroup>
     <PackageReference Include="GenericParsing" Version="1.2.2" />
@@ -28,9 +33,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="LICENSE.txt" Pack="true" PackagePath="/"/>
-    <None Include="icon.png" Pack="true" PackagePath="/"/>
-    <!-- <None Include="../README.md" Pack="true" PackagePath="/"/> -->
+    <None Include="LICENSE.txt"  CopyToOutputDirectory="Always" Pack="true" PackagePath="/"/>
+    <None Include="icon.png"     CopyToOutputDirectory="Always" Pack="true" PackagePath="/"/>
+    <None Include="README.md"    CopyToOutputDirectory="Always" Pack="true" PackagePath="/" />
   </ItemGroup>  
 
   <ItemGroup>
