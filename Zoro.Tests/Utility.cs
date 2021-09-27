@@ -4,25 +4,27 @@ using System.Reflection;
 
 namespace Zoro.Tests
 {
-
     internal class Utility: IDisposable
     {
         public string TestInstanceDir;
         public string TestInstanceConfigfile;
         public string TestDataDir => Path.Combine(Utility.AssemblyDirectory, "data");
 
-        public void PrepareTestInstanceDir()
+        public Utility()
         {
             TestInstanceDir = Path.Combine(Path.GetTempPath(), "Zorotests_" + (Guid.NewGuid().ToString()));
             Directory.CreateDirectory(TestInstanceDir);
+            TestInstanceConfigfile = Path.Combine(TestInstanceDir, "testconfig.xml");
+        }
 
+        public void PrepareTestInstanceDir()
+        {
             foreach (string filename in Directory.EnumerateFiles(TestDataDir))
             {
                 File.Copy(filename, Path.Combine(TestInstanceDir, Path.GetFileName(filename)), true);
                 Console.WriteLine($"Copied {filename} to {TestInstanceDir}");
             }
-
-            TestInstanceConfigfile = Path.Combine(TestInstanceDir, "testconfig.xml");
+            
             if (!File.Exists(TestInstanceConfigfile))
             {
                 throw new FileNotFoundException(TestInstanceConfigfile);
@@ -30,6 +32,13 @@ namespace Zoro.Tests
             string configContents = File.ReadAllText(TestInstanceConfigfile);
             configContents = configContents.Replace("%TestInstanceDir%", TestInstanceDir);
             File.WriteAllText(TestInstanceConfigfile, configContents);
+        }
+
+        public string CreateFileInTestInstanceDir(string contents, string ext)
+        {
+            string fileName = Path.Combine(this.TestInstanceDir, (Guid.NewGuid()) + "." + ext.Replace(".", ""));
+            File.WriteAllText(fileName, contents);
+            return fileName;
         }
 
         // clean up

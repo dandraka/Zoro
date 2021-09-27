@@ -87,5 +87,64 @@ namespace Zoro.Tests
             var contents = new List<string>(File.ReadLines(config.OutputFile));            
             Assert.Equal(4, contents.Count);            
         }
+
+        [Fact]
+        public void T04_Mask_MaskType_None_Test()
+        {
+            // Arrange
+            string csvContent = "id;name\r\n1;Carol Danvers\r\n2;Bruce Banner\r\n3;Peter Parker\r\n";
+            string csvFilename = this.utility.CreateFileInTestInstanceDir(csvContent, "csv");
+            var config = new MaskConfig()
+            {
+                InputFile = csvFilename,
+                OutputFile = csvFilename.Replace(".csv", "_out.csv")
+            };
+            config.FieldMasks.Add(new FieldMask() { FieldName = "id", MaskType = MaskType.None });
+            config.FieldMasks.Add(new FieldMask() { FieldName = "name", MaskType = MaskType.None });
+
+            // Act
+            var masker = new DataMasking(config);
+            masker.Mask();
+
+            // Assert
+            Assert.True(File.Exists(config.OutputFile));
+            var maskContents = new List<string>(csvContent.Split("\r\n"));
+            var contents = new List<string>(File.ReadLines(config.OutputFile));
+            Assert.Equal(4, contents.Count);
+            for(int i = 0; i < contents.Count; i++)
+            {
+                Assert.Equal(maskContents[i], contents[i]);
+            }
+        }
+
+        [Fact]
+        public void T05_Mask_MaskType_Asterisk_Test()
+        {
+            // Arrange
+            string csvContent = "id;name\r\n1;Carol Danvers\r\n2;Bruce Banner\r\n3;Peter Parker\r\n";
+            string csvMaskedContent = "id;name\r\n1;***** *******\r\n2;***** ******\r\n3;***** ******\r\n";
+            string csvFilename = this.utility.CreateFileInTestInstanceDir(csvContent, "csv");
+            var config = new MaskConfig()
+            {
+                InputFile = csvFilename,
+                OutputFile = csvFilename.Replace(".csv", "_out.csv")
+            };
+            config.FieldMasks.Add(new FieldMask() { FieldName = "id", MaskType = MaskType.None });
+            config.FieldMasks.Add(new FieldMask() { FieldName = "name", MaskType = MaskType.Asterisk });
+
+            // Act
+            var masker = new DataMasking(config);
+            masker.Mask();
+
+            // Assert
+            Assert.True(File.Exists(config.OutputFile));
+            var maskContents = new List<string>(csvMaskedContent.Split("\r\n"));
+            var contents = new List<string>(File.ReadLines(config.OutputFile));
+            Assert.Equal(4, contents.Count);
+            for(int i = 0; i < contents.Count; i++)
+            {
+                Assert.Equal(maskContents[i], contents[i]);
+            }
+        }
     }
 }
