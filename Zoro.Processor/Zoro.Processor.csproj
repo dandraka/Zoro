@@ -19,7 +19,7 @@
     <!-- <PackageReleaseNotes></PackageReleaseNotes> -->
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <PackageTags>data anonymization masking gdpr</PackageTags>  
-    <PackageReadmeFile>README.md</PackageReadmeFile>  
+    <PackageReadmeFile>../README.md</PackageReadmeFile>  
   </PropertyGroup>
 
   <ItemGroup>
@@ -30,11 +30,11 @@
   <ItemGroup>
     <None Include="LICENSE.txt" Pack="true" PackagePath="/"/>
     <None Include="icon.png" Pack="true" PackagePath="/"/>
-    <None Include="../README.md" Pack="true" PackagePath="/"/>
+    <!-- <None Include="../README.md" Pack="true" PackagePath="/"/> -->
   </ItemGroup>  
 
   <ItemGroup>
-    <None Include="../Zoro/bin/Debug/net5.0/**/*.*" Pack="true" PackagePath="tools/" />
+    <None Include="../Zoro/bin/Release/net5.0/**/*.*" Pack="true" PackagePath="tools/" />
   </ItemGroup>
 
 </Project>

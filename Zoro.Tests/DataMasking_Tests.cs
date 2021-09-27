@@ -177,6 +177,36 @@ namespace Zoro.Tests
             {
                 Assert.Equal(maskContents[i], contents[i]);
             }
-        }        
+        }    
+
+        [Fact]
+        public void T07_Mask_MaskType_Similar_Test()
+        {
+            // Arrange
+            string csvContent = "id;name\r\n1;Carol Danvers\r\n2;Bruce Banner\r\n3;Peter Parker\r\n";
+            string csvFilename = this.utility.CreateFileInTestInstanceDir(csvContent, "csv");
+            var config = new MaskConfig()
+            {
+                InputFile = csvFilename,
+                OutputFile = csvFilename.Replace(".csv", "_out.csv")
+            };
+            config.FieldMasks.Add(new FieldMask() { FieldName = "id", MaskType = MaskType.None });
+            config.FieldMasks.Add(new FieldMask() { FieldName = "name", MaskType = MaskType.Similar });
+
+            // Act
+            var masker = new DataMasking(config);
+            masker.Mask();
+
+            // Assert
+            Assert.True(File.Exists(config.OutputFile));
+            var contents = new List<string>(File.ReadLines(config.OutputFile));
+            Assert.Equal(4, contents.Count);
+            for(int i = 1; i < contents.Count; i++)
+            {
+                var items = contents[i].Split(';');
+                // id
+                Assert.Equal(i.ToString(), items[0]);
+            }
+        }                    
     }
 }

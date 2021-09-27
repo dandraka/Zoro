@@ -6,7 +6,7 @@ using Zoro.Processor;
 
 namespace Zoro.Tests
 {
-    public class MaskConfig_Tests: IDisposable
+    public class MaskConfig_Tests : IDisposable
     {
         private static string testConfigFile;
 
