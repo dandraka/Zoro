@@ -75,8 +75,8 @@ namespace Zoro.Tests
 
             // test reading
             var config2 = MaskConfig.ReadConfig(testConfigFile);
-            Console.WriteLine($"Config: InputFile = {config2.InputFile}");
-            Console.WriteLine($"Config: OutputFile = {config2.OutputFile}");
+            //Console.WriteLine($"Config: InputFile = {config2.InputFile}");
+            //Console.WriteLine($"Config: OutputFile = {config2.OutputFile}");
             Assert.Equal(44, config2.FieldMasks.Count);
         }
 

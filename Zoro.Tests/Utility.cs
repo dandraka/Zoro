@@ -15,6 +15,8 @@ namespace Zoro.Tests
             TestInstanceDir = Path.Combine(Path.GetTempPath(), "Zorotests_" + (Guid.NewGuid().ToString()));
             Directory.CreateDirectory(TestInstanceDir);
             TestInstanceConfigfile = Path.Combine(TestInstanceDir, "testconfig.xml");
+
+            Console.WriteLine($"TestInstanceDir = {TestInstanceDir}");
         }
 
         public void PrepareTestInstanceDir()
@@ -22,7 +24,7 @@ namespace Zoro.Tests
             foreach (string filename in Directory.EnumerateFiles(TestDataDir))
             {
                 File.Copy(filename, Path.Combine(TestInstanceDir, Path.GetFileName(filename)), true);
-                Console.WriteLine($"Copied {filename} to {TestInstanceDir}");
+                //Console.WriteLine($"Copied {filename} to {TestInstanceDir}");
             }
             
             if (!File.Exists(TestInstanceConfigfile))

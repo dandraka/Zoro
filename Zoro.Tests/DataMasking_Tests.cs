@@ -36,8 +36,8 @@ namespace Zoro.Tests
         public void T02_Mask_CSV_Test()
         {
             var config = MaskConfig.ReadConfig(utility.TestInstanceConfigfile);
-            Console.WriteLine($"Config: InputFile = {config.InputFile}");
-            Console.WriteLine($"Config: OutputFile = {config.OutputFile}");
+            //Console.WriteLine($"Config: InputFile = {config.InputFile}");
+            //Console.WriteLine($"Config: OutputFile = {config.OutputFile}");
             var masker = new DataMasking(config);
             masker.Mask();
 
@@ -146,5 +146,37 @@ namespace Zoro.Tests
                 Assert.Equal(maskContents[i], contents[i]);
             }
         }
+
+        [Fact]
+        public void T06_Mask_MaskType_List_Test()
+        {
+            // Arrange
+            string csvContent = "id;name\r\n1;Carol Danvers\r\n2;Bruce Banner\r\n3;Peter Parker\r\n";
+            string csvMaskedContent = "id;name\r\n1;Charles Xavier\r\n2;Jean Grey\r\n3;Charles Xavier\r\n";
+            string csvFilename = this.utility.CreateFileInTestInstanceDir(csvContent, "csv");
+            var config = new MaskConfig()
+            {
+                InputFile = csvFilename,
+                OutputFile = csvFilename.Replace(".csv", "_out.csv")
+            };
+            config.FieldMasks.Add(new FieldMask() { FieldName = "id", MaskType = MaskType.None });
+            config.FieldMasks.Add(new FieldMask() { FieldName = "name", MaskType = MaskType.List });
+            config.FieldMasks[1].ListOfPossibleReplacements.Add(new Replacement() { Selector = "id=2", ReplacementList = "Jean Grey" });
+            config.FieldMasks[1].ListOfPossibleReplacements.Add(new Replacement() { Selector = "", ReplacementList = "Charles Xavier" });
+
+            // Act
+            var masker = new DataMasking(config);
+            masker.Mask();
+
+            // Assert
+            Assert.True(File.Exists(config.OutputFile));
+            var maskContents = new List<string>(csvMaskedContent.Split("\r\n"));
+            var contents = new List<string>(File.ReadLines(config.OutputFile));
+            Assert.Equal(4, contents.Count);
+            for(int i = 0; i < contents.Count; i++)
+            {
+                Assert.Equal(maskContents[i], contents[i]);
+            }
+        }        
     }
 }
