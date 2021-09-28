@@ -51,7 +51,7 @@ jobs:
       with:
         script: |
           import glob
-          for filename in glob.iglob('**/**', recursive=True):
+          for filename in glob.iglob('/home/runner/work/**/**', recursive=True):
                print(filename)
 
     - name: Publish on version change
