@@ -54,14 +54,21 @@ jobs:
       uses: Rishabh510/Path-lister-action@master
       with:
         path: "/home/runner/work/Zoro/"
-        type: ".*"
+        type: ".csproj"
 
     - name: Output results
       run: |
         echo "Found ${{ steps.pl.outputs.path_count }} file(s) with this extension:"
         for i in ${{ steps.pl.outputs.paths }}; do
         echo $i
-        done        
+        done     
+        
+    - name: List Files
+      run: |
+        directory = r'/home/runner/work/Zoro/'
+        for entry in os.scandir(directory):
+          print(entry.path)
+          done
 
     - name: Publish on version change
       id: publish_nuget
