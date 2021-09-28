@@ -30,12 +30,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: 5.0.x
-        
-    - name: Set up Python 3.7
-      uses: actions/setup-python@v1
-      with:
-        python-version: "3.7"        
+        dotnet-version: 5.0.x            
 
     - name: Restore dependencies
       run: dotnet restore
@@ -48,28 +43,16 @@ jobs:
       env:
         TESTSECRET: ${{secrets.TESTSECRET}}        
         SQLCONNSTRING: ${{secrets.SQLCONNSTRING}} 
-        
-    - name: Fetch action
-      id: pl
-      uses: Rishabh510/Path-lister-action@master
-      with:
-        path: "/home/runner/work/Zoro/"
-        type: ".csproj"
 
-    - name: Output results
-      run: |
-        echo "Found ${{ steps.pl.outputs.path_count }} file(s) with this extension:"
-        for i in ${{ steps.pl.outputs.paths }}; do
-        echo $i
-        done     
-        
-    - name: List Files
-      run: |
-        import os, sys
-        path = "/home/runner/work/Zoro/"
-        dirs = os.listdir( path )
-        for file in dirs:
-          print file
+    - uses: actions/setup-python@v2
+
+    - uses: jannekem/run-python-script-action@v1
+      with:
+        script: |
+          import os
+          print("Directory contents:")
+          for f in os.listdir():
+              print(f) 
 
     - name: Publish on version change
       id: publish_nuget
