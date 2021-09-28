@@ -51,8 +51,9 @@ jobs:
       with:
         script: |
           import glob
-          for filename in glob.iglob('/home/runner/work/**/**', recursive=True):
-               print(filename)
+          for filename in glob.iglob('/home/runner/work/Zoro/**/**', recursive=True):
+              if (not("obj" in filename) and not("runtime" in filename)):
+                  print(filename)
 
     - name: Publish on version change
       id: publish_nuget
