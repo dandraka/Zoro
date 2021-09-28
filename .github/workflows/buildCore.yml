@@ -8,7 +8,7 @@ on:
     - "LICENSE"
     - ".gitattributes"
     - ".gitignore"
-    - ".github/**"
+    #- ".github/**"
     - ".vscode/**"
   pull_request:
     branches: [ master ]
@@ -17,7 +17,7 @@ on:
     - "LICENSE"
     - ".gitattributes"
     - ".gitignore"
-    - ".github/**"
+    #- ".github/**"
     - ".vscode/**"    
 
 jobs:
@@ -65,10 +65,11 @@ jobs:
         
     - name: List Files
       run: |
-        directory = r'/home/runner/work/Zoro/'
-        for entry in os.scandir(directory):
-          print(entry.path)
-          done
+        import os, sys
+        path = "/home/runner/work/Zoro/"
+        dirs = os.listdir( path )
+        for file in dirs:
+          print file
 
     - name: Publish on version change
       id: publish_nuget
