@@ -43,7 +43,7 @@ namespace Zoro.Tests
             return fileName;
         }
 
-        // clean up
+        // perform clean up
         public void Dispose()
         {
             try
