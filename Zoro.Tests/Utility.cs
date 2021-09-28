@@ -55,7 +55,7 @@ namespace Zoro.Tests
             }
             catch
             {
-                // ugh, never mind, nbd
+                // ugh, never mind
             }
         }
 
