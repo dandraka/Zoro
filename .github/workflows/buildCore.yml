@@ -31,6 +31,11 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 5.0.x
+        
+    - name: Set up Python 3.7
+      uses: actions/setup-python@v1
+      with:
+        python-version: "3.7"        
 
     - name: Restore dependencies
       run: dotnet restore
@@ -43,6 +48,20 @@ jobs:
       env:
         TESTSECRET: ${{secrets.TESTSECRET}}        
         SQLCONNSTRING: ${{secrets.SQLCONNSTRING}} 
+        
+    - name: Fetch action
+      id: pl
+      uses: Rishabh510/Path-lister-action@master
+      with:
+        path: "/home/runner/work/Zoro/"
+        type: ".*"
+
+    - name: Output results
+      run: |
+        echo "Found ${{ steps.pl.outputs.path_count }} file(s) with this extension:"
+        for i in ${{ steps.pl.outputs.paths }}; do
+        echo $i
+        done        
 
     - name: Publish on version change
       id: publish_nuget
