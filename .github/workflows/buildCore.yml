@@ -46,13 +46,13 @@ jobs:
 
     - uses: actions/setup-python@v2
 
-    - uses: jannekem/run-python-script-action@v1
+    - name: List all files
+      uses: jannekem/run-python-script-action@v1
       with:
         script: |
-          import os
-          print("Directory contents:")
-          for f in os.listdir():
-              print(f) 
+          import glob
+          for filename in glob.iglob('**/**', recursive=True):
+               print(filename)
 
     - name: Publish on version change
       id: publish_nuget
