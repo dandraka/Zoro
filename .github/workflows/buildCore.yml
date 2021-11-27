@@ -54,4 +54,4 @@ jobs:
       run: nuget pack Zoro.Processor/Dandraka.Zoro.nuspec
       
     - name: Publish
-      run: nuget push Dandraka.Zoro.*.nupkg
+      run: nuget push Dandraka.Zoro.*.nupkg -Source https://www.nuget.org/api/v3/package
