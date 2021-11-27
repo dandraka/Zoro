@@ -47,8 +47,11 @@ jobs:
         TESTSECRET: ${{secrets.TESTSECRET}}        
         SQLCONNSTRING: ${{secrets.SQLCONNSTRING}} 
 
-    - name: Generate executable
+    - name: Generate executable (win)
       run: dotnet publish Zoro/Zoro.csproj --configuration Release --runtime win-x64 /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true --self-contained true
+
+    - name: Generate executable (linux)
+      run: dotnet publish Zoro/Zoro.csproj --configuration Release --runtime linux-x64 /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true --self-contained true      
         
     - name: Pack
       run: nuget pack Zoro.Processor/Dandraka.Zoro.nuspec
