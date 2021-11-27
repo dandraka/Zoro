@@ -48,7 +48,7 @@ jobs:
         SQLCONNSTRING: ${{secrets.SQLCONNSTRING}} 
         
     - name: Pack
-      run: nuget pack ../Zoro.Processor/Dandraka.Zoro.nuspec
+      run: nuget pack Zoro.Processor/Dandraka.Zoro.nuspec
       
     - name: Publish
       run: nuget publish *.nupkg
