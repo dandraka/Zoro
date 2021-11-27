@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
+  <metadata>
+    <id>Dandraka.Zoro</id>
+    <version>1.0.2</version>
+    <authors>Jim (Dimitrios) Andrakakis</authors>
+    <requireLicenseAcceptance>true</requireLicenseAcceptance>
+    <iconUrl>https://raw.githubusercontent.com/dandraka/Zoro/master/icon.png</iconUrl>
+    <licenseUrl>https://raw.githubusercontent.com/dandraka/Zoro/master/LICENSE</licenseUrl>
+    <projectUrl>https://github.com/dandraka/Zoro</projectUrl>
+    <description>Zoro is a data masking and anonymization library for .Net. 
+      The library can be used both in a .Net program and also as a command line utility.
+      You can copy the tools directory to use the tool as a standalone utility.</description>
+    <copyright>Copyright (c) 2017 Jim (Dimitrios) Andrakakis</copyright>
+    <tags>data anonymization masking gdpr</tags>
+    <dependencies>
+      <group targetFramework=".NETStandard2.0">
+        <!--
+        <dependency id="GenericParsing" version="1.2.2" exclude="Build,Analyzers" />
+        <dependency id="System.Data.SqlClient" version="4.8.3" exclude="Build,Analyzers" />
+        -->
+        <dependency id="GenericParsing" version="1.2.2" />
+        <dependency id="System.Data.SqlClient" version="4.8.3" />        
+      </group>
+    </dependencies>
+  </metadata>
+</package>
