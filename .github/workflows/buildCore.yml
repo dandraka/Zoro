@@ -46,6 +46,9 @@ jobs:
       env:
         TESTSECRET: ${{secrets.TESTSECRET}}        
         SQLCONNSTRING: ${{secrets.SQLCONNSTRING}} 
+
+    - name: Publish
+      run: dotnet publish Zoro/Zoro.csproj -configuration Release --runtime win-x64 /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true --self-contained true
         
     - name: Pack
       run: nuget pack Zoro.Processor/Dandraka.Zoro.nuspec
