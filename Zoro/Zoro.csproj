@@ -8,6 +8,8 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net5.0</TargetFramework>
     <ApplicationIcon>icon.ico</ApplicationIcon>
+    <Authors>Jim (Dimitrios) Andrakakis</Authors>
+    <Version>1.0.7</Version>    
   </PropertyGroup>
 
 </Project>

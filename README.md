@@ -30,7 +30,7 @@ var config = new Zoro.Processor.MaskConfig()
     SqlSelect = "SELECT * FROM testdata",
     OutputFile = Path.Combine(utility.TestInstanceDir, "maskeddata_db_02.csv")
 };
-config.FieldMasks.Add(new FieldMask() { FieldName = "name", MaskType = MaskType.Similar );
+config.FieldMasks.Add(new FieldMask() { FieldName = "name", MaskType = MaskType.Similar });
 config.FieldMasks.Add(new FieldMask() { FieldName = "iban", MaskType = MaskType.Asterisk });
 config.FieldMasks.Add(new FieldMask() { FieldName = "country", MaskType = MaskType.None });
 config.FieldMasks.Add(new FieldMask() { FieldName = "address", MaskType = MaskType.List });
