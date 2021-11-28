@@ -1,24 +1,14 @@
-name: Build and test .Net Core app
+name: Build test and publish
 
 on:
   push:
     branches: [ master ]
-    paths-ignore:
-    - "README.md"
-    - "LICENSE"
-    - ".gitattributes"
-    - ".gitignore"
-    - ".github/**"
-    - ".vscode/**"
+    paths:
+    - "**.nuspec"
   pull_request:
     branches: [ master ]
-    paths-ignore:
-    - "README.md"
-    - "LICENSE"
-    - ".gitattributes"
-    - ".gitignore"
-    - ".github/**"
-    - ".vscode/**"    
+    paths:
+    - "**.nuspec"
 
 jobs:
   build:
