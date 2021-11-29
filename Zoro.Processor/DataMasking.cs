@@ -45,7 +45,7 @@ namespace Dandraka.Zoro.Processor
 
         private DataTable ReadDataFromDb()
         {
-            if (string.IsNullOrEmpty(config.ConnectionString))
+            if (config.Connection == null && string.IsNullOrEmpty(config.ConnectionString))
             {
                 throw new InvalidDataException("Connection string must be filled when using the DB option");
             }
@@ -59,10 +59,31 @@ namespace Dandraka.Zoro.Processor
 
             Action doDbSelect = new Action(() =>
             {
-                using (var dbConn = new SqlConnection(config.ConnectionString))
+                if (config.Connection == null)
                 {
-                    dbConn.Open();
-                    var dbCmd = dbConn.CreateCommand();
+                    using (var dbConn = new SqlConnection(config.ConnectionString))
+                    {
+                        dbConn.Open();
+                        var dbCmd = dbConn.CreateCommand();
+                        dbCmd.CommandType = CommandType.Text;
+                        dbCmd.CommandText = config.SqlSelect;
+
+                        using (var dbReader = dbCmd.ExecuteReader(CommandBehavior.CloseConnection))
+                        {
+                            dt.Load(dbReader);
+                            dbReader.Close();
+                        }
+
+                        dbConn.Close();
+                    }
+                }
+                else
+                {
+                    if (config.Connection.State != ConnectionState.Open)
+                    {
+                        config.Connection.Open();
+                    }
+                    var dbCmd = config.Connection.CreateCommand();
                     dbCmd.CommandType = CommandType.Text;
                     dbCmd.CommandText = config.SqlSelect;
 
@@ -71,8 +92,6 @@ namespace Dandraka.Zoro.Processor
                         dt.Load(dbReader);
                         dbReader.Close();
                     }
-
-                    dbConn.Close();
                 }
 
                 foreach (DataColumn dataColumn in dt.Columns)
@@ -135,9 +154,9 @@ namespace Dandraka.Zoro.Processor
                             case MaskType.Similar:
                                 s = GetSimilarString(matchData);
                                 break;
-                                case MaskType.List:
-                                    s = GetStringFromList(row, fieldMask.ListOfPossibleReplacements);
-                                    break;
+                            case MaskType.List:
+                                s = GetStringFromList(row, fieldMask.ListOfPossibleReplacements);
+                                break;
                             default:
                                 s = matchData;
                                 break;
@@ -214,7 +233,7 @@ namespace Dandraka.Zoro.Processor
                 }
 
                 string selectorField = r.Selector.Split('=')[0].Trim();
-                string selectorValue = r.Selector.Split('=')[1].Trim().ToLower();                
+                string selectorValue = r.Selector.Split('=')[1].Trim().ToLower();
 
                 if (!row.Table.Columns.Contains(selectorField))
                 {
@@ -231,7 +250,7 @@ namespace Dandraka.Zoro.Processor
             if (replacementStr == null)
             {
                 // warning, nothing found
-                throw new DataException($"No match could be located for data row\r\n{string.Join(",",row.ItemArray)}");
+                throw new DataException($"No match could be located for data row\r\n{string.Join(",", row.ItemArray)}");
             }
             var list = replacementStr.Split(',').Select(x => x.Trim()).ToList();
             string str = list[rnd.Next(0, list.Count - 1)];
@@ -299,7 +318,7 @@ namespace Dandraka.Zoro.Processor
                     }
                     tbl.Rows.Add(row);
                 }
-            }            
+            }
 
             return tbl;
         }

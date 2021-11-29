@@ -17,6 +17,8 @@ namespace Dandraka.Zoro.Tests
 
         public DbConnection TestDbConnection;
 
+        public string TestTableName;
+
         public Utility()
         {
             TestInstanceDir = Path.Combine(Path.GetTempPath(), "Zorotests_" + (Guid.NewGuid().ToString()));
@@ -26,20 +28,21 @@ namespace Dandraka.Zoro.Tests
             Console.WriteLine($"TestInstanceDir = {TestInstanceDir}");
         }
 
-        public void PrepareLocalDb()
+        public void PrepareLocalDb(string tableName = "testdata")
         {
             this.TestDbConnection = new SQLiteConnection("Data Source=:memory:");
             this.TestDbConnection.Open();
+            this.TestTableName = tableName;
 
             var cmdCreateTable = this.TestDbConnection.CreateCommand();
             cmdCreateTable.CommandType = System.Data.CommandType.Text;
-            cmdCreateTable.CommandText = "CREATE TABLE csvdata (ID int, Name nvarchar(100), BankAccount varchar(50))";
+            cmdCreateTable.CommandText = $"CREATE TABLE {tableName} (ID int, Name nvarchar(100), BankAccount varchar(50), Address nvarchar(100), Country char(2))";
             cmdCreateTable.ExecuteNonQuery();
 
             var csvContents = new List<string>(File.ReadLines(Path.Combine(TestDataDir, "data1.csv")));
             var csvFields = csvContents[0].Split(';');
 
-            string insertSql = $"INSERT INTO csvdata (ID, Name, BankAccount) VALUES ($ID, $Name, $BankAccount)";
+            string insertSql = $"INSERT INTO {tableName} (ID, Name, BankAccount,Address,Country) VALUES ($ID, $Name, $BankAccount,$Address,$Country)";
             var cmdInsert = this.TestDbConnection.CreateCommand();
             cmdInsert.CommandType = System.Data.CommandType.Text;
             cmdInsert.CommandText = insertSql;
@@ -61,9 +64,9 @@ namespace Dandraka.Zoro.Tests
 
             var cmdSelect = this.TestDbConnection.CreateCommand();
             cmdSelect.CommandType = System.Data.CommandType.Text;
-            cmdSelect.CommandText = "select * from csvdata";
+            cmdSelect.CommandText = $"select * from {tableName}";
             var rd = cmdSelect.ExecuteReader();
-            var tbl = new DataTable();
+            var tbl = new DataTable(tableName);
             tbl.Load(rd);
             string tblContents = DumpDataTable(tbl);
             Console.WriteLine("============= Initial DB data =============");

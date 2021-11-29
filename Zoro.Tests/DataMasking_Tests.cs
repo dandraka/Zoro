@@ -16,6 +16,7 @@ namespace Dandraka.Zoro.Tests
         public DataMasking_Tests()
         {
             utility.PrepareTestInstanceDir();
+            utility.PrepareLocalDb();
         }
 
         public void Dispose()
@@ -23,17 +24,8 @@ namespace Dandraka.Zoro.Tests
             this.utility.Dispose();
         }
 
-        //[SkippableFact]
-        public void T01_TestSecret()
-        {
-            // test github secrets
-            var secret = Environment.GetEnvironmentVariable("TESTSECRET");
-            Skip.If(string.IsNullOrWhiteSpace(secret), "No secret info found, is the environment variable 'TESTSECRET' set?");
-            Assert.Equal("LALALA", secret);
-        }
-
-        //[Fact]
-        public void T02_Mask_CSV_Test()
+        [Fact]
+        public void T01_Mask_CSV_Test()
         {
             var config = MaskConfig.ReadConfig(utility.TestInstanceConfigfile);
             //Console.WriteLine($"Config: InputFile = {config.InputFile}");
@@ -46,25 +38,20 @@ namespace Dandraka.Zoro.Tests
             Assert.Equal(5, contents.Count);
         }
 
-        //[SkippableFact]
-        public void T03_Mask_DB_Test()
+        [SkippableFact]
+        public void T02_Mask_DB_Test()
         {
-            var connstr = Environment.GetEnvironmentVariable("SQLCONNSTRING");
-
-            // skip if no db config found
-            Skip.If(string.IsNullOrWhiteSpace(connstr), "No database connection info found, is the environment variable 'SQLCONNSTRING' set?");
-
             var config = new MaskConfig()
             {
-                ConnectionString = connstr,
+                Connection = utility.TestDbConnection,
                 DataSource = DataSource.Database,
                 SqlSelect = "SELECT * FROM testdata",
                 OutputFile = Path.Combine(utility.TestInstanceDir, "maskeddata_db_02.csv")
             };
-            config.FieldMasks.Add(new FieldMask() { FieldName = "name", MaskType = MaskType.Similar });
-            config.FieldMasks.Add(new FieldMask() { FieldName = "iban", MaskType = MaskType.Asterisk });
-            config.FieldMasks.Add(new FieldMask() { FieldName = "country", MaskType = MaskType.None });
-            config.FieldMasks.Add(new FieldMask() { FieldName = "address", MaskType = MaskType.List });
+            config.FieldMasks.Add(new FieldMask() { FieldName = "Name", MaskType = MaskType.Similar });
+            config.FieldMasks.Add(new FieldMask() { FieldName = "BankAccount", MaskType = MaskType.Asterisk });
+            config.FieldMasks.Add(new FieldMask() { FieldName = "Country", MaskType = MaskType.None });
+            config.FieldMasks.Add(new FieldMask() { FieldName = "Address", MaskType = MaskType.List });
             config.FieldMasks[3].ListOfPossibleReplacements.Add(new Replacement() 
                 { Selector = "country=CH", ReplacementList="Bahnhofstrasse 41,Hauptstrasse 8,Berggasse 4" });
             config.FieldMasks[3].ListOfPossibleReplacements.Add(new Replacement() 
@@ -88,8 +75,8 @@ namespace Dandraka.Zoro.Tests
             Assert.Equal(4, contents.Count);            
         }
 
-        //[Fact]
-        public void T04_Mask_MaskType_None_Test()
+        [Fact]
+        public void T03_Mask_MaskType_None_Test()
         {
             // Arrange
             string csvContent = "id;name\r\n1;Carol Danvers\r\n2;Bruce Banner\r\n3;Peter Parker\r\n";
@@ -117,7 +104,7 @@ namespace Dandraka.Zoro.Tests
             }
         }
 
-        //[Fact]
+        [Fact]
         public void T05_Mask_MaskType_Asterisk_Test()
         {
             // Arrange
@@ -147,7 +134,7 @@ namespace Dandraka.Zoro.Tests
             }
         }
 
-        //[Fact]
+        [Fact]
         public void T06_Mask_MaskType_List_Test()
         {
             // Arrange
@@ -179,7 +166,7 @@ namespace Dandraka.Zoro.Tests
             }
         }    
 
-        //[Fact]
+        [Fact]
         public void T07_Mask_MaskType_Similar_Test()
         {
             // Arrange

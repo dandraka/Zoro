@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.Common;
 
 namespace Dandraka.Zoro.Processor
 {
@@ -39,6 +40,7 @@ namespace Dandraka.Zoro.Processor
             this.DataSource = DataSource.CsvFile;
             this.DataDestination = DataDestination.CsvFile;
             this.ConnectionString = string.Empty;
+            this.Connection = null;
             this.SqlSelect = string.Empty;
             this.Delimiter = ";";
             this.FieldMasks = new List<FieldMask>();
@@ -93,6 +95,13 @@ namespace Dandraka.Zoro.Processor
         /// or when <c>DataDestination</c> is Database.
         /// </summary>
         public string ConnectionString { get; set; }
+
+        /// <summary>
+        /// The DB connection, which can be provided directly instead of a connection string.
+        /// Used when either <c>DataSource</c> is Database
+        /// or when <c>DataDestination</c> is Database.
+        /// </summary>
+        public DbConnection Connection { get; set; }        
 
         /// <summary>
         /// The DB query statement, used when <c>DataSource</c> is Database.
