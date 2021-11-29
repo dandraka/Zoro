@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Dandraka.Zoro.Processor
 {
-    public enum DataSource
+    public enum DataDestination
     {
         /// <summary>
         /// The data comes from a csv file.

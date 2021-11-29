@@ -7,10 +7,8 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using GenericParsing;
-// TODO workaround for dotnet core
-//using XperiCode.Impersonator
 
-namespace Zoro.Processor
+namespace Dandraka.Zoro.Processor
 {
     public class DataMasking
     {

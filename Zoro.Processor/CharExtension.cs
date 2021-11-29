@@ -1,6 +1,6 @@
 using System;
 
-namespace Zoro.Processor
+namespace Dandraka.Zoro.Processor
 {
     public static class CharExtension
     {

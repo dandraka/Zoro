@@ -1,5 +1,5 @@
 ﻿
-namespace Zoro.Processor
+namespace Dandraka.Zoro.Processor
 {
     /// <summary>
     /// Sets the type of masking done to a field.

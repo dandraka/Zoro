@@ -1,14 +1,19 @@
 using System;
+using System.Data.Common;
 using System.IO;
 using System.Reflection;
 
-namespace Zoro.Tests
+namespace Dandraka.Zoro.Tests
 {
     internal class Utility: IDisposable
     {
         public string TestInstanceDir;
         public string TestInstanceConfigfile;
         public string TestDataDir => Path.Combine(Utility.AssemblyDirectory, "data");
+
+        public DbConnection TestDbConnection;
+
+        private string compactDbFile;        
 
         public Utility()
         {
@@ -17,6 +22,39 @@ namespace Zoro.Tests
             TestInstanceConfigfile = Path.Combine(TestInstanceDir, "testconfig.xml");
 
             Console.WriteLine($"TestInstanceDir = {TestInstanceDir}");
+        }
+
+        public void PrepareLocalDb()
+        {
+            this.compactDbFile = Path.GetTempFileName();
+            string connectionString = $"Data Source={compactDbFile};Persist Security Info=False";
+
+            Console.WriteLine($"Created Db file {this.compactDbFile}");
+
+            this.TestDbConnection = DbProviderFactories.GetFactory("System.Data.SqlServerCe.4.0").CreateConnection();
+            this.TestDbConnection.ConnectionString = connectionString;
+            this.TestDbConnection.Open();
+
+            var cmdCreateTable = this.TestDbConnection.CreateCommand();
+            cmdCreateTable.CommandType = System.Data.CommandType.Text;
+            cmdCreateTable.CommandText = "CREATE TABLE csvdata (ID int, Name nvarchar(100), BankAccount varchar(50))";
+            cmdCreateTable.ExecuteNonQuery();
+            
+            var csvContents = File.ReadLines(Path.Combine(TestDataDir, "data1.csv"));
+            foreach(string csvLine in csvContents)
+            {
+                if (csvLine.StartsWith("ID"))
+                {
+                    continue;
+                }
+                var csvFields = csvLine.Split(';');
+                string insertSql = $"INSERT INTO csvdata (ID, Name, BankAccount) VALUES ({csvFields[0]},'{csvFields[1]}','{csvFields[2]}')";
+
+                var cmdInsert = this.TestDbConnection.CreateCommand();
+                cmdInsert.CommandType = System.Data.CommandType.Text;
+                cmdInsert.CommandText = insertSql;
+                cmdInsert.ExecuteNonQuery();                
+            }
         }
 
         public void PrepareTestInstanceDir()
@@ -51,6 +89,11 @@ namespace Zoro.Tests
                 if (Directory.Exists(this.TestInstanceDir))
                 {
                     Directory.Delete(this.TestInstanceDir, true);
+                }
+                if (this.TestDbConnection != null 
+                    && this.TestDbConnection.State == System.Data.ConnectionState.Open)
+                {
+                    this.TestDbConnection.Close();
                 }
             }
             catch

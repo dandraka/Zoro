@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Zoro.Processor
+namespace Dandraka.Zoro.Processor
 {
     [Serializable]
     public class MaskConfig
@@ -37,6 +37,7 @@ namespace Zoro.Processor
         public MaskConfig()
         {
             this.DataSource = DataSource.CsvFile;
+            this.DataDestination = DataDestination.CsvFile;
             this.ConnectionString = string.Empty;
             this.SqlSelect = string.Empty;
             this.Delimiter = ";";
@@ -50,9 +51,16 @@ namespace Zoro.Processor
         /// </summary>
         public DataSource DataSource { get; set; }
 
+        /// <summary>
+        /// Determines where the masked data will be written. 
+        /// If the destination is a file, the <c>OutputFile</c> field needs to be filled.
+        /// If the destination is a database, the <c>ConnectionString</c> and <c>SqlCommand</c> fields need to be filled.
+        /// </summary>
+        public DataDestination DataDestination { get; set; }        
+
         private string _inputFile;
         /// <summary>
-        /// The input file.
+        /// The input file, used when <c>DataSource</c> is File.
         /// </summary>
         public string InputFile 
         {
@@ -67,7 +75,7 @@ namespace Zoro.Processor
 
         private string _outputFile;
         /// <summary>
-        /// The output file.
+        /// The output file, used when <c>DataDestination</c> is File.
         /// </summary>
         public string OutputFile 
         {
@@ -81,14 +89,21 @@ namespace Zoro.Processor
         }
 
         /// <summary>
-        /// The DB connection string.
+        /// The DB connection string, used when either <c>DataSource</c> is Database
+        /// or when <c>DataDestination</c> is Database.
         /// </summary>
         public string ConnectionString { get; set; }
 
         /// <summary>
-        /// The DB query statement.
+        /// The DB query statement, used when <c>DataSource</c> is Database.
         /// </summary>
         public string SqlSelect { get; set; }
+
+        /// <summary>
+        /// The DB statement executed to write the data to the DB, used when <c>DataSource</c> is Database.
+        /// It can be any sql for example insert, update or merge.
+        /// </summary>
+        public string SqlCommand { get; set; }        
 
         /// <summary>
         /// The CSV file delimiter. By default, a semicolon.

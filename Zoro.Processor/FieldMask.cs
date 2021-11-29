@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Xml.Schema;
 using System.Xml.Serialization;
 
-namespace Zoro.Processor
+namespace Dandraka.Zoro.Processor
 {
     /// <summary>
     /// Possible replacement, in case of <c>MaskType.List</c>.
