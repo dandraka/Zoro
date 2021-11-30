@@ -42,12 +42,12 @@ namespace Dandraka.Zoro.Tests
         public void T02_Mask_DB_Test()
         {
             var config = new MaskConfig()
-            {
-                Connection = utility.TestDbConnection,
+            {                
                 DataSource = DataSource.Database,
                 SqlSelect = "SELECT * FROM testdata",
                 OutputFile = Path.Combine(utility.TestInstanceDir, "maskeddata_db_02.csv")
             };
+            config.SetConnection(utility.TestDbConnection);
             config.FieldMasks.Add(new FieldMask() { FieldName = "Name", MaskType = MaskType.Similar });
             config.FieldMasks.Add(new FieldMask() { FieldName = "BankAccount", MaskType = MaskType.Asterisk });
             config.FieldMasks.Add(new FieldMask() { FieldName = "Country", MaskType = MaskType.None });
@@ -71,8 +71,10 @@ namespace Dandraka.Zoro.Tests
             }            
 
             Assert.True(File.Exists(config.OutputFile));
-            var contents = new List<string>(File.ReadLines(config.OutputFile));            
-            Assert.Equal(4, contents.Count);            
+            var contents = new List<string>(File.ReadLines(config.OutputFile));   
+            Console.WriteLine($"Contents of {config.OutputFile}");
+            contents.ForEach(x => Console.WriteLine(x));
+            Assert.Equal(5, contents.Count);            
         }
 
         [Fact]

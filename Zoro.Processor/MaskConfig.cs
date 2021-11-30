@@ -40,7 +40,6 @@ namespace Dandraka.Zoro.Processor
             this.DataSource = DataSource.CsvFile;
             this.DataDestination = DataDestination.CsvFile;
             this.ConnectionString = string.Empty;
-            this.Connection = null;
             this.SqlSelect = string.Empty;
             this.Delimiter = ";";
             this.FieldMasks = new List<FieldMask>();
@@ -51,24 +50,24 @@ namespace Dandraka.Zoro.Processor
         /// If the source is a file, the <c>InputFile</c> field needs to be filled.
         /// If the source is a DB query, the <c>ConnectionString</c> and <c>SqlSelect</c> fields need to be filled.
         /// </summary>
-        public DataSource DataSource { get; set; }
+        public DataSource DataSource;
 
         /// <summary>
         /// Determines where the masked data will be written. 
         /// If the destination is a file, the <c>OutputFile</c> field needs to be filled.
         /// If the destination is a database, the <c>ConnectionString</c> and <c>SqlCommand</c> fields need to be filled.
         /// </summary>
-        public DataDestination DataDestination { get; set; }        
+        public DataDestination DataDestination;
 
         private string _inputFile;
         /// <summary>
         /// The input file, used when <c>DataSource</c> is File.
         /// </summary>
-        public string InputFile 
+        public string InputFile
         {
             get => _inputFile;
-            set 
-            { 
+            set
+            {
                 _inputFile = value
                     .Replace('\\', System.IO.Path.DirectorySeparatorChar)
                     .Replace('/', System.IO.Path.DirectorySeparatorChar);
@@ -79,11 +78,11 @@ namespace Dandraka.Zoro.Processor
         /// <summary>
         /// The output file, used when <c>DataDestination</c> is File.
         /// </summary>
-        public string OutputFile 
+        public string OutputFile
         {
             get => _outputFile;
-            set 
-            { 
+            set
+            {
                 _outputFile = value
                     .Replace('\\', System.IO.Path.DirectorySeparatorChar)
                     .Replace('/', System.IO.Path.DirectorySeparatorChar);
@@ -94,30 +93,39 @@ namespace Dandraka.Zoro.Processor
         /// The DB connection string, used when either <c>DataSource</c> is Database
         /// or when <c>DataDestination</c> is Database.
         /// </summary>
-        public string ConnectionString { get; set; }
+        public string ConnectionString;
+
+        private DbConnection _connection;
 
         /// <summary>
         /// The DB connection, which can be provided directly instead of a connection string.
         /// Used when either <c>DataSource</c> is Database
         /// or when <c>DataDestination</c> is Database.
         /// </summary>
-        public DbConnection Connection { get; set; }        
+        public DbConnection GetConnection() => _connection;
+
+        /// <summary>
+        /// The DB connection, which can be provided directly instead of a connection string.
+        /// Used when either <c>DataSource</c> is Database
+        /// or when <c>DataDestination</c> is Database.
+        /// </summary>
+        public void SetConnection(DbConnection connection) => _connection = connection;
 
         /// <summary>
         /// The DB query statement, used when <c>DataSource</c> is Database.
         /// </summary>
-        public string SqlSelect { get; set; }
+        public string SqlSelect;
 
         /// <summary>
         /// The DB statement executed to write the data to the DB, used when <c>DataSource</c> is Database.
         /// It can be any sql for example insert, update or merge.
         /// </summary>
-        public string SqlCommand { get; set; }        
+        public string SqlCommand;
 
         /// <summary>
         /// The CSV file delimiter. By default, a semicolon.
         /// </summary>
-        public string Delimiter { get; set; }
+        public string Delimiter;
 
         /// <summary>
         /// The type of masking for every field. If a field is not found, <c>MaskType.None</c> is implied.

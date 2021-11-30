@@ -45,7 +45,7 @@ namespace Dandraka.Zoro.Processor
 
         private DataTable ReadDataFromDb()
         {
-            if (config.Connection == null && string.IsNullOrEmpty(config.ConnectionString))
+            if (config.GetConnection() == null && string.IsNullOrEmpty(config.ConnectionString))
             {
                 throw new InvalidDataException("Connection string must be filled when using the DB option");
             }
@@ -59,7 +59,7 @@ namespace Dandraka.Zoro.Processor
 
             Action doDbSelect = new Action(() =>
             {
-                if (config.Connection == null)
+                if (config.GetConnection() == null)
                 {
                     using (var dbConn = new SqlConnection(config.ConnectionString))
                     {
@@ -79,11 +79,11 @@ namespace Dandraka.Zoro.Processor
                 }
                 else
                 {
-                    if (config.Connection.State != ConnectionState.Open)
+                    if (config.GetConnection().State != ConnectionState.Open)
                     {
-                        config.Connection.Open();
+                        config.GetConnection().Open();
                     }
-                    var dbCmd = config.Connection.CreateCommand();
+                    var dbCmd = config.GetConnection().CreateCommand();
                     dbCmd.CommandType = CommandType.Text;
                     dbCmd.CommandText = config.SqlSelect;
 

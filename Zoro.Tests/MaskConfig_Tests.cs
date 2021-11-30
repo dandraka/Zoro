@@ -22,7 +22,7 @@ namespace Dandraka.Zoro.Tests
             this.utility.Dispose();
         }
 
-        //[Fact]
+        [Fact]
         public void T01_Save_Read_Config_Test()
         {
             var config = new MaskConfig()
@@ -80,7 +80,7 @@ namespace Dandraka.Zoro.Tests
             Assert.Equal(44, config2.FieldMasks.Count);
         }
 
-        //[Fact]
+        [Fact]
         public void T02_Read_Config_Test()
         {
             var config = MaskConfig.ReadConfig(utility.TestInstanceConfigfile);
