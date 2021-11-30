@@ -44,7 +44,7 @@ namespace Dandraka.Zoro.Tests
             var config = new MaskConfig()
             {                
                 DataSource = DataSource.Database,
-                SqlSelect = "SELECT * FROM testdata",
+                SqlSelect = $"SELECT * FROM {utility.TestTableName}",
                 OutputFile = Path.Combine(utility.TestInstanceDir, "maskeddata_db_02.csv")
             };
             config.SetConnection(utility.TestDbConnection);

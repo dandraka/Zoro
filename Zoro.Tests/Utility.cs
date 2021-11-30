@@ -17,7 +17,7 @@ namespace Dandraka.Zoro.Tests
 
         public DbConnection TestDbConnection;
 
-        public string TestTableName;
+        public string TestTableName { get; private set; }
 
         public Utility()
         {

@@ -27,7 +27,7 @@ namespace Dandraka.Zoro.Processor
 
             AnonymizeTable(dt);
 
-            SaveDataToFile(dt);
+            SaveData(dt);
         }
 
         private DataTable GetData()
@@ -38,6 +38,21 @@ namespace Dandraka.Zoro.Processor
                     return ReadDataFromFile();
                 case DataSource.Database:
                     return ReadDataFromDb();
+                default:
+                    throw new NotSupportedException();
+            }
+        }
+
+        private void SaveData(DataTable dt)
+        {
+            switch (config.DataDestination)
+            {
+                case DataDestination.CsvFile:
+                    SaveDataToFile(dt);
+                    break;
+                case DataDestination.Database:
+                    SaveDataToDb(dt);
+                    break;
                 default:
                     throw new NotSupportedException();
             }
@@ -353,6 +368,31 @@ namespace Dandraka.Zoro.Processor
 
             File.WriteAllText(config.OutputFile, sb.ToString(), Encoding.UTF8);
 
+        }
+
+        private void SaveDataToDb(DataTable dt)
+        {
+            if (string.IsNullOrWhiteSpace(config.SqlCommand))
+            {
+                throw new ArgumentException($"SqlCommand cannot be empty");
+            }
+            var cmd = config.GetConnection().CreateCommand();
+            cmd.CommandText = config.SqlCommand;
+            foreach(var m in config.FieldMasks)
+            {
+                var p = cmd.CreateParameter();
+                p.ParameterName = m.FieldName;
+                cmd.Parameters.Add(p);
+            }
+
+            foreach(DataRow r in dt.Rows)
+            {
+                foreach(var m in config.FieldMasks)
+                {
+                    cmd.Parameters[m.FieldName].Value = r[m.FieldName];
+                }                
+                cmd.ExecuteNonQuery();
+            }
         }
     }
 }
