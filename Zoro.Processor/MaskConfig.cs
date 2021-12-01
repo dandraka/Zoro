@@ -95,10 +95,24 @@ namespace Dandraka.Zoro.Processor
         /// </summary>
         public string ConnectionString;
 
+        /// <summary>
+        /// The type of DB connection to instantiate, used when either <c>DataSource</c> is Database
+        /// or when <c>DataDestination</c> is Database.
+        /// This needs to be available to the DbProviderFactories class, which reads from
+        /// the System.Data section of Machine.Config.
+        /// Examples:
+        /// System.Data.Odbc, System.Data.OleDb, System.Data.SQLite, 
+        /// System.Data.OracleClient, System.Data.SqlClient.
+        /// See <seealso cref="https://downloads.teradata.com/blog/netfx/2010/12/dbproviderfactories-demystified"/>
+        /// for more info.
+        /// </summary>
+        // TODO test for different db types
+        public string ConnectionType;
+
         private DbConnection _connection;
 
         /// <summary>
-        /// The DB connection, which can be provided directly instead of a connection string.
+        /// The DB connection, which can be provided directly instead of a connection string and type.
         /// Used when either <c>DataSource</c> is Database
         /// or when <c>DataDestination</c> is Database.
         /// </summary>

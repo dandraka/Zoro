@@ -1,7 +1,7 @@
 ﻿﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
+using System.Data.Common;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -60,37 +60,26 @@ namespace Dandraka.Zoro.Processor
 
         private DataTable ReadDataFromDb()
         {
-            if (config.GetConnection() == null && string.IsNullOrEmpty(config.ConnectionString))
+            if (config.GetConnection() == null && (string.IsNullOrEmpty(config.ConnectionString) || string.IsNullOrEmpty(config.ConnectionType)))
             {
-                throw new InvalidDataException("Connection string must be filled when using the DB option");
+                throw new InvalidDataException("If no DbConnection is provided, ConnectionString and ConnectionType cannot be empty when using the database option");
             }
-
             if (string.IsNullOrEmpty(config.SqlSelect))
             {
-                throw new InvalidDataException("SQL Select statement must be filled when using the DB option");
+                throw new InvalidDataException("SQL Select statement must be filled when using the database option");
             }
 
             DataTable dt = new DataTable("data");
 
             Action doDbSelect = new Action(() =>
             {
+                bool wasOpen = false;
                 if (config.GetConnection() == null)
                 {
-                    using (var dbConn = new SqlConnection(config.ConnectionString))
-                    {
-                        dbConn.Open();
-                        var dbCmd = dbConn.CreateCommand();
-                        dbCmd.CommandType = CommandType.Text;
-                        dbCmd.CommandText = config.SqlSelect;
-
-                        using (var dbReader = dbCmd.ExecuteReader(CommandBehavior.CloseConnection))
-                        {
-                            dt.Load(dbReader);
-                            dbReader.Close();
-                        }
-
-                        dbConn.Close();
-                    }
+                    DbProviderFactory factory = DbProviderFactories.GetFactory(config.ConnectionType);
+                    config.SetConnection(factory.CreateConnection());
+                    config.GetConnection().ConnectionString = config.ConnectionString;
+                    config.GetConnection().Open();
                 }
                 else
                 {
@@ -98,15 +87,21 @@ namespace Dandraka.Zoro.Processor
                     {
                         config.GetConnection().Open();
                     }
-                    var dbCmd = config.GetConnection().CreateCommand();
-                    dbCmd.CommandType = CommandType.Text;
-                    dbCmd.CommandText = config.SqlSelect;
-
-                    using (var dbReader = dbCmd.ExecuteReader(CommandBehavior.CloseConnection))
+                    else
                     {
-                        dt.Load(dbReader);
-                        dbReader.Close();
+                        wasOpen = true;
                     }
+                }
+
+                var dbCmd = config.GetConnection().CreateCommand();
+                dbCmd.CommandType = CommandType.Text;
+                dbCmd.CommandText = config.SqlSelect;
+
+                var behaviour = wasOpen ? CommandBehavior.Default : CommandBehavior.CloseConnection;
+                using (var dbReader = dbCmd.ExecuteReader(behaviour))
+                {
+                    dt.Load(dbReader);
+                    dbReader.Close();
                 }
 
                 foreach (DataColumn dataColumn in dt.Columns)
@@ -372,26 +367,61 @@ namespace Dandraka.Zoro.Processor
 
         private void SaveDataToDb(DataTable dt)
         {
+            if (config.GetConnection() == null && (string.IsNullOrEmpty(config.ConnectionString) || string.IsNullOrEmpty(config.ConnectionType)))
+            {
+                throw new InvalidDataException("If no DbConnection is provided, ConnectionString and ConnectionType cannot be empty when using the database option");
+            }
             if (string.IsNullOrWhiteSpace(config.SqlCommand))
             {
-                throw new ArgumentException($"SqlCommand cannot be empty");
+                throw new ArgumentException($"Sql Command statement must be filled when using the database option");
             }
+            int numParams = config.SqlCommand.Count(c => c == '$');
+            if (numParams != config.FieldMasks.Count)
+            {
+                throw new ArgumentException($"Sql Command parameter mismatch: '{config.SqlCommand}' does not contain the same number of parameters $field ({numParams}) as the number of FieldMasks ({config.FieldMasks.Count})");
+            }
+
+            bool wasOpen = false;
+            if (config.GetConnection() == null)
+            {
+                DbProviderFactory factory = DbProviderFactories.GetFactory(config.ConnectionType);
+                config.SetConnection(factory.CreateConnection());
+                config.GetConnection().ConnectionString = config.ConnectionString;
+                config.GetConnection().Open();
+            }
+            else
+            {
+                if (config.GetConnection().State != ConnectionState.Open)
+                {
+                    config.GetConnection().Open();
+                }
+                else
+                {
+                    wasOpen = true;
+                }
+            }
+
             var cmd = config.GetConnection().CreateCommand();
             cmd.CommandText = config.SqlCommand;
-            foreach(var m in config.FieldMasks)
+            foreach (var m in config.FieldMasks)
             {
                 var p = cmd.CreateParameter();
                 p.ParameterName = m.FieldName;
                 cmd.Parameters.Add(p);
             }
 
-            foreach(DataRow r in dt.Rows)
+            foreach (DataRow r in dt.Rows)
             {
-                foreach(var m in config.FieldMasks)
+                foreach (var m in config.FieldMasks)
                 {
                     cmd.Parameters[m.FieldName].Value = r[m.FieldName];
-                }                
+                }
                 cmd.ExecuteNonQuery();
+            }
+            
+            if (!wasOpen)
+            {
+                config.GetConnection().Close();
             }
         }
     }

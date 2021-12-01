@@ -64,7 +64,7 @@ namespace Dandraka.Zoro.Tests
 
             var cmdSelect = this.TestDbConnection.CreateCommand();
             cmdSelect.CommandType = System.Data.CommandType.Text;
-            cmdSelect.CommandText = $"select * from {tableName}";
+            cmdSelect.CommandText = $"SELECT * FROM {tableName}";
             var rd = cmdSelect.ExecuteReader();
             var tbl = new DataTable(tableName);
             tbl.Load(rd);
@@ -128,7 +128,7 @@ namespace Dandraka.Zoro.Tests
             }
         }
 
-        private static string DumpDataTable(DataTable table)
+        internal static string DumpDataTable(DataTable table)
         {
             string data = string.Empty;
             StringBuilder sb = new StringBuilder();
