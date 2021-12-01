@@ -2,12 +2,7 @@
 
 Zoro is a data masking/anonymization utility. It fetches data from a database or a CSV file, and creates a CSV file with masked data.
 
-It can be used as a command line program (zoro.exe) or as a dotnet standard library. To run the command line program, simply copy the ```tools``` dir from the Nuget package.
-
-## Note on the code repository
-The library has been converted to DotNet Standard 2.0; the command line utility and the test project has been converted to Dotnet Core 5.0.
-* Branch `master` is the current code which fully works, both for CSV and MS SQL data. This is the code that is maintained and is published as a Nuget package.
-* The branch `dotnet-461` is the legacy version, which must be built with .Net Framework 4.6.1. It works, but it's not maintained.
+It can be used as a command line program (zoro.exe) or as a dotnet standard 2.1 library. To run the command line program, simply copy the ```tools``` dir from the Nuget package. Windows and Linux versions, both 64-bit, are available.
 
 ## Usage:
 
@@ -26,7 +21,9 @@ var configFromFile = Zoro.Processor.MaskConfig.ReadConfig("c:\temp\mask.xml");
 var config = new Zoro.Processor.MaskConfig()
 {
     ConnectionString = "Server=myDbServer;Database=myDb;User Id=myUser;Password=myPassword;",
+    ConnectionType = "System.Data.SqlClient",
     DataSource = DataSource.Database,
+    DataDestination = DataDestination.CsvFile,
     SqlSelect = "SELECT * FROM testdata",
     OutputFile = Path.Combine(utility.TestInstanceDir, "maskeddata_db_02.csv")
 };
@@ -95,6 +92,10 @@ ID;Name;BankAccount
 <MaskConfig xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <FieldMasks>
     <FieldMask>
+      <FieldName>ID</FieldName>
+      <MaskType>None</MaskType>
+    </FieldMask>  
+    <FieldMask>
       <FieldName>MainPhone</FieldName>
       <MaskType>Similar</MaskType>
       <RegExMatch>^(\+\d\d)?(.*)$</RegExMatch>
@@ -116,12 +117,12 @@ ID;Name;BankAccount
         </ListOfPossibleReplacements>
     </FieldMask>
   </FieldMasks>
-  <InputFile></InputFile>
-  <OutputFile>C:\temp\Zorotests\maskeddata.csv</OutputFile>
-  <Delimiter>;</Delimiter>
   <DataSource>Database</DataSource>
+  <DataDestination>Database</DataDestination>
   <ConnectionString>Server=DBSRV1;Database=appdb;Trusted_Connection=yes;</ConnectionString>
+  <ConnectionType>System.Data.SqlClient</ConnectionType>
   <SqlSelect>SELECT * FROM customers</SqlSelect>
+  <SqlCommand>INSERT INTO customers_anonymous (ID, MainPhone, Street) VALUES ($ID, $MainPhone, $Street)</SqlCommand>
 </MaskConfig>
 ```
 
