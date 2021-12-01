@@ -126,6 +126,8 @@ ID;Name;BankAccount
 </MaskConfig>
 ```
 
+If using a database to write data (DataDestination=Database), the number of parameters in SqlCommand ($field) must match the number of FieldMasks.
+
 ### Note:
 
 Although not required by the license, the author kindly asks that you share any improvements you made.
