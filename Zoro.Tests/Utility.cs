@@ -94,10 +94,12 @@ namespace Dandraka.Zoro.Tests
             var rd = cmdSelect.ExecuteReader();
             var tbl = new DataTable(tableName);
             tbl.Load(rd);
+            /*
             string tblContents = DumpDataTable(tbl);
             Console.WriteLine("============= Initial DB data =============");
             Console.Write(tblContents);
             Console.WriteLine("===========================================");
+            */
         }
 
         public void PrepareTestInstanceDir()

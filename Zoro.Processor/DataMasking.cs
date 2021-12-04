@@ -75,25 +75,7 @@ namespace Dandraka.Zoro.Processor
 
             Action doDbSelect = new Action(() =>
             {
-                bool wasOpen = false;
-                if (config.GetConnection() == null)
-                {
-                    DbProviderFactory factory = DbProviderFactories.GetFactory(config.ConnectionType);
-                    config.SetConnection(factory.CreateConnection());
-                    config.GetConnection().ConnectionString = config.ConnectionString;
-                    config.GetConnection().Open();
-                }
-                else
-                {
-                    if (config.GetConnection().State != ConnectionState.Open)
-                    {
-                        config.GetConnection().Open();
-                    }
-                    else
-                    {
-                        wasOpen = true;
-                    }
-                }
+                bool wasOpen = EnsureOpenDbConnection();
 
                 var dbCmd = config.GetConnection().CreateCommand();
                 dbCmd.CommandType = CommandType.Text;
@@ -169,9 +151,14 @@ namespace Dandraka.Zoro.Processor
                             case MaskType.List:
                                 s = GetStringFromList(row, fieldMask.ListOfPossibleReplacements);
                                 break;
-                            default:
+                            case MaskType.Query:
+                                s = GetStringFromQuery(row, fieldMask.QueryReplacement);
+                                break;
+                            case MaskType.None:
                                 s = matchData;
                                 break;
+                            default:
+                                throw new NotImplementedException($"Mask type {fieldMask.MaskType} is not yet implemented");
                         }
                     }
                     replaceStr += s;
@@ -189,8 +176,12 @@ namespace Dandraka.Zoro.Processor
                         return GetSimilarString(data);
                     case MaskType.List:
                         return GetStringFromList(row, fieldMask.ListOfPossibleReplacements);
-                    default:
+                    case MaskType.Query:
+                        return GetStringFromQuery(row, fieldMask.QueryReplacement);
+                    case MaskType.None:
                         return data;
+                    default:
+                        throw new NotImplementedException($"Mask type {fieldMask.MaskType} is not yet implemented");
                 }
             }
         }
@@ -267,6 +258,52 @@ namespace Dandraka.Zoro.Processor
             var list = replacementStr.Split(',').Select(x => x.Trim()).ToList();
             string str = list[rnd.Next(0, list.Count - 1)];
             return str;
+        }
+
+        private string GetStringFromQuery(DataRow row, QueryReplacement queryReplacement)
+        {
+            if (queryReplacement.ListOfPossibleReplacements == null)
+            {
+                bool wasOpen = EnsureOpenDbConnection();
+                queryReplacement.ListOfPossibleReplacements = new List<Replacement>();
+
+                var dbCmd = config.GetConnection().CreateCommand();
+                dbCmd.CommandType = CommandType.Text;
+                dbCmd.CommandText = queryReplacement.Query;
+
+                var dt = new DataTable(queryReplacement.ValueDbField);
+                var behaviour = wasOpen ? CommandBehavior.Default : CommandBehavior.CloseConnection;
+                using (var dbReader = dbCmd.ExecuteReader(behaviour))
+                {
+                    dt.Load(dbReader);
+                    dbReader.Close();
+                }
+
+                foreach (DataColumn dataColumn in dt.Columns)
+                {
+                    dataColumn.ReadOnly = false;
+                }
+
+                // generate lists
+                var groupList = dt.Rows.OfType<DataRow>()
+                    .Select(r => Convert.ToString(r[queryReplacement.GroupDbField]))
+                    .Distinct()
+                    .ToList();
+                foreach (string group in groupList)
+                {
+                    var valueList = dt.Rows.OfType<DataRow>()
+                        .Where(r => Convert.ToString(r[queryReplacement.GroupDbField]) == group)
+                        .Select(r => Convert.ToString(r[queryReplacement.ValueDbField]))
+                        .ToList();
+                    queryReplacement.ListOfPossibleReplacements.Add(new Replacement()
+                    {
+                        Selector = $"{queryReplacement.SelectorField}={group}",
+                        ReplacementList = string.Join(',', valueList)
+                    });
+                }
+            }
+
+            return GetStringFromList(row, queryReplacement.ListOfPossibleReplacements);
         }
 
         private string getReplacedString(string data, Func<char, char> method)
@@ -383,6 +420,36 @@ namespace Dandraka.Zoro.Processor
                 throw new ArgumentException($"Sql Command parameter mismatch: '{config.SqlCommand}' does not contain the same number of parameters $field ({numParams}) as the number of FieldMasks ({config.FieldMasks.Count})");
             }
 
+            bool wasOpen = EnsureOpenDbConnection();
+
+            var cmd = config.GetConnection().CreateCommand();
+            cmd.CommandText = config.SqlCommand;
+            foreach (var m in config.FieldMasks)
+            {
+                var p = cmd.CreateParameter();
+                p.ParameterName = m.FieldName;
+                cmd.Parameters.Add(p);
+            }
+
+            foreach (DataRow r in dt.Rows)
+            {
+                foreach (var m in config.FieldMasks)
+                {
+                    cmd.Parameters[m.FieldName].Value = r[m.FieldName];
+                }
+                cmd.ExecuteNonQuery();
+            }
+
+            if (!wasOpen)
+            {
+                config.GetConnection().Close();
+            }
+        }
+
+        /// <summary>Creates and opens a db connection, if needed.</summary>
+        /// <returns>True if the connection was already open, false otherwise.</returns>
+        private bool EnsureOpenDbConnection()
+        {
             bool wasOpen = false;
             if (config.GetConnection() == null)
             {
@@ -402,29 +469,7 @@ namespace Dandraka.Zoro.Processor
                     wasOpen = true;
                 }
             }
-
-            var cmd = config.GetConnection().CreateCommand();
-            cmd.CommandText = config.SqlCommand;
-            foreach (var m in config.FieldMasks)
-            {
-                var p = cmd.CreateParameter();
-                p.ParameterName = m.FieldName;
-                cmd.Parameters.Add(p);
-            }
-
-            foreach (DataRow r in dt.Rows)
-            {
-                foreach (var m in config.FieldMasks)
-                {
-                    cmd.Parameters[m.FieldName].Value = r[m.FieldName];
-                }
-                cmd.ExecuteNonQuery();
-            }
-            
-            if (!wasOpen)
-            {
-                config.GetConnection().Close();
-            }
+            return wasOpen;
         }
     }
 }

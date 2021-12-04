@@ -171,7 +171,7 @@ namespace Dandraka.Zoro.Tests
         [Fact]
         public void T07_Mask_MaskType_Similar_Test()
         {
-            // Arrange
+            // ===== Arrange
             string csvContent = "id;name\r\n1;Carol Danvers\r\n2;Bruce Banner\r\n3;Peter Parker\r\n";
             string csvFilename = this.utility.CreateFileInTestInstanceDir(csvContent, "csv");
             var config = new MaskConfig()
@@ -182,11 +182,11 @@ namespace Dandraka.Zoro.Tests
             config.FieldMasks.Add(new FieldMask() { FieldName = "id", MaskType = MaskType.None });
             config.FieldMasks.Add(new FieldMask() { FieldName = "name", MaskType = MaskType.Similar });
 
-            // Act
+            // ===== Act
             var masker = new DataMasking(config);
             masker.Mask();
 
-            // Assert
+            // ===== Assert
             Assert.True(File.Exists(config.OutputFile));
             var contents = new List<string>(File.ReadLines(config.OutputFile));
             Assert.Equal(4, contents.Count);
@@ -196,6 +196,89 @@ namespace Dandraka.Zoro.Tests
                 // id
                 Assert.Equal(i.ToString(), items[0]);
             }
-        }                    
+        }                
+
+        [Fact]
+        public void T08_Mask_MaskType_Query_Test()
+        {
+            // ===== Arrange
+            string csvContent = "ID;Name;City;Country\r\n1;Roche;Basel;CH\r\n2;ABB;Baden;CH\r\n3;BMW;München;DE\r\n4;Barilla;Parma;IT\r\n5;FAGE;Athens;GR";
+            string csvFilename = this.utility.CreateFileInTestInstanceDir(csvContent, "csv");
+            var config = new MaskConfig()
+            {
+                InputFile = csvFilename,
+                OutputFile = csvFilename.Replace(".csv", "_out.csv")
+            };
+            config.SetConnection(utility.TestDbConnection);
+            config.FieldMasks.Add(new FieldMask() { FieldName = "ID", MaskType = MaskType.None });
+            config.FieldMasks.Add(new FieldMask() { FieldName = "Name", MaskType = MaskType.Asterisk });
+            config.FieldMasks.Add(new FieldMask() { FieldName = "City", MaskType = MaskType.Query });
+            config.FieldMasks.Add(new FieldMask() { FieldName = "Country", MaskType = MaskType.None });
+
+            config.FieldMasks[2].QueryReplacement = new QueryReplacement()
+            {
+                Query = "SELECT city, country FROM cities",
+                GroupDbField = "country",
+                ValueDbField = "city",
+                SelectorField = "Country"
+            };
+
+            // prepare lookup table
+            var cmdTbl = utility.TestDbConnection.CreateCommand();
+            cmdTbl.CommandText = @"CREATE TABLE cities AS 
+                SELECT 'Geneva'   AS city, 'CH' as country UNION ALL 
+                SELECT 'Bern'     AS city, 'CH' as country UNION ALL 
+                SELECT 'Thun'     AS city, 'CH' as country UNION ALL 
+                SELECT 'Köln'     AS city, 'DE' as country UNION ALL                 
+                SELECT 'Berlin'   AS city, 'DE' as country UNION ALL 
+                SELECT 'Hamburg'  AS city, 'DE' as country UNION ALL 
+                SELECT 'Roma'     AS city, 'IT' as country UNION ALL 
+                SELECT 'Venezia'  AS city, 'IT' as country UNION ALL 
+                SELECT 'Milano'   AS city, 'IT' as country UNION ALL 
+                SELECT 'Rethimno' AS city, 'GR' as country UNION ALL 
+                SELECT 'Trikala'  AS city, 'GR' as country UNION ALL 
+                SELECT 'Patra'    AS city, 'GR' as country";
+            cmdTbl.ExecuteNonQuery();
+            utility.TestTablesToDrop = "cities";                        
+
+            // ===== Act
+            var masker = new DataMasking(config);
+            masker.Mask();
+
+            // ===== Assert
+            Assert.True(File.Exists(config.OutputFile));
+            var contents = new List<string>(File.ReadLines(config.OutputFile));
+            Assert.Equal(6, contents.Count);
+            for(int i = 1; i < contents.Count; i++)
+            {
+                var items = contents[i].Split(';');
+                
+                string id = items[0];
+                string city = items[2];
+                string country = items[3];
+
+                // id
+                Assert.Equal(i.ToString(), id);
+
+                // city
+                switch (country)
+                {
+                    case "CH":
+                        Assert.Contains<string>(city, new string[] { "Geneva", "Bern", "Thun" });
+                        break;
+                    case "DE":
+                        Assert.Contains<string>(city, new string[] { "Köln", "Berlin", "Hamburg" });
+                        break;
+                    case "IT":
+                        Assert.Contains<string>(city, new string[] { "Roma", "Venezia", "Milano" });
+                        break;
+                    case "GR":
+                        Assert.Contains<string>(city, new string[] { "Rethimno", "Trikala", "Patra" });
+                        break;                                                                        
+                    default:
+                        throw new NotSupportedException($"Unexpected country {country} found");
+                }
+            }
+        }                        
     }
 }
