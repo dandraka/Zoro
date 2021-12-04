@@ -16,6 +16,8 @@ namespace Dandraka.Zoro.Processor
 
         private readonly Random rnd = new Random(DateTime.Now.Millisecond);
 
+        private char DbParamChar => this.config.GetConnection().GetType().ToString() == "System.Data.SqlClient.SqlConnection" ? '@' : '$';
+
         public DataMasking(MaskConfig config)
         {
             this.config = config;
@@ -375,7 +377,7 @@ namespace Dandraka.Zoro.Processor
             {
                 throw new ArgumentException($"Sql Command statement must be filled when using the database option");
             }
-            int numParams = config.SqlCommand.Count(c => c == '$');
+            int numParams = config.SqlCommand.Count(c => c == this.DbParamChar);
             if (numParams != config.FieldMasks.Count)
             {
                 throw new ArgumentException($"Sql Command parameter mismatch: '{config.SqlCommand}' does not contain the same number of parameters $field ({numParams}) as the number of FieldMasks ({config.FieldMasks.Count})");

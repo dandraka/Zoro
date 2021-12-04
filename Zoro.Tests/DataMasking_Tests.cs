@@ -16,7 +16,7 @@ namespace Dandraka.Zoro.Tests
         public DataMasking_Tests()
         {
             utility.PrepareTestInstanceDir();
-            utility.PrepareLocalDb();
+            utility.PrepareSqliteDb("DataMasking_Tests");
         }
 
         public void Dispose()

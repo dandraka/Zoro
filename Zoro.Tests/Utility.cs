@@ -5,6 +5,7 @@ using System.IO;
 using System.Reflection;
 using System.Text;
 using System.Data.SQLite;
+using System.Data.SqlClient;
 using System.Collections.Generic;
 
 namespace Dandraka.Zoro.Tests
@@ -17,6 +18,8 @@ namespace Dandraka.Zoro.Tests
 
         public DbConnection TestDbConnection;
 
+        public char DbParamChar => this.TestDbConnection is SqlConnection ? '@' : '$';
+
         public string TestTableName { get; private set; }
 
         public Utility()
@@ -28,27 +31,47 @@ namespace Dandraka.Zoro.Tests
             Console.WriteLine($"TestInstanceDir = {TestInstanceDir}");
         }
 
-        public void PrepareLocalDb(string tableName = "testdata")
+        public void PrepareSqliteDb(string tableName)
         {
             this.TestDbConnection = new SQLiteConnection("Data Source=:memory:");
+            this.PrepareDb(tableName);
+        }
+
+        public void PrepareSqlServerDb(string tableName, string connString)
+        {
+            this.TestDbConnection = new SqlConnection(connString);
+            this.PrepareDb(tableName);
+        }
+
+        private void PrepareDb(string tableName = "testdata")
+        {
             this.TestDbConnection.Open();
             this.TestTableName = tableName;
 
             var cmdCreateTable = this.TestDbConnection.CreateCommand();
             cmdCreateTable.CommandType = System.Data.CommandType.Text;
-            cmdCreateTable.CommandText = $"CREATE TABLE {tableName} (ID int, Name nvarchar(100), BankAccount varchar(50), Address nvarchar(100), Country char(2))";
+            cmdCreateTable.CommandText = $"CREATE TABLE {tableName} (ID int, Name nvarchar(100), BankAccount nvarchar(50), Address nvarchar(100), Country nvarchar(2))";
             cmdCreateTable.ExecuteNonQuery();
 
             var csvContents = new List<string>(File.ReadLines(Path.Combine(TestDataDir, "data1.csv")));
             var csvFields = csvContents[0].Split(';');
 
-            string insertSql = $"INSERT INTO {tableName} (ID, Name, BankAccount,Address,Country) VALUES ($ID, $Name, $BankAccount,$Address,$Country)";
+            string insertSql = $"INSERT INTO {tableName} (ID, Name, BankAccount,Address,Country) VALUES ({DbParamChar}ID, {DbParamChar}Name, {DbParamChar}BankAccount,{DbParamChar}Address,{DbParamChar}Country)";
             var cmdInsert = this.TestDbConnection.CreateCommand();
             cmdInsert.CommandType = System.Data.CommandType.Text;
             cmdInsert.CommandText = insertSql;
             foreach (string csvField in csvFields)
             {
-                cmdInsert.Parameters.Add(new SQLiteParameter($"${csvField}"));
+                switch (this.TestDbConnection.GetType().ToString())
+                {
+                    case "System.Data.SqlClient.SqlConnection":
+                        var dbType = csvField == "ID" ? SqlDbType.Int : SqlDbType.NVarChar;
+                        cmdInsert.Parameters.Add(new SqlParameter($"{DbParamChar}{csvField}", dbType));
+                        break;
+                    default:
+                        cmdInsert.Parameters.Add(new SQLiteParameter($"{DbParamChar}{csvField}"));
+                        break;
+                }                
             }
 
             for (int i = 1; i < csvContents.Count; i++)
@@ -110,7 +133,20 @@ namespace Dandraka.Zoro.Tests
                 if (this.TestDbConnection != null
                     && this.TestDbConnection.State == System.Data.ConnectionState.Open)
                 {
+                    try
+                    {
+                        var cmdDropTable = this.TestDbConnection.CreateCommand();
+                        cmdDropTable.CommandType = System.Data.CommandType.Text;
+                        cmdDropTable.CommandText = $"DROP TABLE {this.TestTableName}";
+                        cmdDropTable.ExecuteNonQuery();
+                        Console.WriteLine($"Dropped table {this.TestTableName}");
+                    }
+                    catch
+                    {
+                        // meh
+                    }
                     this.TestDbConnection.Close();
+                    Console.WriteLine("Closed DB connection");
                 }
             }
             catch
