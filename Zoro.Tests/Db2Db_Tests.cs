@@ -177,7 +177,7 @@ namespace Dandraka.Zoro.Tests
         [SkippableFact]
         public void T05_Db2Csv_SqlServer()
         {
-            string tblName = $"T01_Db2Csv_{Guid.NewGuid().ToString().Substring(0, 8)}";
+            string tblName = $"T05_Db2Csv_{Guid.NewGuid().ToString().Substring(0, 8)}";
 
             var connstr = Environment.GetEnvironmentVariable("SQLCONNSTRING");
 
@@ -224,8 +224,8 @@ namespace Dandraka.Zoro.Tests
         [SkippableFact]
         public void T06_Csv2Db_SqlServer()
         {
-            string tblName = $"T02_Csv2Db_{Guid.NewGuid().ToString().Substring(0, 8)}";
-            string tblName2 = $"T02_Csv2Db_{Guid.NewGuid().ToString().Substring(0, 8)}";
+            string tblName = $"T06_Csv2Db_{Guid.NewGuid().ToString().Substring(0, 8)}";
+            string tblName2 = $"T06_Csv2Db_{Guid.NewGuid().ToString().Substring(0, 8)}";
 
             var connstr = Environment.GetEnvironmentVariable("SQLCONNSTRING");
 
@@ -252,6 +252,7 @@ namespace Dandraka.Zoro.Tests
                 var cmdTbl = utility.TestDbConnection.CreateCommand();
                 cmdTbl.CommandText = $"CREATE TABLE {tblName2} (ID int, Name nvarchar(100), BankAccount varchar(50))";
                 cmdTbl.ExecuteNonQuery();
+                utility.TestTablesToDrop = tblName2;
 
                 var masker = new DataMasking(config);
                 try

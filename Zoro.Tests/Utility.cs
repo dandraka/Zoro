@@ -7,6 +7,7 @@ using System.Text;
 using System.Data.SQLite;
 using System.Data.SqlClient;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Dandraka.Zoro.Tests
 {
@@ -21,6 +22,8 @@ namespace Dandraka.Zoro.Tests
         public char DbParamChar => this.TestDbConnection is SqlConnection ? '@' : '$';
 
         public string TestTableName { get; private set; }
+
+        public string TestTablesToDrop { get; set; }
 
         public Utility()
         {
@@ -135,11 +138,18 @@ namespace Dandraka.Zoro.Tests
                 {
                     try
                     {
-                        var cmdDropTable = this.TestDbConnection.CreateCommand();
-                        cmdDropTable.CommandType = System.Data.CommandType.Text;
-                        cmdDropTable.CommandText = $"DROP TABLE {this.TestTableName}";
-                        cmdDropTable.ExecuteNonQuery();
-                        Console.WriteLine($"Dropped table {this.TestTableName}");
+                        var tblsToDrop = new List<string>();
+                        if (!string.IsNullOrEmpty(this.TestTableName)) { tblsToDrop.Add(this.TestTableName); }
+                        if (!string.IsNullOrEmpty(this.TestTablesToDrop)) { this.TestTablesToDrop.Split(';').ToList().ForEach(x => tblsToDrop.Add(x)); }
+
+                        foreach (string tblToDrop in tblsToDrop)
+                        {
+                            var cmdDropTable = this.TestDbConnection.CreateCommand();
+                            cmdDropTable.CommandType = System.Data.CommandType.Text;
+                            cmdDropTable.CommandText = $"DROP TABLE {tblToDrop}";
+                            cmdDropTable.ExecuteNonQuery();
+                            Console.WriteLine($"Dropped table {tblToDrop}");                            
+                        }
                     }
                     catch
                     {
