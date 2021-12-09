@@ -1,16 +1,18 @@
 # Zoro - The masked avenger
 
-Zoro is a data masking/anonymization utility. It fetches data from a database or a CSV file, and creates a CSV file with masked data.
+Zoro is a data masking and anonymization utility. It fetches data from a database or a CSV file, and either creates a CSV file or runs SQL statements with the masked data.
 
-It can be used as a command line program (zoro.exe) or as a dotnet standard 2.1 library. To run the command line program, simply copy the ```tools``` dir from the Nuget package. Windows and Linux versions, both 64-bit, are available.
+It can be used as a command line program or as a dotnet standard 2.1 library. To run the command line program, simply copy the ```tools``` dir from the Nuget package. Windows and Linux versions, both 64-bit, are available.
 
 ## Usage:
 
 **As a command line utility:**
 
-Zoro.exe path_to_config_file
+[Win] zoro.exe path_to_config_file
+E.g. ```zoro.exe c:\temp\mask.xml```
 
-E.g. ```Zoro.exe c:\temp\mask.xml```
+[Linux] ./zoro path_to_config_file
+E.g. ```zoro /home/jim/data/mask.xml```
 
 **As a library**
 
@@ -96,6 +98,10 @@ ID;Name;BankAccount
       <MaskType>None</MaskType>
     </FieldMask>  
     <FieldMask>
+      <FieldName>CountryISOCode</FieldName>
+      <MaskType>None</MaskType>
+    </FieldMask>      
+    <FieldMask>
       <FieldName>MainPhone</FieldName>
       <MaskType>Similar</MaskType>
       <RegExMatch>^(\+\d\d)?(.*)$</RegExMatch>
@@ -116,6 +122,11 @@ ID;Name;BankAccount
           <Replacement Selector="" List="Bedford Gardens,Sheffield Terrace,Kensington Palace Gardens" />
         </ListOfPossibleReplacements>
     </FieldMask>
+    <FieldMask>
+      <FieldName>City</FieldName>
+      <MaskType>Query</MaskType>
+      <QueryReplacement SelectorField="CountryISOCode" GroupField="countrycode" ValueField="cityname" Query="SELECT cityname, countrycode FROM cities" />
+    </FieldMask>  
   </FieldMasks>
   <DataSource>Database</DataSource>
   <DataDestination>Database</DataDestination>
