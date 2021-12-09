@@ -47,4 +47,4 @@ jobs:
       run: nuget pack Zoro.Processor/Dandraka.Zoro.nuspec
       
     - name: Publish
-      run: nuget push Dandraka.Zoro.*.nupkg -Source https://www.nuget.org/api/v2/package
+      run: nuget push Dandraka.Zoro.*.nupkg -Source https://www.nuget.org/api/v2/package -Timeout 601 -Verbosity detailed
