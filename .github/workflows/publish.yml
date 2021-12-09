@@ -5,6 +5,7 @@ on:
     branches: [ master ]
     paths:
     - "**.nuspec"
+    - "**/publish.yml"
   pull_request:
     branches: [ master ]
     paths:
@@ -47,5 +48,11 @@ jobs:
     - name: Pack
       run: nuget pack Zoro.Processor/Dandraka.Zoro.nuspec
       
-    - name: Publish
-      run: nuget push Dandraka.Zoro.*.nupkg -Source https://www.nuget.org/api/v2/package -Timeout 601 -Verbosity detailed
+    - name: Publish artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: nuget-package
+        path: Dandraka.Zoro.*.nupkg
+          
+    #- name: Publish to nuget.org
+    #  run: nuget push Dandraka.Zoro.*.nupkg -Source https://www.nuget.org/api/v2/package -Timeout 601 -Verbosity detailed
