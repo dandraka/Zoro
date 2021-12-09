@@ -1,22 +1,22 @@
 ﻿﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
+using System.Data.Common;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using GenericParsing;
-// TODO workaround for dotnet core
-//using XperiCode.Impersonator
 
-namespace Zoro.Processor
+namespace Dandraka.Zoro.Processor
 {
     public class DataMasking
     {
         private readonly MaskConfig config;
 
         private readonly Random rnd = new Random(DateTime.Now.Millisecond);
+
+        private char DbParamChar => this.config.GetConnection().GetType().ToString() == "System.Data.SqlClient.SqlConnection" ? '@' : '$';
 
         public DataMasking(MaskConfig config)
         {
@@ -29,7 +29,7 @@ namespace Zoro.Processor
 
             AnonymizeTable(dt);
 
-            SaveDataToFile(dt);
+            SaveData(dt);
         }
 
         private DataTable GetData()
@@ -45,36 +45,47 @@ namespace Zoro.Processor
             }
         }
 
+        private void SaveData(DataTable dt)
+        {
+            switch (config.DataDestination)
+            {
+                case DataDestination.CsvFile:
+                    SaveDataToFile(dt);
+                    break;
+                case DataDestination.Database:
+                    SaveDataToDb(dt);
+                    break;
+                default:
+                    throw new NotSupportedException();
+            }
+        }
+
         private DataTable ReadDataFromDb()
         {
-            if (string.IsNullOrEmpty(config.ConnectionString))
+            if (config.GetConnection() == null && (string.IsNullOrEmpty(config.ConnectionString) || string.IsNullOrEmpty(config.ConnectionType)))
             {
-                throw new InvalidDataException("Connection string must be filled when using the DB option");
+                throw new InvalidDataException("If no DbConnection is provided, ConnectionString and ConnectionType cannot be empty when using the database option");
             }
-
             if (string.IsNullOrEmpty(config.SqlSelect))
             {
-                throw new InvalidDataException("SQL Select statement must be filled when using the DB option");
+                throw new InvalidDataException("SQL Select statement must be filled when using the database option");
             }
 
             DataTable dt = new DataTable("data");
 
             Action doDbSelect = new Action(() =>
             {
-                using (var dbConn = new SqlConnection(config.ConnectionString))
+                bool wasOpen = EnsureOpenDbConnection();
+
+                var dbCmd = config.GetConnection().CreateCommand();
+                dbCmd.CommandType = CommandType.Text;
+                dbCmd.CommandText = config.SqlSelect;
+
+                var behaviour = wasOpen ? CommandBehavior.Default : CommandBehavior.CloseConnection;
+                using (var dbReader = dbCmd.ExecuteReader(behaviour))
                 {
-                    dbConn.Open();
-                    var dbCmd = dbConn.CreateCommand();
-                    dbCmd.CommandType = CommandType.Text;
-                    dbCmd.CommandText = config.SqlSelect;
-
-                    using (var dbReader = dbCmd.ExecuteReader(CommandBehavior.CloseConnection))
-                    {
-                        dt.Load(dbReader);
-                        dbReader.Close();
-                    }
-
-                    dbConn.Close();
+                    dt.Load(dbReader);
+                    dbReader.Close();
                 }
 
                 foreach (DataColumn dataColumn in dt.Columns)
@@ -137,12 +148,17 @@ namespace Zoro.Processor
                             case MaskType.Similar:
                                 s = GetSimilarString(matchData);
                                 break;
-                                case MaskType.List:
-                                    s = GetStringFromList(row, fieldMask.ListOfPossibleReplacements);
-                                    break;
-                            default:
+                            case MaskType.List:
+                                s = GetStringFromList(row, fieldMask.ListOfPossibleReplacements);
+                                break;
+                            case MaskType.Query:
+                                s = GetStringFromQuery(row, fieldMask.QueryReplacement);
+                                break;
+                            case MaskType.None:
                                 s = matchData;
                                 break;
+                            default:
+                                throw new NotImplementedException($"Mask type {fieldMask.MaskType} is not yet implemented");
                         }
                     }
                     replaceStr += s;
@@ -160,8 +176,12 @@ namespace Zoro.Processor
                         return GetSimilarString(data);
                     case MaskType.List:
                         return GetStringFromList(row, fieldMask.ListOfPossibleReplacements);
-                    default:
+                    case MaskType.Query:
+                        return GetStringFromQuery(row, fieldMask.QueryReplacement);
+                    case MaskType.None:
                         return data;
+                    default:
+                        throw new NotImplementedException($"Mask type {fieldMask.MaskType} is not yet implemented");
                 }
             }
         }
@@ -216,7 +236,7 @@ namespace Zoro.Processor
                 }
 
                 string selectorField = r.Selector.Split('=')[0].Trim();
-                string selectorValue = r.Selector.Split('=')[1].Trim().ToLower();                
+                string selectorValue = r.Selector.Split('=')[1].Trim().ToLower();
 
                 if (!row.Table.Columns.Contains(selectorField))
                 {
@@ -233,11 +253,57 @@ namespace Zoro.Processor
             if (replacementStr == null)
             {
                 // warning, nothing found
-                throw new DataException($"No match could be located for data row\r\n{string.Join(",",row.ItemArray)}");
+                throw new DataException($"No match could be located for data row\r\n{string.Join(",", row.ItemArray)}");
             }
             var list = replacementStr.Split(',').Select(x => x.Trim()).ToList();
             string str = list[rnd.Next(0, list.Count - 1)];
             return str;
+        }
+
+        private string GetStringFromQuery(DataRow row, QueryReplacement queryReplacement)
+        {
+            if (queryReplacement.ListOfPossibleReplacements == null)
+            {
+                bool wasOpen = EnsureOpenDbConnection();
+                queryReplacement.ListOfPossibleReplacements = new List<Replacement>();
+
+                var dbCmd = config.GetConnection().CreateCommand();
+                dbCmd.CommandType = CommandType.Text;
+                dbCmd.CommandText = queryReplacement.Query;
+
+                var dt = new DataTable(queryReplacement.ValueDbField);
+                var behaviour = wasOpen ? CommandBehavior.Default : CommandBehavior.CloseConnection;
+                using (var dbReader = dbCmd.ExecuteReader(behaviour))
+                {
+                    dt.Load(dbReader);
+                    dbReader.Close();
+                }
+
+                foreach (DataColumn dataColumn in dt.Columns)
+                {
+                    dataColumn.ReadOnly = false;
+                }
+
+                // generate lists
+                var groupList = dt.Rows.OfType<DataRow>()
+                    .Select(r => Convert.ToString(r[queryReplacement.GroupDbField]))
+                    .Distinct()
+                    .ToList();
+                foreach (string group in groupList)
+                {
+                    var valueList = dt.Rows.OfType<DataRow>()
+                        .Where(r => Convert.ToString(r[queryReplacement.GroupDbField]) == group)
+                        .Select(r => Convert.ToString(r[queryReplacement.ValueDbField]))
+                        .ToList();
+                    queryReplacement.ListOfPossibleReplacements.Add(new Replacement()
+                    {
+                        Selector = $"{queryReplacement.SelectorField}={group}",
+                        ReplacementList = string.Join(',', valueList)
+                    });
+                }
+            }
+
+            return GetStringFromList(row, queryReplacement.ListOfPossibleReplacements);
         }
 
         private string getReplacedString(string data, Func<char, char> method)
@@ -301,7 +367,7 @@ namespace Zoro.Processor
                     }
                     tbl.Rows.Add(row);
                 }
-            }            
+            }
 
             return tbl;
         }
@@ -336,6 +402,74 @@ namespace Zoro.Processor
 
             File.WriteAllText(config.OutputFile, sb.ToString(), Encoding.UTF8);
 
+        }
+
+        private void SaveDataToDb(DataTable dt)
+        {
+            if (config.GetConnection() == null && (string.IsNullOrEmpty(config.ConnectionString) || string.IsNullOrEmpty(config.ConnectionType)))
+            {
+                throw new InvalidDataException("If no DbConnection is provided, ConnectionString and ConnectionType cannot be empty when using the database option");
+            }
+            if (string.IsNullOrWhiteSpace(config.SqlCommand))
+            {
+                throw new ArgumentException($"Sql Command statement must be filled when using the database option");
+            }
+            int numParams = config.SqlCommand.Count(c => c == this.DbParamChar);
+            if (numParams != config.FieldMasks.Count)
+            {
+                throw new ArgumentException($"Sql Command parameter mismatch: '{config.SqlCommand}' does not contain the same number of parameters $field ({numParams}) as the number of FieldMasks ({config.FieldMasks.Count})");
+            }
+
+            bool wasOpen = EnsureOpenDbConnection();
+
+            var cmd = config.GetConnection().CreateCommand();
+            cmd.CommandText = config.SqlCommand;
+            foreach (var m in config.FieldMasks)
+            {
+                var p = cmd.CreateParameter();
+                p.ParameterName = m.FieldName;
+                cmd.Parameters.Add(p);
+            }
+
+            foreach (DataRow r in dt.Rows)
+            {
+                foreach (var m in config.FieldMasks)
+                {
+                    cmd.Parameters[m.FieldName].Value = r[m.FieldName];
+                }
+                cmd.ExecuteNonQuery();
+            }
+
+            if (!wasOpen)
+            {
+                config.GetConnection().Close();
+            }
+        }
+
+        /// <summary>Creates and opens a db connection, if needed.</summary>
+        /// <returns>True if the connection was already open, false otherwise.</returns>
+        private bool EnsureOpenDbConnection()
+        {
+            bool wasOpen = false;
+            if (config.GetConnection() == null)
+            {
+                DbProviderFactory factory = DbProviderFactories.GetFactory(config.ConnectionType);
+                config.SetConnection(factory.CreateConnection());
+                config.GetConnection().ConnectionString = config.ConnectionString;
+                config.GetConnection().Open();
+            }
+            else
+            {
+                if (config.GetConnection().State != ConnectionState.Open)
+                {
+                    config.GetConnection().Open();
+                }
+                else
+                {
+                    wasOpen = true;
+                }
+            }
+            return wasOpen;
         }
     }
 }

@@ -1,8 +1,8 @@
 ﻿using System;
 using System.IO;
-using Zoro.Processor;
+using Dandraka.Zoro.Processor;
 
-namespace Zoro
+namespace Dandraka.Zoro
 {
     class Program
     {

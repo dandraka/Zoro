@@ -1,5 +1,5 @@
 ﻿
-namespace Zoro.Processor
+namespace Dandraka.Zoro.Processor
 {
     /// <summary>
     /// Sets the type of masking done to a field.
@@ -24,6 +24,12 @@ namespace Zoro.Processor
         /// <summary>
         /// The field contents are substituted with a randomly picked item of a given list.
         /// </summary>
-        List
+        List,
+
+        /// <summary>
+        /// The field contents are substituted with a randomly picked item from the result of q query.
+        /// The query must return only one field.
+        /// </summary>
+        Query
     }
 }

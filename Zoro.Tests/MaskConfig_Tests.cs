@@ -1,10 +1,11 @@
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.IO;
 using Xunit;
-using Zoro.Processor;
+using Dandraka.Zoro.Processor;
 
-namespace Zoro.Tests
+namespace Dandraka.Zoro.Tests
 {
     public class MaskConfig_Tests : IDisposable
     {
@@ -36,7 +37,7 @@ namespace Zoro.Tests
 
             string[] fields = new[]
             {
-                "BIRTHDAY", "BANKACCOUNTNR", "FINANCIALINSTITUTE", "BANKZIPNR", "STREET1",
+                "BIRTHDAY", "BANKACCOUNTNR", "FINANCIALINSTITUTE", "BANKZIPNR", "STREET1", "LAND",
                 "ZIP1", "STREET2", "ZIP2", "STREET3", "ZIP3", "PHONEID1", "PHONEFIELDSTR1", "PHONEID2",
                 "PHONEFIELDSTR2", "PHONEID3", "PHONEFIELDSTR3", "PHONEID4", "PHONEFIELDSTR4", "PHONEID5",
                 "PHONEFIELDSTR5", "PHONEID6", "PHONEFIELDSTR6", "PHONEID7", "PHONEFIELDSTR7", "PHONEID8",
@@ -44,15 +45,21 @@ namespace Zoro.Tests
                 "MAILFIELDSTR2", "MAILFIELDSTR3", "MAILFIELDSTR4", "GWIBAN", "GWBIC", "GWTRADEREGISTER", "WCM_KURZNA",
                 "ART_STREET_EXPORT", "ART_NAME_EXPORT", "ART_ZIP_EXPORT", "ART_CHRISTIANNAME_EXPORT"
             };
-            foreach (string field in fields)
-            {
-                config.FieldMasks.Add(new FieldMask() { FieldName = field, MaskType = MaskType.Similar });
-            }
-
             string[] nameFields = new[]
             {
                 "NAME", "CHRISTIANNAME"
             };
+            string[] zipFields = new[]
+            {
+                "ZIP1", "ZIP2", "ZIP3"
+            };            
+
+
+            foreach (string field in fields.Where(x => !nameFields.Contains(x) && !zipFields.Contains(x)))
+            {
+                config.FieldMasks.Add(new FieldMask() { FieldName = field, MaskType = MaskType.Similar });
+            }
+
             foreach (string field in nameFields)
             {
                 config.FieldMasks.Add(new FieldMask()
@@ -67,7 +74,23 @@ namespace Zoro.Tests
                 });
             }
 
-            testConfigFile = Path.Combine(utility.TestInstanceDir, "testconfig2.xml");
+            foreach (string field in zipFields)
+            {
+                config.FieldMasks.Add(new FieldMask()
+                {
+                    FieldName = field,
+                    MaskType = MaskType.Query,
+                    QueryReplacement = new QueryReplacement() 
+                    {
+                        Query = "SELECT postcode, country FROM postcode",
+                        ValueDbField = "postcode",
+                        GroupDbField = "country",
+                        SelectorField = "LAND"
+                    }
+                });
+            }            
+
+            testConfigFile = Path.Combine(utility.TestInstanceDir, $"config_{Guid.NewGuid()}.xml");
             MaskConfig.SaveConfig(testConfigFile, config);
 
             // test writing
@@ -77,7 +100,7 @@ namespace Zoro.Tests
             var config2 = MaskConfig.ReadConfig(testConfigFile);
             //Console.WriteLine($"Config: InputFile = {config2.InputFile}");
             //Console.WriteLine($"Config: OutputFile = {config2.OutputFile}");
-            Assert.Equal(44, config2.FieldMasks.Count);
+            Assert.Equal(45, config2.FieldMasks.Count);
         }
 
         [Fact]

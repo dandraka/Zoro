@@ -13,4 +13,6 @@
   <InputFile>%TestInstanceDir%\data1.csv</InputFile>
   <OutputFile>%TestInstanceDir%\maskeddata1.csv</OutputFile>
   <Delimiter>;</Delimiter>
+  <DataSource>CsvFile</DataSource>
+  <DataDestination>CsvFile</DataDestination>
 </MaskConfig>
