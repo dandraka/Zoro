@@ -13,7 +13,7 @@
 
   <ItemGroup>
     <PackageReference Include="GenericParsing" Version="1.2.2" />
-    <PackageReference Include="System.Data.SqlClient" Version="4.8.3" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.8.5" />
   </ItemGroup>
 
   <ItemGroup>
