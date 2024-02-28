@@ -5,7 +5,6 @@ on:
     branches: [ master ]
     paths:
     - "**.nuspec"
-    - "**/publish.yml"
   pull_request:
     branches: [ master ]
     paths:
@@ -21,11 +20,10 @@ jobs:
     - uses: NuGet/setup-nuget@v1.0.5
       with:
         nuget-api-key: ${{secrets.NUGET_API_KEY}}
-        nuget-version: 'latest'
     - name: Setup .NET
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: 5.0.x        
+        dotnet-version: 8.0.x        
     
     - name: Restore dependencies
       run: dotnet restore
@@ -48,11 +46,5 @@ jobs:
     - name: Pack
       run: nuget pack Zoro.Processor/Dandraka.Zoro.nuspec
       
-    - name: Publish artifact
-      uses: actions/upload-artifact@v2
-      with:
-        name: nuget-package
-        path: Dandraka.Zoro.*.nupkg
-          
-    #- name: Publish to nuget.org
-    #  run: nuget push Dandraka.Zoro.*.nupkg -Source https://www.nuget.org/api/v2/package -Timeout 601 -Verbosity detailed
+    - name: Publish
+      run: nuget push Dandraka.Zoro.*.nupkg -Source https://www.nuget.org/api/v2/package

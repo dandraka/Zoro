@@ -2,7 +2,7 @@ name: Build and test
 
 on:
   push:
-    branches: [ feature-db2db ]
+    branches: [ master ]
     paths-ignore:
     - "**.nuspec"
     - "**/publish.yml"
@@ -12,7 +12,7 @@ on:
     - "**/LICENSE"
     - "**/LICENSE.txt"
   pull_request:
-    branches: [ feature-db2db ]
+    branches: [ master ]
     paths-ignore:
     - "**.nuspec"
     - "**/publish.yml"
@@ -32,7 +32,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: 5.0.x        
+        dotnet-version: 8.0.x        
     
     - name: Restore dependencies
       run: dotnet restore
