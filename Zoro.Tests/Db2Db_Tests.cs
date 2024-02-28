@@ -146,7 +146,7 @@ namespace Dandraka.Zoro.Tests
                     DataSource = DataSource.Database,
                     DataDestination = DataDestination.Database,
                     SqlSelect = $"SELECT * FROM {utility.TestTableName}",
-                    SqlCommand = $"UPDATE {utility.TestTableName} SET Name=$Name, Bankaccount=$Bankaccount, Address=$Address WHERE ID = $ID",
+                    SqlCommand = $"UPDATE {utility.TestTableName} SET Name=$Name, Bankaccount=$BankAccount, Address=$Address WHERE ID = $ID",
                     OutputFile = Path.Combine(utility.TestInstanceDir, "T01_Db2Csv.csv")
                 };
                 config.SetConnection(utility.TestDbConnection);
