@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <Authors>Jim (Dimitrios) Andrakakis</Authors>
-    <Version>2.0.0</Version>
+    <Version>2.0.1</Version>
   </PropertyGroup>
 
   <Target Name="CopyCustomContent" BeforeTargets="Build">
@@ -12,14 +12,14 @@
   </Target>    
 
   <ItemGroup>
-    <PackageReference Include="GenericParsing" Version="1.2.2" />
-    <PackageReference Include="System.Data.SqlClient" Version="4.8.5" />
+    <PackageReference Include="GenericParsing" Version="1.5.0" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.8.6" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="LICENSE.txt"  CopyToOutputDirectory="Always" Pack="true" PackagePath="/"/>
-    <None Include="icon.png"     CopyToOutputDirectory="Always" Pack="true" PackagePath="/"/>
-    <None Include="README.md"    CopyToOutputDirectory="Always" Pack="true" PackagePath="/" />
+    <None Include="LICENSE.txt" CopyToOutputDirectory="Always" Pack="true" PackagePath="/" />
+    <None Include="icon.png" CopyToOutputDirectory="Always" Pack="true" PackagePath="/" />
+    <None Include="README.md" CopyToOutputDirectory="Always" Pack="true" PackagePath="/" />
   </ItemGroup>  
 
   <ItemGroup>
