@@ -415,30 +415,6 @@ namespace Dandraka.Zoro.Processor
                     throw new NotSupportedException($"JSON type {Enum.GetName(typeof(JsonValueKind), jsonData.ValueKind)} is not supported at this level.");
             }
 
-            //    bool doSetup = true;
-            //
-            //    while (parser.Read())
-            //    {
-            //
-            //        if (doSetup)
-            //        {
-            //            for (int i = 0; i < parser.ColumnCount; i++)
-            //            {
-            //                string colName = parser.GetColumnName(i);
-            //                tbl.Columns.Add(colName, typeof(string));
-            //            }
-            //            doSetup = false;
-            //        }
-            //
-            //        var row = tbl.NewRow();
-            //        for (int i = 0; i < parser.ColumnCount; i++)
-            //        {
-            //            string colName = parser.GetColumnName(i);
-            //            row[colName] = parser[colName];
-            //        }
-            //        tbl.Rows.Add(row);
-            //    }
-
             return tbl;
         }
 
@@ -466,12 +442,28 @@ namespace Dandraka.Zoro.Processor
                 {
                     switch (child.Value.ValueKind)
                     {
+                        /*
                         case JsonValueKind.String:
                         case JsonValueKind.Null:
                         case JsonValueKind.Number:
                         case JsonValueKind.True:
                         case JsonValueKind.False:
                             tbl.Columns.Add(child.Name, typeof(string));
+                            break;
+                        default:
+                            // skip
+                            break;
+                        */
+                        case JsonValueKind.String:
+                        case JsonValueKind.Null:
+                            tbl.Columns.Add(child.Name, typeof(string));
+                            break;
+                        case JsonValueKind.Number:
+                            tbl.Columns.Add(child.Name, typeof(decimal));
+                            break;
+                        case JsonValueKind.True:
+                        case JsonValueKind.False:
+                            tbl.Columns.Add(child.Name, typeof(bool));
                             break;
                         default:
                             // skip
@@ -551,8 +543,7 @@ namespace Dandraka.Zoro.Processor
 
         private void SaveDataToJSONFile(DataTable dt)
         {
-            string json = JsonConvert.SerializeObject(dt, Formatting.Indented);
-            File.WriteAllText(config.OutputFile, json, Encoding.UTF8);
+            File.WriteAllText(config.OutputFile, JsonConvert.SerializeObject(dt, Formatting.Indented), Encoding.UTF8);
         }
 
         private void SaveDataToDb(DataTable dt)

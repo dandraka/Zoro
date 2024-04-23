@@ -7,7 +7,7 @@
     </FieldMask>
     <FieldMask>
       <FieldName>salary</FieldName>
-      <MaskType>Asterisk</MaskType>
+      <MaskType>Similar</MaskType>
     </FieldMask>
     <FieldMask>
       <FieldName>spouse</FieldName>
