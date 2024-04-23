@@ -459,7 +459,24 @@ namespace Dandraka.Zoro.Processor
                             tbl.Columns.Add(child.Name, typeof(string));
                             break;
                         case JsonValueKind.Number:
-                            tbl.Columns.Add(child.Name, typeof(decimal));
+                            // int or decimal?                            
+                            try
+                            {
+                                decimal nd = child.Value.GetDecimal();
+                                int ni = child.Value.GetInt32();
+                                if (nd - ni == 0)
+                                {
+                                    tbl.Columns.Add(child.Name, typeof(int));
+                                }
+                                else
+                                {
+                                    tbl.Columns.Add(child.Name, typeof(decimal));
+                                }
+                            }
+                            catch (Exception)
+                            {
+                                tbl.Columns.Add(child.Name, typeof(decimal));
+                            }                                                        
                             break;
                         case JsonValueKind.True:
                         case JsonValueKind.False:
