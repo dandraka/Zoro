@@ -94,7 +94,7 @@ namespace Dandraka.Zoro.Tests
             MaskConfig.SaveConfig(testConfigFile, config);
 
             // test writing
-            Assert.True(File.Exists(utility.TestInstanceConfigfile));
+            Assert.True(File.Exists(utility.TestInstanceConfigCSVfile));
 
             // test reading
             var config2 = MaskConfig.ReadConfig(testConfigFile);
@@ -106,7 +106,7 @@ namespace Dandraka.Zoro.Tests
         [Fact]
         public void T02_Read_Config_Test()
         {
-            var config = MaskConfig.ReadConfig(utility.TestInstanceConfigfile);
+            var config = MaskConfig.ReadConfig(utility.TestInstanceConfigCSVfile);
 
             Assert.Equal(2, config.FieldMasks.Count);
         }

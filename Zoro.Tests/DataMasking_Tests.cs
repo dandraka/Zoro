@@ -9,7 +9,7 @@ namespace Dandraka.Zoro.Tests
     /// <summary>
     /// Tests for the <c>DataMasking</c> class.
     /// </summary>
-    public class DataMasking_Tests: IDisposable
+    public class DataMasking_Tests : IDisposable
     {
         private Utility utility = new Utility();
 
@@ -27,14 +27,14 @@ namespace Dandraka.Zoro.Tests
         [Fact]
         public void T01_Mask_CSV_Test()
         {
-            var config = MaskConfig.ReadConfig(utility.TestInstanceConfigfile);
+            var config = MaskConfig.ReadConfig(utility.TestInstanceConfigCSVfile);
             //Console.WriteLine($"Config: InputFile = {config.InputFile}");
             //Console.WriteLine($"Config: OutputFile = {config.OutputFile}");
             var masker = new DataMasking(config);
             masker.Mask();
 
             Assert.True(File.Exists(config.OutputFile));
-            var contents = new List<string>(File.ReadLines(config.OutputFile));            
+            var contents = new List<string>(File.ReadLines(config.OutputFile));
             Assert.Equal(5, contents.Count);
         }
 
@@ -42,7 +42,7 @@ namespace Dandraka.Zoro.Tests
         public void T02_Mask_DB_Test()
         {
             var config = new MaskConfig()
-            {                
+            {
                 DataSource = DataSource.Database,
                 SqlSelect = $"SELECT * FROM {utility.TestTableName}",
                 OutputFile = Path.Combine(utility.TestInstanceDir, "maskeddata_db_02.csv")
@@ -52,29 +52,29 @@ namespace Dandraka.Zoro.Tests
             config.FieldMasks.Add(new FieldMask() { FieldName = "BankAccount", MaskType = MaskType.Asterisk });
             config.FieldMasks.Add(new FieldMask() { FieldName = "Country", MaskType = MaskType.None });
             config.FieldMasks.Add(new FieldMask() { FieldName = "Address", MaskType = MaskType.List });
-            config.FieldMasks[3].ListOfPossibleReplacements.Add(new Replacement() 
-                { Selector = "country=CH", ReplacementList="Bahnhofstrasse 41,Hauptstrasse 8,Berggasse 4" });
-            config.FieldMasks[3].ListOfPossibleReplacements.Add(new Replacement() 
-                { Selector = "country=GR", ReplacementList="Evangelistrias 22,Thessalias 47,Eparhiaki Odos Lefkogion 6" });
-            config.FieldMasks[3].ListOfPossibleReplacements.Add(new Replacement() 
-                { Selector = "", ReplacementList="Main Street 9,Fifth Avenue 104,Ranch rd. 1" });                
+            config.FieldMasks[3].ListOfPossibleReplacements.Add(new Replacement()
+            { Selector = "country=CH", ReplacementList = "Bahnhofstrasse 41,Hauptstrasse 8,Berggasse 4" });
+            config.FieldMasks[3].ListOfPossibleReplacements.Add(new Replacement()
+            { Selector = "country=GR", ReplacementList = "Evangelistrias 22,Thessalias 47,Eparhiaki Odos Lefkogion 6" });
+            config.FieldMasks[3].ListOfPossibleReplacements.Add(new Replacement()
+            { Selector = "", ReplacementList = "Main Street 9,Fifth Avenue 104,Ranch rd. 1" });
 
             var masker = new DataMasking(config);
             try
             {
-                 masker.Mask();
+                masker.Mask();
             }
             catch (System.Data.SqlClient.SqlException ex)
             {
                 // error 40 - could not open connection to sql server
                 Skip.If(ex.Message.Contains("40"), $"Database seems not to respond, check if your SQL Server is running. {ex.Message}");
-            }            
+            }
 
             Assert.True(File.Exists(config.OutputFile));
-            var contents = new List<string>(File.ReadLines(config.OutputFile));   
+            var contents = new List<string>(File.ReadLines(config.OutputFile));
             Console.WriteLine($"Contents of {config.OutputFile}");
             contents.ForEach(x => Console.WriteLine(x));
-            Assert.Equal(5, contents.Count);            
+            Assert.Equal(5, contents.Count);
         }
 
         [Fact]
@@ -100,7 +100,7 @@ namespace Dandraka.Zoro.Tests
             var maskContents = new List<string>(csvContent.Split("\r\n"));
             var contents = new List<string>(File.ReadLines(config.OutputFile));
             Assert.Equal(4, contents.Count);
-            for(int i = 0; i < contents.Count; i++)
+            for (int i = 0; i < contents.Count; i++)
             {
                 Assert.Equal(maskContents[i], contents[i]);
             }
@@ -130,7 +130,7 @@ namespace Dandraka.Zoro.Tests
             var maskContents = new List<string>(csvMaskedContent.Split("\r\n"));
             var contents = new List<string>(File.ReadLines(config.OutputFile));
             Assert.Equal(4, contents.Count);
-            for(int i = 0; i < contents.Count; i++)
+            for (int i = 0; i < contents.Count; i++)
             {
                 Assert.Equal(maskContents[i], contents[i]);
             }
@@ -162,11 +162,11 @@ namespace Dandraka.Zoro.Tests
             var maskContents = new List<string>(csvMaskedContent.Split("\r\n"));
             var contents = new List<string>(File.ReadLines(config.OutputFile));
             Assert.Equal(4, contents.Count);
-            for(int i = 0; i < contents.Count; i++)
+            for (int i = 0; i < contents.Count; i++)
             {
                 Assert.Equal(maskContents[i], contents[i]);
             }
-        }    
+        }
 
         [Fact]
         public void T07_Mask_MaskType_Similar_Test()
@@ -190,13 +190,13 @@ namespace Dandraka.Zoro.Tests
             Assert.True(File.Exists(config.OutputFile));
             var contents = new List<string>(File.ReadLines(config.OutputFile));
             Assert.Equal(4, contents.Count);
-            for(int i = 1; i < contents.Count; i++)
+            for (int i = 1; i < contents.Count; i++)
             {
                 var items = contents[i].Split(';');
                 // id
                 Assert.Equal(i.ToString(), items[0]);
             }
-        }                
+        }
 
         [Fact]
         public void T08_Mask_MaskType_Query_Test()
@@ -239,7 +239,7 @@ namespace Dandraka.Zoro.Tests
                 SELECT 'Trikala'  AS city, 'GR' as country UNION ALL 
                 SELECT 'Patra'    AS city, 'GR' as country";
             cmdTbl.ExecuteNonQuery();
-            utility.TestTablesToDrop = "cities";                        
+            utility.TestTablesToDrop = "cities";
 
             // ===== Act
             var masker = new DataMasking(config);
@@ -249,10 +249,10 @@ namespace Dandraka.Zoro.Tests
             Assert.True(File.Exists(config.OutputFile));
             var contents = new List<string>(File.ReadLines(config.OutputFile));
             Assert.Equal(6, contents.Count);
-            for(int i = 1; i < contents.Count; i++)
+            for (int i = 1; i < contents.Count; i++)
             {
                 var items = contents[i].Split(';');
-                
+
                 string id = items[0];
                 string city = items[2];
                 string country = items[3];
@@ -274,11 +274,102 @@ namespace Dandraka.Zoro.Tests
                         break;
                     case "GR":
                         Assert.Contains<string>(city, new string[] { "Rethimno", "Trikala", "Patra" });
-                        break;                                                                        
+                        break;
                     default:
                         throw new NotSupportedException($"Unexpected country {country} found");
                 }
             }
-        }                        
+        }
+
+        [Fact]
+        public void T09_Mask_JSON_Array_Test()
+        {
+            var config = MaskConfig.ReadConfig(utility.TestInstanceConfigJSONfile);
+            //Console.WriteLine($"Config: InputFile = {config.InputFile}");
+            //Console.WriteLine($"Config: OutputFile = {config.OutputFile}");
+            var masker = new DataMasking(config);
+            masker.Mask();
+
+            Assert.True(File.Exists(config.OutputFile));
+            var contents = new List<string>(File.ReadLines(config.OutputFile));
+            Assert.Equal(20, contents.Count);
+
+            /*
+            [
+              {
+                "name": "Xtekpoqsuf Sunqw",
+                "salary": "******",
+                "married": "True",
+                "spouse": "Athina Lefkogianaki"
+              },
+              {
+                "name": "Xkipbe Wirlje",
+                "salary": "******",
+                "married": "True",
+                "spouse": "Eleni Koufaki"
+              },
+              {
+                "name": "Gagac Dxalfo",
+                "salary": "*****",
+                "married": "False",
+                "spouse": ""
+              }
+            ]
+            */
+        }
+
+        [Fact]
+        public void T10_Mask_JSON_SingleElement_Test()
+        {
+            var config = MaskConfig.ReadConfig(utility.TestInstanceConfigJSONfile);
+            config.InputFile = config.InputFile.Replace("data2.json", "data3.json");
+            config.OutputFile = config.InputFile.Replace("data2.json", "data3.json");
+            //Console.WriteLine($"Config: InputFile = {config.InputFile}");
+            //Console.WriteLine($"Config: OutputFile = {config.OutputFile}");
+            var masker = new DataMasking(config);
+            masker.Mask();
+
+            Assert.True(File.Exists(config.OutputFile));
+            var contents = new List<string>(File.ReadLines(config.OutputFile));
+            Assert.Equal(8, contents.Count);
+
+            /*
+            [
+              {
+                "name": "Qqurlejhol Xaxll",
+                "salary": "******",
+                "married": "True",
+                "spouse": "Athina Lefkogianaki"
+              }
+            ]
+            */
+        }
+
+        [Fact]
+        public void T11_Mask_JSON_SingleElement_NoHeader_Test()
+        {
+            var config = MaskConfig.ReadConfig(utility.TestInstanceConfigJSONfile);
+            config.InputFile = config.InputFile.Replace("data2.json", "data4.json");
+            config.OutputFile = config.InputFile.Replace("data2.json", "data4.json");
+            //Console.WriteLine($"Config: InputFile = {config.InputFile}");
+            //Console.WriteLine($"Config: OutputFile = {config.OutputFile}");
+            var masker = new DataMasking(config);
+            masker.Mask();
+
+            Assert.True(File.Exists(config.OutputFile));
+            var contents = new List<string>(File.ReadLines(config.OutputFile));
+            Assert.Equal(8, contents.Count);
+
+            /*
+            [
+              {
+                "name": "Qqurlejhol Xaxll",
+                "salary": "******",
+                "married": "True",
+                "spouse": "Athina Lefkogianaki"
+              }
+            ]
+            */
+        }
     }
 }

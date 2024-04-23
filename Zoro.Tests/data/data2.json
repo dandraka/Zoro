@@ -1,0 +1,26 @@
+[ 
+	{
+		"employee": {
+			"name": "Aleksander Singh",
+			"salary": 117300,
+			"married": true,
+			"spouse": "Ingrid Díaz"
+		}
+	},
+	{
+		"employee": {
+			"name": "Alicja Bakshi",
+			"salary": 145600,
+			"married": true,
+			"spouse": "Ellinore Alvarez"
+		}
+	},
+	{
+		"employee": {
+			"name": "Jakub Sharma",
+			"salary": 78400,
+			"married": false,
+			"spouse": null
+		}
+	}
+]  

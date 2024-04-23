@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<MaskConfig xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <FieldMasks>
+    <FieldMask>
+      <FieldName>name</FieldName>
+      <MaskType>Similar</MaskType>
+    </FieldMask>
+    <FieldMask>
+      <FieldName>salary</FieldName>
+      <MaskType>Asterisk</MaskType>
+    </FieldMask>
+    <FieldMask>
+      <FieldName>spouse</FieldName>
+      <MaskType>List</MaskType>
+		<ListOfPossibleReplacements>
+			<Replacement Selector="" List="Eleni Koufaki,Athina Lefkogianaki,Mihaela Papadomanolaki" />
+		</ListOfPossibleReplacements>
+	</FieldMask>	  
+  </FieldMasks>
+  <InputFile>%TestInstanceDir%\data2.json</InputFile>
+  <OutputFile>%TestInstanceDir%\maskedata2.json</OutputFile>
+  <Delimiter>;</Delimiter>
+  <DataSource>JsonFile</DataSource>
+  <DataDestination>JsonFile</DataDestination>
+</MaskConfig>

@@ -5,8 +5,10 @@ using System.Data.Common;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using GenericParsing;
+using Newtonsoft.Json;
 
 namespace Dandraka.Zoro.Processor
 {
@@ -37,7 +39,9 @@ namespace Dandraka.Zoro.Processor
             switch (config.DataSource)
             {
                 case DataSource.CsvFile:
-                    return ReadDataFromFile();
+                    return ReadDataFromCSVFile();
+                case DataSource.JsonFile:
+                    return ReadDataFromJSONFile();
                 case DataSource.Database:
                     return ReadDataFromDb();
                 default:
@@ -50,7 +54,10 @@ namespace Dandraka.Zoro.Processor
             switch (config.DataDestination)
             {
                 case DataDestination.CsvFile:
-                    SaveDataToFile(dt);
+                    SaveDataToCSVFile(dt);
+                    break;
+                case DataDestination.JsonFile:
+                    SaveDataToJSONFile(dt);
                     break;
                 case DataDestination.Database:
                     SaveDataToDb(dt);
@@ -325,8 +332,13 @@ namespace Dandraka.Zoro.Processor
             return anon;
         }
 
-        private DataTable ReadDataFromFile()
+        private DataTable ReadDataFromCSVFile()
         {
+            if (!File.Exists(config.InputFile))
+            {
+                throw new FileNotFoundException(config.InputFile);
+            }
+
             var tbl = new DataTable();
 
             using (var parser = new GenericParser())
@@ -372,7 +384,140 @@ namespace Dandraka.Zoro.Processor
             return tbl;
         }
 
-        private void SaveDataToFile(DataTable dt)
+        private DataTable ReadDataFromJSONFile()
+        {
+            if (!File.Exists(config.InputFile))
+            {
+                throw new FileNotFoundException(config.InputFile);
+            }
+
+            var tbl = new DataTable();
+
+            string json = File.ReadAllText(config.InputFile);
+
+            var jsonData = System.Text.Json.JsonSerializer.Deserialize<JsonElement>(json);
+
+            switch (jsonData.ValueKind)
+            {
+                case JsonValueKind.Object:
+                    // generate 1 row
+                    AddJSONData(jsonData, ref tbl);
+                    break;
+                case JsonValueKind.Array:
+                    // generate multiple rows
+                    var itemsList = jsonData.EnumerateArray().ToList();
+                    foreach (var item in itemsList)
+                    {
+                        AddJSONData(item, ref tbl);
+                    }
+                    break;
+                default:
+                    throw new NotSupportedException($"JSON type {Enum.GetName(typeof(JsonValueKind), jsonData.ValueKind)} is not supported at this level.");
+            }
+
+            //    bool doSetup = true;
+            //
+            //    while (parser.Read())
+            //    {
+            //
+            //        if (doSetup)
+            //        {
+            //            for (int i = 0; i < parser.ColumnCount; i++)
+            //            {
+            //                string colName = parser.GetColumnName(i);
+            //                tbl.Columns.Add(colName, typeof(string));
+            //            }
+            //            doSetup = false;
+            //        }
+            //
+            //        var row = tbl.NewRow();
+            //        for (int i = 0; i < parser.ColumnCount; i++)
+            //        {
+            //            string colName = parser.GetColumnName(i);
+            //            row[colName] = parser[colName];
+            //        }
+            //        tbl.Rows.Add(row);
+            //    }
+
+            return tbl;
+        }
+
+        private void AddJSONData(JsonElement jsonNode, ref DataTable tbl)
+        {
+            if (jsonNode.ValueKind != JsonValueKind.Object)
+            {
+                throw new NotSupportedException();
+            }
+
+            if (tbl.Columns.Count == 0)
+            {
+                // do setup
+                List<JsonProperty> childrenListForColumns = null;
+                var topNodeForColumns = jsonNode.EnumerateObject().ToList()[0].Value;
+                if (topNodeForColumns.ValueKind == JsonValueKind.Object)
+                {
+                    childrenListForColumns = jsonNode.EnumerateObject().ToList()[0].Value.EnumerateObject().ToList();
+                }
+                else
+                {
+                    childrenListForColumns = jsonNode.EnumerateObject().ToList();
+                }
+                foreach (var child in childrenListForColumns)
+                {
+                    switch (child.Value.ValueKind)
+                    {
+                        case JsonValueKind.String:
+                        case JsonValueKind.Null:
+                        case JsonValueKind.Number:
+                        case JsonValueKind.True:
+                        case JsonValueKind.False:
+                            tbl.Columns.Add(child.Name, typeof(string));
+                            break;
+                        default:
+                            // skip
+                            break;
+                    }                    
+                }
+            }
+
+            // add row
+            var row = tbl.NewRow();
+            List<JsonProperty> childrenList = null;
+            var topNode = jsonNode.EnumerateObject().ToList()[0].Value;
+            if (topNode.ValueKind == JsonValueKind.Object)
+            {
+                childrenList = jsonNode.EnumerateObject().ToList()[0].Value.EnumerateObject().ToList();
+            }
+            else
+            {
+                childrenList = jsonNode.EnumerateObject().ToList();
+            }
+            foreach (var child in childrenList)
+            {
+                switch (child.Value.ValueKind)
+                {
+                    case JsonValueKind.String:
+                        row[child.Name] = child.Value.GetString();
+                        break;
+                    case JsonValueKind.Null:
+                        row[child.Name] = string.Empty;
+                        break;
+                    case JsonValueKind.Number:
+                        row[child.Name] = child.Value.GetDecimal().ToString();
+                        break;
+                    case JsonValueKind.True:
+                    case JsonValueKind.False:
+                        row[child.Name] = child.Value.GetBoolean().ToString();
+                        break;
+                    default:
+                        // skip
+                        break;
+                }
+            }
+            tbl.Rows.Add(row);
+        }
+
+        private void SaveDataToCSVFile(DataTable dt)
         {
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < dt.Columns.Count; i++)
@@ -402,6 +547,12 @@ namespace Dandraka.Zoro.Processor
 
             File.WriteAllText(config.OutputFile, sb.ToString(), Encoding.UTF8);
 
+        }
+
+        private void SaveDataToJSONFile(DataTable dt)
+        {
+            string json = JsonConvert.SerializeObject(dt, Formatting.Indented);
+            File.WriteAllText(config.OutputFile, json, Encoding.UTF8);
         }
 
         private void SaveDataToDb(DataTable dt)

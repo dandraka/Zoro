@@ -1,6 +1,6 @@
 # Zoro - The masked avenger
 
-Zoro is a data masking and anonymization utility. It fetches data from a database or a CSV file, and either creates a CSV file or runs SQL statements with the masked data.
+Zoro is a data masking and anonymization utility. It fetches data from a database, a JSON or a CSV file, and either creates a JSON file, a CSV file or runs SQL statements with the masked data.
 
 It can be used as a command line program or as a dotnet standard 2.1 library. To run the command line program, simply copy the ```tools``` dir from the Nuget package. Windows and Linux versions, both 64-bit, are available.
 

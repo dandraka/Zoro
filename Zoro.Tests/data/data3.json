@@ -1,0 +1,8 @@
+{
+  "employee": {
+    "name": "Aleksander Singh",
+    "salary": 117300,
+    "married": true,
+    "spouse": "Ingrid Díaz"
+  }
+}

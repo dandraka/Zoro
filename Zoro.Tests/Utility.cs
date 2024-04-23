@@ -14,7 +14,8 @@ namespace Dandraka.Zoro.Tests
     internal class Utility : IDisposable
     {
         public string TestInstanceDir;
-        public string TestInstanceConfigfile;
+        public string TestInstanceConfigCSVfile;
+        public string TestInstanceConfigJSONfile;
         public string TestDataDir => Path.Combine(Utility.AssemblyDirectory, "data");
 
         public DbConnection TestDbConnection;
@@ -29,7 +30,8 @@ namespace Dandraka.Zoro.Tests
         {
             TestInstanceDir = Path.Combine(Path.GetTempPath(), "Zorotests_" + (Guid.NewGuid().ToString()));
             Directory.CreateDirectory(TestInstanceDir);
-            TestInstanceConfigfile = Path.Combine(TestInstanceDir, "testconfig.xml");
+            TestInstanceConfigCSVfile = Path.Combine(TestInstanceDir, "testconfig.xml");
+            TestInstanceConfigJSONfile = Path.Combine(TestInstanceDir, "testconfigjson.xml");
 
             Console.WriteLine($"TestInstanceDir = {TestInstanceDir}");
         }
@@ -110,13 +112,23 @@ namespace Dandraka.Zoro.Tests
                 //Console.WriteLine($"Copied {filename} to {TestInstanceDir}");
             }
 
-            if (!File.Exists(TestInstanceConfigfile))
+            if (!File.Exists(TestInstanceConfigCSVfile))
             {
-                throw new FileNotFoundException(TestInstanceConfigfile);
+                throw new FileNotFoundException(TestInstanceConfigCSVfile);
             }
-            string configContents = File.ReadAllText(TestInstanceConfigfile);
-            configContents = configContents.Replace("%TestInstanceDir%", TestInstanceDir);
-            File.WriteAllText(TestInstanceConfigfile, configContents);
+
+            if (!File.Exists(TestInstanceConfigJSONfile))
+            {
+                throw new FileNotFoundException(TestInstanceConfigJSONfile);
+            }
+
+            string configContentsCSV = File.ReadAllText(TestInstanceConfigCSVfile);
+            configContentsCSV = configContentsCSV.Replace("%TestInstanceDir%", TestInstanceDir);
+            File.WriteAllText(TestInstanceConfigCSVfile, configContentsCSV);
+
+            string configContentsJSON = File.ReadAllText(TestInstanceConfigJSONfile);
+            configContentsJSON = configContentsJSON.Replace("%TestInstanceDir%", TestInstanceDir);
+            File.WriteAllText(TestInstanceConfigJSONfile, configContentsJSON);
         }
 
         public string CreateFileInTestInstanceDir(string contents, string ext)

@@ -1,6 +1,6 @@
 # Zoro - The masked avenger
 
-Zoro is a data masking and anonymization utility. It fetches data from a database or a CSV file, and either creates a CSV file or runs SQL statements with the masked data.
+Zoro is a data masking and anonymization utility. It fetches data from a database, a JSON or a CSV file, and either creates a JSON file, a CSV file or runs SQL statements with the masked data.
 
 It can be used as a command line program or as a dotnet standard 2.1 library. To run the command line program, simply copy the ```tools``` dir from the Nuget package. Windows and Linux versions, both 64-bit, are available.
 
@@ -124,19 +124,9 @@ ID;Name;BankAccount
     </FieldMask>
     <FieldMask>
       <FieldName>City</FieldName>
-      <MaskType>List</MaskType>
-        <ListOfPossibleReplacements>
-          <Replacement Selector="Country=Netherlands" List="Bergselaan,Schieweg,Nootdorpstraat,Nolensstraat" />
-          <Replacement Selector="Country=Switzerland" List="Bahnhofstrasse,Clarahofweg,Sperrstrasse,Erlenstrasse" />
-          <Replacement Selector="Country=Liechtenstein" List="Lettstrasse,Bangarten,Beckagässli,Haldenweg" />
-          <Replacement Selector="Country=Germany" List="Bahnhofstraße,Freigaße,Hauptstraße" />
-          <Replacement Selector="Country=Belgium" List="Rue d'Argent,Rue d'Assaut,Rue de l'Ecuyer,Rue du Persil" />
-          <Replacement Selector="Country=Austria" List="Miesbachgasse,Kleine Pfarrgasse,Heinestraße" />
-          <Replacement Selector="Country=France" List="Rue Nationale,Boulevard Vauban,Rue des Stations,Boulevard de la Liberté" />
-          <!--- fallback when nothing matches; MUST be the last one --->
-          <Replacement Selector="" List="Bedford Gardens,Sheffield Terrace,Kensington Palace Gardens" />
-        </ListOfPossibleReplacements>
-    </FieldMask>    
+      <MaskType>Query</MaskType>
+      <QueryReplacement SelectorField="CountryISOCode" GroupField="countrycode" ValueField="cityname" Query="SELECT cityname, countrycode FROM cities" />
+    </FieldMask>  
   </FieldMasks>
   <DataSource>Database</DataSource>
   <DataDestination>Database</DataDestination>

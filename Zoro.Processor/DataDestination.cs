@@ -9,13 +9,18 @@ namespace Dandraka.Zoro.Processor
     public enum DataDestination
     {
         /// <summary>
-        /// The data comes from a csv file.
+        /// The data will be written to a csv file.
         /// </summary>
         CsvFile,
 
         /// <summary>
-        /// The data is obtained by executing a DB query.
+        /// The data will be INSERTed in a db using an SQL query.
         /// </summary>
-        Database
+        Database,
+
+        /// <summary>
+        /// The data will be written to a JSON file.
+        /// </summary>
+        JsonFile
     }
 }

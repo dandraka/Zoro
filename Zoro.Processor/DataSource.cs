@@ -16,6 +16,11 @@ namespace Dandraka.Zoro.Processor
         /// <summary>
         /// The data is obtained by executing a DB query.
         /// </summary>
-        Database
+        Database,
+
+        /// <summary>
+        /// The data comes from a JSON file.
+        /// </summary>
+        JsonFile
     }
 }
