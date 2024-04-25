@@ -2,7 +2,7 @@
 
 Zoro is a data masking and anonymization utility. It fetches data from a database, a JSON or a CSV file, and either creates a JSON file, a CSV file or runs SQL statements with the masked data.
 
-It can be used as a command line program or as a dotnet standard 2.1 library. To run the command line program, simply copy the ```tools``` dir from the Nuget package. Windows and Linux versions, both 64-bit, are available.
+It can be used as a command line program or as a dotnet standard 2.1 library. To run the command line program, simply copy the ```tools``` dir from the [Nuget package](https://www.nuget.org/packages/Dandraka.Zoro). Windows and Linux versions, both 64-bit, are available.
 
 ## Usage:
 
@@ -138,6 +138,10 @@ ID;Name;BankAccount
 ```
 
 If using a database to write data (DataDestination=Database), the number of parameters in SqlCommand ($field) must match the number of FieldMasks.
+
+### Developer documentation
+
+Please see the [generated docs](https://github.com/dandraka/Zoro/blob/master/docs/Zoro.Processor.md).
 
 ### Note:
 
