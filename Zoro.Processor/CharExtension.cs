@@ -7,7 +7,7 @@ namespace Dandraka.Zoro.Processor
     /// </summary>
     public static class CharExtension
     {
-        private static Random rnd = new Random(DateTime.Now.Millisecond);
+        private static readonly Random rnd = new Random(DateTime.Now.Millisecond);
 
         /// <summary>
         /// Returns true if the character is a vowel.

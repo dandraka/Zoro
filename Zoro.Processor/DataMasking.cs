@@ -46,17 +46,13 @@ namespace Dandraka.Zoro.Processor
 
         private DataTable GetData()
         {
-            switch (config.DataSource)
+            return config.DataSource switch
             {
-                case DataSource.CsvFile:
-                    return ReadDataFromCSVFile();
-                case DataSource.JsonFile:
-                    return ReadDataFromJSONFile();
-                case DataSource.Database:
-                    return ReadDataFromDb();
-                default:
-                    throw new NotSupportedException();
-            }
+                DataSource.CsvFile => ReadDataFromCSVFile(),
+                DataSource.JsonFile => ReadDataFromJSONFile(),
+                DataSource.Database => ReadDataFromDb(),
+                _ => throw new NotSupportedException(),
+            };
         }
 
         private void SaveData(DataTable dt)
@@ -157,26 +153,15 @@ namespace Dandraka.Zoro.Processor
                     }
                     else
                     {
-                        switch (fieldMask.MaskType)
+                        s = fieldMask.MaskType switch
                         {
-                            case MaskType.Asterisk:
-                                s = GetAsteriskString(matchData, fieldMask.Asterisk[0]);
-                                break;
-                            case MaskType.Similar:
-                                s = GetSimilarString(matchData);
-                                break;
-                            case MaskType.List:
-                                s = GetStringFromList(row, fieldMask.ListOfPossibleReplacements);
-                                break;
-                            case MaskType.Query:
-                                s = GetStringFromQuery(row, fieldMask.QueryReplacement);
-                                break;
-                            case MaskType.None:
-                                s = matchData;
-                                break;
-                            default:
-                                throw new NotImplementedException($"Mask type {fieldMask.MaskType} is not yet implemented");
-                        }
+                            MaskType.Asterisk => GetAsteriskString(matchData, fieldMask.Asterisk[0]),
+                            MaskType.Similar => GetSimilarString(matchData),
+                            MaskType.List => GetStringFromList(row, fieldMask.ListOfPossibleReplacements),
+                            MaskType.Query => GetStringFromQuery(row, fieldMask.QueryReplacement),
+                            MaskType.None => matchData,
+                            _ => throw new NotImplementedException($"Mask type {fieldMask.MaskType} is not yet implemented"),
+                        };
                     }
                     replaceStr += s;
                 }
@@ -185,27 +170,21 @@ namespace Dandraka.Zoro.Processor
             }
             else
             {
-                switch (fieldMask.MaskType)
+                return fieldMask.MaskType switch
                 {
-                    case MaskType.Asterisk:
-                        return GetAsteriskString(data, fieldMask.Asterisk[0]);
-                    case MaskType.Similar:
-                        return GetSimilarString(data);
-                    case MaskType.List:
-                        return GetStringFromList(row, fieldMask.ListOfPossibleReplacements);
-                    case MaskType.Query:
-                        return GetStringFromQuery(row, fieldMask.QueryReplacement);
-                    case MaskType.None:
-                        return data;
-                    default:
-                        throw new NotImplementedException($"Mask type {fieldMask.MaskType} is not yet implemented");
-                }
+                    MaskType.Asterisk => GetAsteriskString(data, fieldMask.Asterisk[0]),
+                    MaskType.Similar => GetSimilarString(data),
+                    MaskType.List => GetStringFromList(row, fieldMask.ListOfPossibleReplacements),
+                    MaskType.Query => GetStringFromQuery(row, fieldMask.QueryReplacement),
+                    MaskType.None => data,
+                    _ => throw new NotImplementedException($"Mask type {fieldMask.MaskType} is not yet implemented"),
+                };
             }
         }
 
         private string GetSimilarString(string data)
         {
-            Func<char, char> method = (c) =>
+            char method(char c)
             {
                 if (Char.IsDigit(c))
                 {
@@ -229,14 +208,14 @@ namespace Dandraka.Zoro.Processor
                     }
                     return a;
                 }
-            };
-            return getReplacedString(data, method);
+            }
+            return GetReplacedString(data, method);
         }
 
         private string GetAsteriskString(string data, char asterisk)
         {
-            Func<char, char> method = (c) => { return asterisk; };
-            return getReplacedString(data, method);
+            char method(char c) { return asterisk; }
+            return GetReplacedString(data, method);
         }
 
         private string GetStringFromList(DataRow row, List<Replacement> listOfReplacements)
@@ -323,7 +302,7 @@ namespace Dandraka.Zoro.Processor
             return GetStringFromList(row, queryReplacement.ListOfPossibleReplacements);
         }
 
-        private string getReplacedString(string data, Func<char, char> method)
+        private string GetReplacedString(string data, Func<char, char> method)
         {
             string anon = string.Empty;
 
@@ -437,9 +416,9 @@ namespace Dandraka.Zoro.Processor
 
             if (tbl.Columns.Count == 0)
             {
-                // do setup
-                List<JsonProperty> childrenListForColumns = null;
                 var topNodeForColumns = jsonNode.EnumerateObject().ToList()[0].Value;
+                // do setup
+                List<JsonProperty> childrenListForColumns;
                 if (topNodeForColumns.ValueKind == JsonValueKind.Object)
                 {
                     childrenListForColumns = jsonNode.EnumerateObject().ToList()[0].Value.EnumerateObject().ToList();
@@ -501,8 +480,8 @@ namespace Dandraka.Zoro.Processor
 
             // add row
             var row = tbl.NewRow();
-            List<JsonProperty> childrenList = null;
             var topNode = jsonNode.EnumerateObject().ToList()[0].Value;
+            List<JsonProperty> childrenList;
             if (topNode.ValueKind == JsonValueKind.Object)
             {
                 childrenList = jsonNode.EnumerateObject().ToList()[0].Value.EnumerateObject().ToList();

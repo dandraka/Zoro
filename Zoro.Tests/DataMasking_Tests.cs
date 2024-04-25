@@ -11,7 +11,11 @@ namespace Dandraka.Zoro.Tests
     /// </summary>
     public class DataMasking_Tests : IDisposable
     {
-        private Utility utility = new Utility();
+        private readonly Utility utility = new();
+        private static readonly string[] CHcities = ["Geneva", "Bern", "Thun"];
+        private static readonly string[] DEcities = ["Köln", "Berlin", "Hamburg"];
+        private static readonly string[] ITcities = ["Roma", "Venezia", "Milano"];
+        private static readonly string[] GRCities = ["Rethimno", "Trikala", "Patra"];
 
         public DataMasking_Tests()
         {
@@ -21,7 +25,8 @@ namespace Dandraka.Zoro.Tests
 
         public void Dispose()
         {
-            this.utility.Dispose();
+            utility.Dispose();
+            GC.SuppressFinalize(this);
         }
 
         [Fact]
@@ -264,16 +269,16 @@ namespace Dandraka.Zoro.Tests
                 switch (country)
                 {
                     case "CH":
-                        Assert.Contains<string>(city, new string[] { "Geneva", "Bern", "Thun" });
+                        Assert.Contains<string>(city, CHcities);
                         break;
                     case "DE":
-                        Assert.Contains<string>(city, new string[] { "Köln", "Berlin", "Hamburg" });
+                        Assert.Contains<string>(city, DEcities);
                         break;
                     case "IT":
-                        Assert.Contains<string>(city, new string[] { "Roma", "Venezia", "Milano" });
+                        Assert.Contains<string>(city, ITcities);
                         break;
                     case "GR":
-                        Assert.Contains<string>(city, new string[] { "Rethimno", "Trikala", "Patra" });
+                        Assert.Contains<string>(city, GRCities);
                         break;
                     default:
                         throw new NotSupportedException($"Unexpected country {country} found");
