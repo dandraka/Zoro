@@ -1,0 +1,1 @@
+xmldocmd .\bin\Debug\netstandard2.1\Zoro.Processor.dll ..\docs --namespace-pages  --clean
