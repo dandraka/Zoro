@@ -6,11 +6,15 @@ using System.Threading.Tasks;
 
 namespace Dandraka.Zoro.Processor
 {
+    /// <summary>
+    /// Specifies where the data should be sent to.
+    /// </summary>
     public enum DataDestination
     {
         /// <summary>
         /// The data will be written to a csv file.
         /// </summary>
+        ///
         CsvFile,
 
         /// <summary>

@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace Dandraka.Zoro.Processor
 {
+    /// <summary>
+    /// Specifies where the data is coming from.
+    /// </summary>
     public enum DataSource
     {
         /// <summary>

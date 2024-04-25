@@ -12,6 +12,9 @@ using Newtonsoft.Json;
 
 namespace Dandraka.Zoro.Processor
 {
+    /// <summary>
+    /// Main masking class, this is where the job is done.
+    /// </summary>
     public class DataMasking
     {
         private readonly MaskConfig config;
@@ -20,11 +23,18 @@ namespace Dandraka.Zoro.Processor
 
         private char DbParamChar => this.config.GetConnection().GetType().ToString() == "System.Data.SqlClient.SqlConnection" ? '@' : '$';
 
+        /// <summary>
+        /// Creates an instance of DataMasking class.
+        /// </summary>
+        /// <param name="config"></param>
         public DataMasking(MaskConfig config)
         {
             this.config = config;
         }
 
+        /// <summary>
+        /// Performs masking.
+        /// </summary>
         public void Mask()
         {
             var dt = GetData();

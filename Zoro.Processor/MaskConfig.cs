@@ -4,6 +4,10 @@ using System.Data.Common;
 
 namespace Dandraka.Zoro.Processor
 {
+    /// <summary>
+    /// Class that keeps all configuration info for a masking job, 
+    /// including the collection of <c>FieldMask</c> objects.
+    /// </summary>
     [Serializable]
     public class MaskConfig
     {
@@ -24,7 +28,6 @@ namespace Dandraka.Zoro.Processor
         /// Read the configuration from a file.
         /// </summary>
         /// <param name="configfile"></param>
-        /// <param name="config"></param>
         public static MaskConfig ReadConfig(string configfile)
         {
             var ser = new System.Xml.Serialization.XmlSerializer(typeof(MaskConfig));
@@ -35,6 +38,9 @@ namespace Dandraka.Zoro.Processor
             return config;
         }
 
+        /// <summary>
+        /// Creates an instance of MaskConfig class.
+        /// </summary>
         public MaskConfig()
         {
             this.DataSource = DataSource.CsvFile;
@@ -103,7 +109,7 @@ namespace Dandraka.Zoro.Processor
         /// Examples:
         /// System.Data.Odbc, System.Data.OleDb, System.Data.SQLite, 
         /// System.Data.OracleClient, System.Data.SqlClient.
-        /// See <seealso cref="https://downloads.teradata.com/blog/netfx/2010/12/dbproviderfactories-demystified"/>
+        /// See also https://downloads.teradata.com/blog/netfx/2010/12/dbproviderfactories-demystified
         /// for more info.
         /// </summary>
         // TODO test for different db types
