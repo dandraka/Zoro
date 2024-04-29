@@ -16,7 +16,7 @@ namespace Dandraka.Zoro.Tests
         public string TestInstanceDir;
         public string TestInstanceConfigCSVfile;
         public string TestInstanceConfigJSONfile;
-        public string TestDataDir => Path.Combine(Utility.AssemblyDirectory, "data");
+        public static string TestDataDir => Path.Combine(Utility.AssemblyDirectory, "data");
 
         public DbConnection TestDbConnection;
 
@@ -191,7 +191,7 @@ namespace Dandraka.Zoro.Tests
         internal static string DumpDataTable(DataTable table)
         {
             string data = string.Empty;
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new();
 
             if (null != table && null != table.Rows)
             {

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using Xunit;
 using Dandraka.Zoro.Processor;
+using Newtonsoft.Json.Linq;
 
 namespace Dandraka.Zoro.Tests
 {
@@ -289,92 +290,97 @@ namespace Dandraka.Zoro.Tests
         [Fact]
         public void T09_Mask_JSON_Array_Test()
         {
+            // === Arrange ===
             var config = MaskConfig.ReadConfig(utility.TestInstanceConfigJSONfile);
-            //Console.WriteLine($"Config: InputFile = {config.InputFile}");
-            //Console.WriteLine($"Config: OutputFile = {config.OutputFile}");
+
+            // === Act ===
             var masker = new DataMasking(config);
             masker.Mask();
 
+            // === Assert ===
             Assert.True(File.Exists(config.OutputFile));
+            var contentsOrig = new List<string>(File.ReadLines(config.InputFile));
             var contents = new List<string>(File.ReadLines(config.OutputFile));
-            Assert.Equal(20, contents.Count);
+            Assert.Equal(contentsOrig.Count, contents.Count);
 
-            /*
-            [
-              {
-                "name": "Xtekpoqsuf Sunqw",
-                "salary": "******",
-                "married": "True",
-                "spouse": "Athina Lefkogianaki"
-              },
-              {
-                "name": "Xkipbe Wirlje",
-                "salary": "******",
-                "married": "True",
-                "spouse": "Eleni Koufaki"
-              },
-              {
-                "name": "Gagac Dxalfo",
-                "salary": "*****",
-                "married": "False",
-                "spouse": ""
-              }
-            ]
-            */
+            var jsonObjOrig = JArray.Parse(File.ReadAllText(config.InputFile));
+            var jsonObjMasked = JArray.Parse(File.ReadAllText(config.OutputFile));
+            string orig = jsonObjOrig[0]["employee"].Value<string>("name");
+            string masked = jsonObjMasked[0]["employee"].Value<string>("name");
+            Assert.NotEqual(orig, masked);
         }
 
         [Fact]
         public void T10_Mask_JSON_SingleElement_Test()
         {
+            // === Arrange ===
             var config = MaskConfig.ReadConfig(utility.TestInstanceConfigJSONfile);
             config.InputFile = config.InputFile.Replace("data2.json", "data3.json");
-            config.OutputFile = config.InputFile.Replace("data2.json", "data3.json");
-            //Console.WriteLine($"Config: InputFile = {config.InputFile}");
-            //Console.WriteLine($"Config: OutputFile = {config.OutputFile}");
+            config.OutputFile = config.OutputFile.Replace("data2.json", "data3.json");
+
+            // === Act ===
             var masker = new DataMasking(config);
             masker.Mask();
 
+            // === Assert ===
             Assert.True(File.Exists(config.OutputFile));
+            var contentsOrig = new List<string>(File.ReadLines(config.InputFile));
             var contents = new List<string>(File.ReadLines(config.OutputFile));
-            Assert.Equal(8, contents.Count);
+            Assert.Equal(contentsOrig.Count, contents.Count);
 
-            /*
-            [
-              {
-                "name": "Qqurlejhol Xaxll",
-                "salary": "******",
-                "married": "True",
-                "spouse": "Athina Lefkogianaki"
-              }
-            ]
-            */
+            var jsonObjOrig = JObject.Parse(File.ReadAllText(config.InputFile));
+            var jsonObjMasked = JObject.Parse(File.ReadAllText(config.OutputFile));
+            string orig = jsonObjOrig["employee"].Value<string>("name");
+            string masked = jsonObjMasked["employee"].Value<string>("name");
+            Assert.NotEqual(orig, masked);
         }
 
         [Fact]
         public void T11_Mask_JSON_SingleElement_NoHeader_Test()
         {
+            // === Arrange ===
             var config = MaskConfig.ReadConfig(utility.TestInstanceConfigJSONfile);
             config.InputFile = config.InputFile.Replace("data2.json", "data4.json");
-            config.OutputFile = config.InputFile.Replace("data2.json", "data4.json");
-            //Console.WriteLine($"Config: InputFile = {config.InputFile}");
-            //Console.WriteLine($"Config: OutputFile = {config.OutputFile}");
+            config.OutputFile = config.OutputFile.Replace("data2.json", "data4.json");
+
+            // === Act ===
             var masker = new DataMasking(config);
             masker.Mask();
 
-            Assert.True(File.Exists(config.OutputFile));
+            // === Assert ===
+            var contentsOrig = new List<string>(File.ReadLines(config.InputFile));
             var contents = new List<string>(File.ReadLines(config.OutputFile));
-            Assert.Equal(8, contents.Count);
+            Assert.Equal(contentsOrig.Count, contents.Count);
 
-            /*
-            [
-              {
-                "name": "Qqurlejhol Xaxll",
-                "salary": "******",
-                "married": "True",
-                "spouse": "Athina Lefkogianaki"
-              }
-            ]
-            */
+            var jsonObjOrig = JObject.Parse(File.ReadAllText(config.InputFile));
+            var jsonObjMasked = JObject.Parse(File.ReadAllText(config.OutputFile));
+            string orig = jsonObjOrig.Value<string>("name");
+            string masked = jsonObjMasked.Value<string>("name");
+            Assert.NotEqual(orig, masked);
+        }
+
+        [Fact]
+        public void T12_Mask_JSON_Deep_Test()
+        {
+            // === Arrange ===
+            var config = MaskConfig.ReadConfig(utility.TestInstanceConfigJSONfile);
+            config.InputFile = config.InputFile.Replace("data2.json", "nested2WithArray.json");
+            config.OutputFile = config.OutputFile.Replace("data2.json", "nested2WithArray.json");
+
+            // === Act ===
+            var masker = new DataMasking(config);
+            masker.Mask();
+
+            // === Assert ===
+            var contentsOrig = new List<string>(File.ReadLines(config.InputFile));
+            var contents = new List<string>(File.ReadLines(config.OutputFile));
+            Assert.Equal(contentsOrig.Count, contents.Count);
+
+            var jsonObjOrig = JObject.Parse(File.ReadAllText(config.InputFile));
+            var jsonObjMasked = JObject.Parse(File.ReadAllText(config.OutputFile));
+            string orig = jsonObjOrig["data"][0]["categories"][0].Value<string>("CategoryName");
+            string masked = jsonObjMasked["data"][0]["categories"][0].Value<string>("CategoryName");
+            Assert.NotEqual(orig, masked);
         }
     }
 }

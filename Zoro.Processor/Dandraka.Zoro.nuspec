@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
   <metadata>
     <id>Dandraka.Zoro</id>
-    <version>2.1.4</version>
+    <version>2.2.1</version>
     <authors>Jim (Dimitrios) Andrakakis</authors>
     <requireLicenseAcceptance>true</requireLicenseAcceptance>
     <icon>icon.png</icon>
@@ -13,7 +13,7 @@
       The library can be used both in a dotnet standard 2.1 library and also as a command line utility. 
       You can copy the tools directory to use the tool as a standalone program for Windows and Linux, both 64bit.</description>
     <releaseNotes>
-		Added basic JSON support. 
+		Added full JSON support. 
 		Added developer docs. 
 		Addressed SQL Data Provider Security Feature Bypass Vulnerability CVE-2024-0056 on Microsoft.Data.SqlClient and System.Data.SqlClient
 	</releaseNotes>

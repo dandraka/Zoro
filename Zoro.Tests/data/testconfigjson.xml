@@ -9,6 +9,10 @@
       <FieldName>salary</FieldName>
       <MaskType>Similar</MaskType>
     </FieldMask>
+	<FieldMask>
+		<FieldName>CategoryName</FieldName>
+		<MaskType>Similar</MaskType>
+	</FieldMask>	  
     <FieldMask>
       <FieldName>spouse</FieldName>
       <MaskType>List</MaskType>

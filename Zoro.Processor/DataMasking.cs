@@ -1,14 +1,15 @@
-﻿﻿using System;
+﻿using GenericParsing;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Serialization;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Text.Json;
 using System.Text.RegularExpressions;
-using GenericParsing;
-using Newtonsoft.Json;
 
 namespace Dandraka.Zoro.Processor
 {
@@ -37,14 +38,85 @@ namespace Dandraka.Zoro.Processor
         /// </summary>
         public void Mask()
         {
-            var dt = GetData();
+            object dt = GetData();
 
-            AnonymizeTable(dt);
+            switch (config.DataSource)
+            {
+                // flat types
+                case DataSource.CsvFile:
+                case DataSource.Database:
+                    AnonymizeFlatData((DataTable)dt);                    
+                    break;
+                // nested types
+                case DataSource.JsonFile:
+                    AnonymizeJSONData((JContainer)dt);
+                    break;
+                default:
+                    throw new NotImplementedException($"{Enum.GetName(typeof(DataSource), config.DataSource)} is not implemented");
+            }
 
             SaveData(dt);
         }
 
-        private DataTable GetData()
+        private void AnonymizeJSONData(JContainer jsonContainer)
+        {
+            switch (jsonContainer.GetType().Name)
+            {
+                case "JArray":
+                    foreach (var jsonItem in (JArray)jsonContainer)
+                    {
+                        foreach (JProperty c in (JToken)jsonItem)
+                        {
+                            AnonymizeJSONProperty(c);
+                        }
+                    }
+                    break;
+                case "JObject":
+                    foreach (JProperty c in (JToken)jsonContainer)
+                    {
+                        AnonymizeJSONProperty(c);
+                    }
+                    break;
+                default:
+                    throw new NotImplementedException(jsonContainer.GetType().FullName);
+            }
+        }
+
+        private void AnonymizeJSONProperty(JProperty c)
+        {
+            string colName = c.Name;
+            string value = Convert.ToString(c.Value);
+            var fieldMask = config.FieldMasks.FirstOrDefault(x => x.FieldName == colName);
+            if (fieldMask != null)
+            {
+                switch (c.Value.Type)
+                {
+                    case JTokenType.Integer:
+                        string i = GetMaskedString(value, fieldMask, null);
+                        c.Value = Convert.ToInt32(i);
+                        break;
+                    case JTokenType.Float:
+                        string f = GetMaskedString(value, fieldMask, null);
+                        c.Value = Convert.ToDecimal(f);
+                        break;
+                    default:
+                        // treat non-numbers as strings
+                        string s = GetMaskedString(value, fieldMask, null);
+                        c.Value = s;
+                        break;
+                }
+            }            
+
+            if (c.HasValues)
+            {
+                foreach (var jsonChild in c.Children().OfType<JContainer>())
+                {
+                    AnonymizeJSONData((JContainer)jsonChild);
+                }
+            }
+        }
+
+        private object GetData()
         {
             return config.DataSource switch
             {
@@ -55,18 +127,18 @@ namespace Dandraka.Zoro.Processor
             };
         }
 
-        private void SaveData(DataTable dt)
+        private void SaveData(object dt)
         {
             switch (config.DataDestination)
             {
                 case DataDestination.CsvFile:
-                    SaveDataToCSVFile(dt);
+                    SaveDataToCSVFile((DataTable)dt);
                     break;
                 case DataDestination.JsonFile:
-                    SaveDataToJSONFile(dt);
+                    SaveDataToJSONFile((JContainer)dt);
                     break;
                 case DataDestination.Database:
-                    SaveDataToDb(dt);
+                    SaveDataToDb((DataTable)dt);
                     break;
                 default:
                     throw new NotSupportedException();
@@ -112,7 +184,7 @@ namespace Dandraka.Zoro.Processor
             return dt;
         }
 
-        private void AnonymizeTable(DataTable dt)
+        private void AnonymizeFlatData(DataTable dt)
         {
             for (int r = 0; r < dt.Rows.Count; r++)
             {
@@ -373,146 +445,27 @@ namespace Dandraka.Zoro.Processor
             return tbl;
         }
 
-        private DataTable ReadDataFromJSONFile()
+        private JContainer ReadDataFromJSONFile()
         {
             if (!File.Exists(config.InputFile))
             {
                 throw new FileNotFoundException(config.InputFile);
             }
 
-            var tbl = new DataTable();
-
             string json = File.ReadAllText(config.InputFile);
 
-            var jsonData = System.Text.Json.JsonSerializer.Deserialize<JsonElement>(json);
-
-            switch (jsonData.ValueKind)
+            JContainer jsonObj;
+            try
             {
-                case JsonValueKind.Object:
-                    // generate 1 row
-                    AddJSONData(jsonData, ref tbl);
-                    break;
-                case JsonValueKind.Array:
-                    // generate multiple rows
-                    var itemsList = jsonData.EnumerateArray().ToList();
-                    foreach (var item in itemsList)
-                    {
-                        AddJSONData(item, ref tbl);
-                    }
-                    break;
-                default:
-                    throw new NotSupportedException($"JSON type {Enum.GetName(typeof(JsonValueKind), jsonData.ValueKind)} is not supported at this level.");
+                jsonObj = JObject.Parse(json);
             }
-
-            return tbl;
-        }
-
-        private void AddJSONData(JsonElement jsonNode, ref DataTable tbl)
-        {
-            if (jsonNode.ValueKind != JsonValueKind.Object)
+            catch(JsonReaderException e)
             {
-                throw new NotSupportedException();
+                e.ToString();
+                jsonObj = JArray.Parse(json);
             }
-
-            if (tbl.Columns.Count == 0)
-            {
-                var topNodeForColumns = jsonNode.EnumerateObject().ToList()[0].Value;
-                // do setup
-                List<JsonProperty> childrenListForColumns;
-                if (topNodeForColumns.ValueKind == JsonValueKind.Object)
-                {
-                    childrenListForColumns = jsonNode.EnumerateObject().ToList()[0].Value.EnumerateObject().ToList();
-                }
-                else
-                {
-                    childrenListForColumns = jsonNode.EnumerateObject().ToList();
-                }
-                foreach (var child in childrenListForColumns)
-                {
-                    switch (child.Value.ValueKind)
-                    {
-                        /*
-                        case JsonValueKind.String:
-                        case JsonValueKind.Null:
-                        case JsonValueKind.Number:
-                        case JsonValueKind.True:
-                        case JsonValueKind.False:
-                            tbl.Columns.Add(child.Name, typeof(string));
-                            break;
-                        default:
-                            // skip
-                            break;
-                        */
-                        case JsonValueKind.String:
-                        case JsonValueKind.Null:
-                            tbl.Columns.Add(child.Name, typeof(string));
-                            break;
-                        case JsonValueKind.Number:
-                            // int or decimal?                            
-                            try
-                            {
-                                decimal nd = child.Value.GetDecimal();
-                                int ni = child.Value.GetInt32();
-                                if (nd - ni == 0)
-                                {
-                                    tbl.Columns.Add(child.Name, typeof(int));
-                                }
-                                else
-                                {
-                                    tbl.Columns.Add(child.Name, typeof(decimal));
-                                }
-                            }
-                            catch (Exception)
-                            {
-                                tbl.Columns.Add(child.Name, typeof(decimal));
-                            }                                                        
-                            break;
-                        case JsonValueKind.True:
-                        case JsonValueKind.False:
-                            tbl.Columns.Add(child.Name, typeof(bool));
-                            break;
-                        default:
-                            // skip
-                            break;
-                    }                    
-                }
-            }
-
-            // add row
-            var row = tbl.NewRow();
-            var topNode = jsonNode.EnumerateObject().ToList()[0].Value;
-            List<JsonProperty> childrenList;
-            if (topNode.ValueKind == JsonValueKind.Object)
-            {
-                childrenList = jsonNode.EnumerateObject().ToList()[0].Value.EnumerateObject().ToList();
-            }
-            else
-            {
-                childrenList = jsonNode.EnumerateObject().ToList();
-            }
-            foreach (var child in childrenList)
-            {
-                switch (child.Value.ValueKind)
-                {
-                    case JsonValueKind.String:
-                        row[child.Name] = child.Value.GetString();
-                        break;
-                    case JsonValueKind.Null:
-                        row[child.Name] = string.Empty;
-                        break;
-                    case JsonValueKind.Number:
-                        row[child.Name] = child.Value.GetDecimal().ToString();
-                        break;
-                    case JsonValueKind.True:
-                    case JsonValueKind.False:
-                        row[child.Name] = child.Value.GetBoolean().ToString();
-                        break;
-                    default:
-                        // skip
-                        break;
-                }
-            }
-            tbl.Rows.Add(row);
+            
+            return jsonObj;
         }
 
         private void SaveDataToCSVFile(DataTable dt)
@@ -547,9 +500,10 @@ namespace Dandraka.Zoro.Processor
 
         }
 
-        private void SaveDataToJSONFile(DataTable dt)
+        private void SaveDataToJSONFile(JContainer dt)
         {
-            File.WriteAllText(config.OutputFile, JsonConvert.SerializeObject(dt, Formatting.Indented), Encoding.UTF8);
+            File.WriteAllText(config.OutputFile, dt.ToString(), Encoding.UTF8);
+            config.OutputFile.ToString();
         }
 
         private void SaveDataToDb(DataTable dt)
