@@ -12,7 +12,7 @@ It can be used as a command line program or as a dotnet standard 2.1 library. To
 E.g. ```zoro.exe c:\temp\mask.xml```
 
 [Linux] ./zoro path_to_config_file
-E.g. ```zoro /home/jim/data/mask.xml```
+E.g. ```./zoro /home/jim/data/mask.xml```
 
 **As a library**
 
@@ -132,12 +132,16 @@ ID;Name;BankAccount
   <DataDestination>Database</DataDestination>
   <ConnectionString>Server=DBSRV1;Database=appdb;Trusted_Connection=yes;</ConnectionString>
   <ConnectionType>System.Data.SqlClient</ConnectionType>
-  <SqlSelect>SELECT * FROM customers</SqlSelect>
-  <SqlCommand>INSERT INTO customers_anonymous (ID, MainPhone, Street) VALUES ($ID, $MainPhone, $Street)</SqlCommand>
+  <SqlSelect>SELECT ID, MainPhone, Street, CountryISOCode FROM customers</SqlSelect>
+  <SqlCommand>INSERT INTO customers_anonymous (ID, MainPhone, Street, City, CountryISOCode) VALUES ($ID, $MainPhone, $Street, $City, $CountryISOCode)</SqlCommand>
 </MaskConfig>
 ```
 
-If using a database to write data (DataDestination=Database), the number of parameters in SqlCommand ($field) must match the number of FieldMasks.
+#### Notes on usage
+
+- If using a database to write data (DataDestination=Database), the number and names of parameters in SqlCommand ($field) must match the number and names of FieldMasks.
+- If input is a JSON file (DataSource=JsonFile) and one or more FieldMasks are type List (FieldMask.MaskType=List), one 1 Replacement entry is allowed, which has to have an empty Selector (Selector="").
+- If input is a JSON file (DataSource=JsonFile), FieldMasks that perform a database query (FieldMask.MaskType=Query) are not allowed.
 
 ### Developer documentation
 
