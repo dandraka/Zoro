@@ -113,7 +113,7 @@ namespace Dandraka.Zoro.Tests
         }
 
         [Fact]
-        public void T05_Mask_MaskType_Asterisk_Test()
+        public void T04_Mask_MaskType_Asterisk_Test()
         {
             // Arrange
             string csvContent = "id;name\r\n1;Carol Danvers\r\n2;Bruce Banner\r\n3;Peter Parker\r\n";
@@ -143,7 +143,7 @@ namespace Dandraka.Zoro.Tests
         }
 
         [Fact]
-        public void T06_Mask_MaskType_List_Test()
+        public void T05_Mask_MaskType_List_Test()
         {
             // Arrange
             string csvContent = "id;name\r\n1;Carol Danvers\r\n2;Bruce Banner\r\n3;Peter Parker\r\n";
@@ -175,7 +175,7 @@ namespace Dandraka.Zoro.Tests
         }
 
         [Fact]
-        public void T07_Mask_MaskType_Similar_Test()
+        public void T06_Mask_MaskType_Similar_Test()
         {
             // ===== Arrange
             string csvContent = "id;name\r\n1;Carol Danvers\r\n2;Bruce Banner\r\n3;Peter Parker\r\n";
@@ -205,7 +205,7 @@ namespace Dandraka.Zoro.Tests
         }
 
         [Fact]
-        public void T08_Mask_MaskType_Query_Test()
+        public void T07_Mask_MaskType_Query_Test()
         {
             // ===== Arrange
             string csvContent = "ID;Name;City;Country\r\n1;Roche;Basel;CH\r\n2;ABB;Baden;CH\r\n3;BMW;München;DE\r\n4;Barilla;Parma;IT\r\n5;FAGE;Athens;GR";
@@ -285,10 +285,10 @@ namespace Dandraka.Zoro.Tests
                         throw new NotSupportedException($"Unexpected country {country} found");
                 }
             }
-        }
+        }        
 
         [Fact]
-        public void T09_Mask_JSON_Array_Test()
+        public void T08_Mask_JSON_Array_Test()
         {
             // === Arrange ===
             var config = MaskConfig.ReadConfig(utility.TestInstanceConfigJSONfile);
@@ -311,7 +311,7 @@ namespace Dandraka.Zoro.Tests
         }
 
         [Fact]
-        public void T10_Mask_JSON_SingleElement_Test()
+        public void T09_Mask_JSON_SingleElement_Test()
         {
             // === Arrange ===
             var config = MaskConfig.ReadConfig(utility.TestInstanceConfigJSONfile);
@@ -336,7 +336,7 @@ namespace Dandraka.Zoro.Tests
         }
 
         [Fact]
-        public void T11_Mask_JSON_SingleElement_NoHeader_Test()
+        public void T10_Mask_JSON_SingleElement_NoHeader_Test()
         {
             // === Arrange ===
             var config = MaskConfig.ReadConfig(utility.TestInstanceConfigJSONfile);
@@ -360,7 +360,7 @@ namespace Dandraka.Zoro.Tests
         }
 
         [Fact]
-        public void T12_Mask_JSON_Deep_Test()
+        public void T11_Mask_JSON_Deep_Test()
         {
             // === Arrange ===
             var config = MaskConfig.ReadConfig(utility.TestInstanceConfigJSONfile);
@@ -382,5 +382,139 @@ namespace Dandraka.Zoro.Tests
             string masked = jsonObjMasked["data"][0]["categories"][0].Value<string>("CategoryName");
             Assert.NotEqual(orig, masked);
         }
+
+        [Fact]
+        public void T12_Mask_MaskType_Expression_Test()
+        {
+            // Arrange
+            string csvContent = "Id;Name\r\n1;Carol Danvers\r\n2;Bruce Banner\r\n3;Peter Parker\r\n";
+            string csvMaskedContent = "Id;Name\r\n1;Hero-1\r\n2;Hero-2\r\n3;Hero-3\r\n";
+            string csvFilename = this.utility.CreateFileInTestInstanceDir(csvContent, "csv");
+            var config = new MaskConfig()
+            {
+                InputFile = csvFilename,
+                OutputFile = csvFilename.Replace(".csv", "_out.csv")
+            };
+            config.FieldMasks.Add(new FieldMask() { FieldName = "id", MaskType = MaskType.None });
+            config.FieldMasks.Add(new FieldMask() 
+            {
+                FieldName = "name", 
+                MaskType = MaskType.Expression,
+                Expression = "Hero-{{id}}"
+            });
+
+            // Act
+            var masker = new DataMasking(config);
+            masker.Mask();
+
+            // Assert
+            Assert.True(File.Exists(config.OutputFile));
+            var maskContents = new List<string>(csvMaskedContent.Split("\r\n"));
+            var contents = new List<string>(File.ReadLines(config.OutputFile));
+            Assert.Equal(4, contents.Count);
+            for (int i = 0; i < contents.Count; i++)
+            {
+                Assert.Equal(maskContents[i], contents[i]);
+            }
+        }        
+
+        [Fact]
+        public void T13_Mask_MaskType_Expression_Regex_Test()
+        {
+            // Arrange
+            string csvContent = "Id;Name\r\n1;Carol Danvers\r\n2;Bruce Banner\r\n3;Peter Parker\r\n";
+            string csvMaskedContent = "Id;Name\r\n1;CarHero-1\r\n2;BruHero-2\r\n3;PetHero-3\r\n";
+            string csvFilename = this.utility.CreateFileInTestInstanceDir(csvContent, "csv");
+            var config = new MaskConfig()
+            {
+                InputFile = csvFilename,
+                OutputFile = csvFilename.Replace(".csv", "_out.csv")
+            };
+            config.FieldMasks.Add(new FieldMask() { FieldName = "id", MaskType = MaskType.None });
+            config.FieldMasks.Add(new FieldMask() 
+            {
+                FieldName = "name", 
+                MaskType = MaskType.Expression,
+                Expression = "Hero-{{id}}",
+                RegExMatch = "(...)(.*)",
+                RegExGroupToReplace = 2
+            });
+
+            // Act
+            var masker = new DataMasking(config);
+            masker.Mask();
+
+            // Assert
+            Assert.True(File.Exists(config.OutputFile));
+            var maskContents = new List<string>(csvMaskedContent.Split("\r\n"));
+            var contents = new List<string>(File.ReadLines(config.OutputFile));
+            Assert.Equal(4, contents.Count);
+            for (int i = 0; i < contents.Count; i++)
+            {
+                Assert.Equal(maskContents[i], contents[i]);
+            }
+        }   
+
+        [Fact]
+        public void T14_Mask_JSON_Expression_Test()
+        {
+            // === Arrange ===
+            var config = MaskConfig.ReadConfig(utility.TestInstanceConfigJSONfile);
+            config.FieldMasks.Clear();
+            config.FieldMasks.Add(new FieldMask()
+            {
+                FieldName = "name",
+                MaskType = MaskType.Expression,
+                Expression = "Customer-{{$.id}}"
+            });
+            config.InputFile = config.InputFile.Replace("data2.json", "data5.json");
+            config.OutputFile = config.OutputFile.Replace("data2.json", "data5.json");
+
+            // === Act ===
+            var masker = new DataMasking(config);
+            masker.Mask();
+
+            // === Assert ===
+            var contentsOrig = new List<string>(File.ReadLines(config.InputFile));
+            var contents = new List<string>(File.ReadLines(config.OutputFile));
+            Assert.Equal(contentsOrig.Count, contents.Count);
+
+            var jsonObjOrig = JObject.Parse(File.ReadAllText(config.InputFile));
+            var jsonObjMasked = JObject.Parse(File.ReadAllText(config.OutputFile));
+            string origId = jsonObjOrig.Value<string>("id");
+            string maskedName = jsonObjMasked.Value<string>("name");
+            Assert.Equal($"Customer-{origId}", maskedName);
+        }       
+
+        [Fact]
+        public void T15_Mask_JSON_Expression_WrongJsonPath_Test()
+        {
+            // === Arrange ===
+            var config = MaskConfig.ReadConfig(utility.TestInstanceConfigJSONfile);
+            config.FieldMasks.Clear();
+            config.FieldMasks.Add(new FieldMask()
+            {
+                FieldName = "name",
+                MaskType = MaskType.Expression,
+                Expression = "Customer-{{$.i2d}}"
+            });
+            config.InputFile = config.InputFile.Replace("data2.json", "data5.json");
+            config.OutputFile = config.OutputFile.Replace("data2.json", "data5.json");
+
+            // === Act ===
+            bool hasException = false;
+            var masker = new DataMasking(config);
+            try 
+            {
+                masker.Mask();
+            }
+            catch(FieldNotFoundException)
+            {
+                hasException = true;
+            }
+            
+            // === Assert ===
+            Assert.True(hasException, "FieldNotFoundException was expected");
+        }                               
     }
 }

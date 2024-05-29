@@ -1,7 +1,6 @@
 ﻿using GenericParsing;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -21,6 +20,8 @@ namespace Dandraka.Zoro.Processor
         private readonly MaskConfig config;
 
         private readonly Random rnd = new Random(DateTime.Now.Millisecond);
+
+        private readonly Regex fieldsRegEx = new Regex("{{.*?}}");
 
         private char DbParamChar => this.config.GetConnection().GetType().ToString() == "System.Data.SqlClient.SqlConnection" ? '@' : '$';
 
@@ -92,16 +93,16 @@ namespace Dandraka.Zoro.Processor
                 switch (c.Value.Type)
                 {
                     case JTokenType.Integer:
-                        string i = GetMaskedString(value, fieldMask, null);
+                        string i = GetMaskedString(value, fieldMask, null, c);
                         c.Value = Convert.ToInt32(i);
                         break;
                     case JTokenType.Float:
-                        string f = GetMaskedString(value, fieldMask, null);
+                        string f = GetMaskedString(value, fieldMask, null, c);
                         c.Value = Convert.ToDecimal(f);
                         break;
                     default:
                         // treat non-numbers as strings
-                        string s = GetMaskedString(value, fieldMask, null);
+                        string s = GetMaskedString(value, fieldMask, null, c);
                         c.Value = s;
                         break;
                 }
@@ -205,7 +206,7 @@ namespace Dandraka.Zoro.Processor
             }
         }
 
-        private string GetMaskedString(string data, FieldMask fieldMask, DataRow row)
+        private string GetMaskedString(string data, FieldMask fieldMask, DataRow row, JProperty jsonNode = null)
         {
             if (string.IsNullOrEmpty(data))
                 return data;
@@ -231,6 +232,7 @@ namespace Dandraka.Zoro.Processor
                             MaskType.Similar => GetSimilarString(matchData),
                             MaskType.List => GetStringFromList(row, fieldMask.ListOfPossibleReplacements),
                             MaskType.Query => GetStringFromQuery(row, fieldMask.QueryReplacement),
+                            MaskType.Expression => GetExpressionString(row, fieldMask.Expression, jsonNode),
                             MaskType.None => matchData,
                             _ => throw new NotImplementedException($"Mask type {fieldMask.MaskType} is not yet implemented"),
                         };
@@ -248,10 +250,48 @@ namespace Dandraka.Zoro.Processor
                     MaskType.Similar => GetSimilarString(data),
                     MaskType.List => GetStringFromList(row, fieldMask.ListOfPossibleReplacements),
                     MaskType.Query => GetStringFromQuery(row, fieldMask.QueryReplacement),
+                    MaskType.Expression => GetExpressionString(row, fieldMask.Expression, jsonNode),
                     MaskType.None => data,
                     _ => throw new NotImplementedException($"Mask type {fieldMask.MaskType} is not yet implemented"),
                 };
             }
+        }
+
+        private string GetExpressionString(DataRow row, string expression, JProperty jsonNode)
+        {            
+            var r = fieldsRegEx.Match(expression);
+
+            foreach(Group rxGroup in r.Groups)
+            {
+                string fieldName = rxGroup.Value.Replace("{{", "").Replace("}}", "").ToLower();
+
+                switch(this.config.DataSource)
+                {
+                    case DataSource.CsvFile:
+                    case DataSource.Database:
+                        if (!row.Table.Columns.Contains(fieldName))
+                        {
+                            throw new FieldNotFoundException(fieldName);
+                        }
+                        string fieldValue = Convert.ToString(row[fieldName]);
+                        expression = expression.Replace(rxGroup.Value, fieldValue);
+                        break;
+                    case DataSource.JsonFile:
+                        // field name is supposed to be a JsonPath
+                        var jsonPathResult = jsonNode.Root.SelectToken(fieldName);
+                        if (jsonPathResult == null || jsonPathResult.Value<object>() == null)
+                        {
+                            throw new FieldNotFoundException(fieldName);
+                        }
+                        fieldValue = jsonPathResult.Value<string>();
+                        expression = expression.Replace(rxGroup.Value, fieldValue);
+                        break;
+                    default:
+                        throw new NotSupportedException($"Data source {this.config.DataSource} is not supported.");
+                }
+            }
+
+            return expression;
         }
 
         private string GetSimilarString(string data)

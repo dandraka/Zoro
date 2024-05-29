@@ -12,6 +12,7 @@ public class FieldMask
 | --- | --- |
 | [FieldMask](FieldMask/FieldMask.md)() | Creates an instance of FieldMask class. |
 | [Asterisk](FieldMask/Asterisk.md) { get; set; } | In case of `MaskType.Asterisk`, the character to apply. The default is asterisk (*). |
+| [Expression](FieldMask/Expression.md) { get; set; } | In case of `MaskType.Expression`, the expression to use. The field contents are substituted with a combination of a constant string and values from other fields. Must be filled with a constant string and field names enclosed in double curly brackets. For example "Customer-{{CustomerID}}" (without the quotes). When the data source is Json, a JsonPath is expected in the place of field name. The JsonPath will be applied on the root of the Json. For example "Customer-{{$.CustomerID}}" (without the quotes). |
 | [FieldName](FieldMask/FieldName.md) { get; set; } | The name of the field. |
 | [ListOfPossibleReplacements](FieldMask/ListOfPossibleReplacements.md) { get; set; } | In case of `MaskType.List`, the comma-separated list of items to choose from. |
 | [MaskType](FieldMask/MaskType.md) { get; set; } | The type of masking to apply. The default is None. |
