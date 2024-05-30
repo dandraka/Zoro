@@ -58,9 +58,9 @@ Please see the [generated docs](https://github.com/dandraka/Zoro/blob/master/doc
 
 ### Notes on usage
 
-- If using a database to write data (DataDestination=Database), the names of parameters in SqlCommand ($field) must match the names of FieldMasks.
+- If using a database to write data (DataDestination=Database), all names of parameters in SqlCommand (@field for SqlServer or $field elsewhere) must have a corresponding FieldMask, even if the MaskType is None. Also, currently connection types of ```System.Data.SqlClient``` and ```System.Data.OleDb``` are supported, but if anything else (e.g. MySql, Oracle) is needed please open an issue; adding more is trivial.
 - If input is a JSON file (DataSource=JsonFile) and one or more FieldMasks are type List (FieldMask.MaskType=List), one 1 Replacement entry is allowed, which has to have an empty Selector (Selector="").
-- If input is a JSON file (DataSource=JsonFile), FieldMasks that perform a database query (FieldMask.MaskType=Query) are not allowed.
+- If input is a JSON file (DataSource=JsonFile), FieldMasks that perform a database query (FieldMask.MaskType=Query) are not allowed. This is planned to be supported in a later version.
 
 ## Examples:
 
@@ -114,9 +114,13 @@ ID;Name;BankAccount
     <FieldMask>
       <FieldName>ID</FieldName>
       <MaskType>None</MaskType>
-    </FieldMask>  
+    </FieldMask>   
     <FieldMask>
-      <FieldName>CountryISOCode</FieldName>
+      <FieldName>CustomerFullname</FieldName>
+      <MaskType>None</MaskType>
+    </FieldMask>   
+    <FieldMask>
+      <FieldName>CustomerCountry</FieldName>
       <MaskType>None</MaskType>
     </FieldMask>      
     <FieldMask>
@@ -124,35 +128,40 @@ ID;Name;BankAccount
       <MaskType>Similar</MaskType>
       <RegExMatch>^(\+\d\d)?(.*)$</RegExMatch>
       <RegExGroupToReplace>2</RegExGroupToReplace>
-    </FieldMask>
+    </FieldMask>   
     <FieldMask>
       <FieldName>Street</FieldName>
       <MaskType>List</MaskType>
         <ListOfPossibleReplacements>
-          <Replacement Selector="Country=Netherlands" List="Bergselaan,Schieweg,Nootdorpstraat,Nolensstraat" />
-          <Replacement Selector="Country=Switzerland" List="Bahnhofstrasse,Clarahofweg,Sperrstrasse,Erlenstrasse" />
-          <Replacement Selector="Country=Liechtenstein" List="Lettstrasse,Bangarten,Beckagässli,Haldenweg" />
-          <Replacement Selector="Country=Germany" List="Bahnhofstraße,Freigaße,Hauptstraße" />
-          <Replacement Selector="Country=Belgium" List="Rue d'Argent,Rue d'Assaut,Rue de l'Ecuyer,Rue du Persil" />
-          <Replacement Selector="Country=Austria" List="Miesbachgasse,Kleine Pfarrgasse,Heinestraße" />
-          <Replacement Selector="Country=France" List="Rue Nationale,Boulevard Vauban,Rue des Stations,Boulevard de la Liberté" />
+          <Replacement Selector="CustomerCountry=NL" List="Bergselaan,Schieweg,Nootdorpstraat,Nolensstraat" />
+          <Replacement Selector="CustomerCountry=CH" List="Bahnhofstrasse,Clarahofweg,Sperrstrasse,Erlenstrasse" />
+          <Replacement Selector="CustomerCountry=LI" List="Lettstrasse,Bangarten,Beckagässli,Haldenweg" />
+          <Replacement Selector="CustomerCountry=DE" List="Bahnhofstraße,Freigaße,Hauptstraße" />
+          <Replacement Selector="CustomerCountry=BE" List="Rue d'Argent,Rue d'Assaut,Rue de l'Ecuyer,Rue du Persil" />
+          <Replacement Selector="CustomerCountry=FR" List="Rue Nationale,Boulevard Vauban,Rue des Stations,Boulevard de la Liberté" />
           <!--- fallback when nothing matches; MUST be the last one --->
           <Replacement Selector="" List="Bedford Gardens,Sheffield Terrace,Kensington Palace Gardens" />
         </ListOfPossibleReplacements>
-    </FieldMask>
+    </FieldMask>          
     <FieldMask>
-      <FieldName>City</FieldName>
+      <FieldName>CustomerCity</FieldName>
       <MaskType>Query</MaskType>
-      <QueryReplacement SelectorField="CountryISOCode" GroupField="countrycode" ValueField="cityname" Query="SELECT cityname, countrycode FROM cities" />
+      <QueryReplacement 
+        SelectorField="CustomerCountry" 
+        GroupField="cityCountryName" 
+        ValueField="cityName" 
+        Query="SELECT cityName, cityCountryName FROM cities" />
     </FieldMask>  
   </FieldMasks>
   <DataSource>Database</DataSource>
   <DataDestination>Database</DataDestination>
   <ConnectionString>Server=DBSRV1;Database=appdb;Trusted_Connection=yes;</ConnectionString>
+  <!-- Currently System.Data.SqlClient and System.Data.OleDb are supported, but if needed, adding more is trivial -->
   <ConnectionType>System.Data.SqlClient</ConnectionType>
-  <SqlSelect>SELECT ID, MainPhone, Street, CountryISOCode FROM customers</SqlSelect>
-  <SqlCommand>INSERT INTO customers_anonymous (ID, MainPhone, Street, City, CountryISOCode) VALUES ($ID, $MainPhone, $Street, $City, $CountryISOCode)</SqlCommand>
-</MaskConfig>
+  <SqlSelect>SELECT ID, CustomerFullname, CustomerCity, CustomerCountry FROM customers</SqlSelect>
+  <!-- Note that the parameter character is @ for Sql Server, $ elsewhere -->
+  <SqlCommand>INSERT INTO customers_anonymous (ID, CustomerFullname, CustomerCity, CustomerCountry) VALUES (@ID, @CustomerFullname, @CustomerCity, @CustomerCountry)</SqlCommand>
+</MaskConfig> 
 ```
 
 **Sample config file for JSON source and destination using an Expression and a List**
