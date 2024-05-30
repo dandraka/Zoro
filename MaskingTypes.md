@@ -292,7 +292,7 @@ Sample input and output
 
 ### MaskType=Query
 
-The field contents are substituted with a randomly picked item of one or more given lists which are fetch using a database query. A selector can be used to pick the correct list (for example, streets that martch the country). If a match is not found, a DataNotFound exception is raised (no fall back possible).
+The field contents are substituted with a randomly picked item of one or more given lists which are fetched using a database query. A selector can be used to pick the correct list (for example, streets that martch the country). If a match is not found, a DataNotFound exception is raised (no fallback possible).
 
 #### Mandatory, optional and ignored fields
 
@@ -360,6 +360,7 @@ Sample input and output
 | Gianniou	| GR              |
 | Asomatos	| GR              |
 | Lefkogeia	| GR              |
+
 _Cities reference table_
 
 | CustomerCountry | CustomerFullname     | CustomerCity (original) | CustomerCity (masked) |
