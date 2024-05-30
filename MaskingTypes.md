@@ -7,14 +7,14 @@ This reference explains two things:
 ## Anonymization techniques
 
 Regardless of the tool being used and irrespective of the source or destination, in order to anonymize a set of data the following actions can be taken:                                                                                                                  
-| Technhique                  | Description                                                                    |  Example                                                                                 |
-|-----------------------------|--------------------------------------------------------------------------------|------------------------------------------------------------------------------------------|
-| Pseudonymisation            | Exchanging the original data with pre-created fake data in a _reversible_ way  | Nick Peterson _always_ becomes John Miller, Eva Richards _always_ becomes Jane Brady etc. |
-| Shuffling a.k.a. Permutation| Shuffling values between records                                               | Customer.City gets a random city from the Cities table |
-| Noise Addition/Perturbation | Changing part of the value thus keeping the order of magnitude and distribution| Change last 4 digits of phone numbers, height +/- 5cm |
-| Generalization/Aggregation  | Changing values by using aggregated values (buckets) thus keeping the order of magnitude | Account balances between 0-1000 become 500, between 1001-2000 become 1500 etc. |
-| Synthetic (fake) data       | Exchanging the original data with pre-created fake data in a _random_ way      | Linkoln Rd. 47 becomes Main Street 5, River View 23 becomes Wall Str. 10 etc. |
-| Hiding                      | Exchanng data with fake uniform data                                           | NL35INGB0679775293 becomes ***************** |
+| Technhique                         | Description                                                                    |  Example                                                                                 |
+|------------------------------------|--------------------------------------------------------------------------------|------------------------------------------------------------------------------------------|
+| Pseudonymisation                   | Exchanging the original data with pre-created fake data in a _reversible_ way  | Nick Peterson _always_ becomes John Miller, Eva Richards _always_ becomes Jane Brady etc. |
+| Shuffling a.k.a. Permutation       | Shuffling values between records                                               | Customer.City gets a random city from the Cities table |
+| Noise Addition a.k.a. Perturbation | Changing part of the value thus keeping the order of magnitude and distribution| Change last 4 digits of phone numbers, height +/- 5cm |
+| Generalization a.k.a. Aggregation  | Changing values by using aggregated values (buckets) thus keeping the order of magnitude | Account balances between 0-1000 become 500, between 1001-2000 become 1500 etc. |
+| Synthetic (fake) data              | Exchanging the original data with pre-created fake data in a _random_ way      | Linkoln Rd. 47 becomes Main Street 5, River View 23 becomes Wall Str. 10 etc. |
+| Hiding                             | Exchanng data with fake uniform data                                           | NL35INGB0679775293 becomes ***************** |
 
 This is how Zoro supports these techniques:
 
