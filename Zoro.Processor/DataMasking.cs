@@ -30,9 +30,30 @@ namespace Dandraka.Zoro.Processor
         /// </summary>
         /// <param name="config"></param>
         public DataMasking(MaskConfig config)
-        {
-            this.config = config;
+        {            
+            this.config = config;            
         }
+
+        private static DbProviderFactory GetDbFactory(string connType)
+        {
+            switch(connType)
+            {
+                case "System.Data.SqlClient":
+                    DbProviderFactories.RegisterFactory(connType, typeof(System.Data.SqlClient.SqlClientFactory));
+                    break;
+                case "System.Data.OleDb":
+                    DbProviderFactories.RegisterFactory(connType, typeof(System.Data.OleDb.OleDbFactory));
+                    break; 
+                /*                    
+                case "System.Data.Odbc":
+                    DbProviderFactories.RegisterFactory(connType, typeof(System.Data.Odbc.OdbcFactory));
+                    break;
+                */                                      
+                default:
+                    throw new NotSupportedException($"Connection type {connType} is not yet supported");
+            }            
+            return DbProviderFactories.GetFactory(connType);
+        }        
 
         /// <summary>
         /// Performs masking.
@@ -46,7 +67,7 @@ namespace Dandraka.Zoro.Processor
                 // flat types
                 case DataSource.CsvFile:
                 case DataSource.Database:
-                    AnonymizeFlatData((DataTable)dt);                    
+                    AnonymizeFlatData((DataTable)dt);
                     break;
                 // nested types
                 case DataSource.JsonFile:
@@ -106,7 +127,7 @@ namespace Dandraka.Zoro.Processor
                         c.Value = s;
                         break;
                 }
-            }            
+            }
 
             if (c.HasValues)
             {
@@ -258,14 +279,14 @@ namespace Dandraka.Zoro.Processor
         }
 
         private string GetExpressionString(DataRow row, string expression, JProperty jsonNode)
-        {            
+        {
             var r = fieldsRegEx.Match(expression);
 
-            foreach(Group rxGroup in r.Groups)
+            foreach (Group rxGroup in r.Groups)
             {
                 string fieldName = rxGroup.Value.Replace("{{", "").Replace("}}", "").ToLower();
 
-                switch(this.config.DataSource)
+                switch (this.config.DataSource)
                 {
                     case DataSource.CsvFile:
                     case DataSource.Database:
@@ -278,10 +299,14 @@ namespace Dandraka.Zoro.Processor
                         break;
                     case DataSource.JsonFile:
                         // field name is supposed to be a JsonPath
-                        var jsonPathResult = jsonNode.Root.SelectToken(fieldName);
+                        var jsonPathResult = jsonNode.Parent.SelectToken(fieldName); //jsonNode.Root.SelectToken(fieldName);
                         if (jsonPathResult == null || jsonPathResult.Value<object>() == null)
                         {
-                            throw new FieldNotFoundException(fieldName);
+                            jsonPathResult = jsonNode.Root.SelectToken(fieldName);
+                            if (jsonPathResult == null || jsonPathResult.Value<object>() == null)
+                            {
+                                throw new FieldNotFoundException(fieldName);
+                            }
                         }
                         fieldValue = jsonPathResult.Value<string>();
                         expression = expression.Replace(rxGroup.Value, fieldValue);
@@ -361,7 +386,7 @@ namespace Dandraka.Zoro.Processor
             if (replacementStr == null)
             {
                 // warning, nothing found
-                throw new DataException($"No match could be located for data row\r\n{string.Join(",", row.ItemArray)}");
+                throw new DataNotFoundException(row);
             }
             var list = replacementStr.Split(',').Select(x => x.Trim()).ToList();
             string str = list[rnd.Next(0, list.Count - 1)];
@@ -499,12 +524,12 @@ namespace Dandraka.Zoro.Processor
             {
                 jsonObj = JObject.Parse(json);
             }
-            catch(JsonReaderException e)
+            catch (JsonReaderException e)
             {
                 e.ToString();
                 jsonObj = JArray.Parse(json);
             }
-            
+
             return jsonObj;
         }
 
@@ -559,7 +584,7 @@ namespace Dandraka.Zoro.Processor
             int numParams = config.SqlCommand.Count(c => c == this.DbParamChar);
             if (numParams != config.FieldMasks.Count)
             {
-                throw new ArgumentException($"Sql Command parameter mismatch: '{config.SqlCommand}' does not contain the same number of parameters $field ({numParams}) as the number of FieldMasks ({config.FieldMasks.Count})");
+                throw new ArgumentException($"Sql Command parameter mismatch: '{config.SqlCommand}' does not contain the same number of parameters {this.DbParamChar}field ({numParams}) as the number of FieldMasks ({config.FieldMasks.Count})");
             }
 
             bool wasOpen = EnsureOpenDbConnection();
@@ -591,12 +616,12 @@ namespace Dandraka.Zoro.Processor
         /// <summary>Creates and opens a db connection, if needed.</summary>
         /// <returns>True if the connection was already open, false otherwise.</returns>
         private bool EnsureOpenDbConnection()
-        {
+        {            
             bool wasOpen = false;
             if (config.GetConnection() == null)
             {
-                DbProviderFactory factory = DbProviderFactories.GetFactory(config.ConnectionType);
-                config.SetConnection(factory.CreateConnection());
+                var dbFactory = GetDbFactory(config.ConnectionType);
+                config.SetConnection(dbFactory.CreateConnection());
                 config.GetConnection().ConnectionString = config.ConnectionString;
                 config.GetConnection().Open();
             }

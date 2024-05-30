@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<MaskConfig xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <FieldMasks>
+    <FieldMask>
+      <FieldName>ID</FieldName>
+      <MaskType>None</MaskType>
+    </FieldMask>   
+    <FieldMask>
+      <FieldName>CustomerFullname</FieldName>
+      <MaskType>None</MaskType>
+    </FieldMask>   
+    <FieldMask>
+      <FieldName>CustomerCountry</FieldName>
+      <MaskType>None</MaskType>
+    </FieldMask>           
+    <FieldMask>
+      <FieldName>CustomerCity</FieldName>
+      <MaskType>Query</MaskType>
+      <QueryReplacement 
+        SelectorField="CustomerCountry" 
+        GroupField="cityCountryName" 
+        ValueField="cityName" 
+        Query="SELECT cityName, cityCountryName FROM cities" />
+    </FieldMask>  
+  </FieldMasks>
+  <DataSource>Database</DataSource>
+  <DataDestination>Database</DataDestination>
+  <!--<ConnectionString>Server=DBSRV1;Database=appdb;Trusted_Connection=yes;</ConnectionString>-->
+  <ConnectionString>Server=chzhbapp1006\DC1;Database=devtest;Trusted_Connection=yes;</ConnectionString>
+  <ConnectionType>System.Data.SqlClient</ConnectionType>
+  <SqlSelect>SELECT ID, CustomerFullname, CustomerCity, CustomerCountry FROM customers</SqlSelect>
+  <SqlCommand>INSERT INTO customers_anonymous (ID, CustomerFullname, CustomerCity, CustomerCountry) VALUES (@ID, @CustomerFullname, @CustomerCity, @CustomerCountry)</SqlCommand>
+</MaskConfig> 

@@ -285,7 +285,7 @@ namespace Dandraka.Zoro.Tests
                         throw new NotSupportedException($"Unexpected country {country} found");
                 }
             }
-        }        
+        }
 
         [Fact]
         public void T08_Mask_JSON_Array_Test()
@@ -396,9 +396,9 @@ namespace Dandraka.Zoro.Tests
                 OutputFile = csvFilename.Replace(".csv", "_out.csv")
             };
             config.FieldMasks.Add(new FieldMask() { FieldName = "id", MaskType = MaskType.None });
-            config.FieldMasks.Add(new FieldMask() 
+            config.FieldMasks.Add(new FieldMask()
             {
-                FieldName = "name", 
+                FieldName = "name",
                 MaskType = MaskType.Expression,
                 Expression = "Hero-{{id}}"
             });
@@ -416,7 +416,7 @@ namespace Dandraka.Zoro.Tests
             {
                 Assert.Equal(maskContents[i], contents[i]);
             }
-        }        
+        }
 
         [Fact]
         public void T13_Mask_MaskType_Expression_Regex_Test()
@@ -431,9 +431,9 @@ namespace Dandraka.Zoro.Tests
                 OutputFile = csvFilename.Replace(".csv", "_out.csv")
             };
             config.FieldMasks.Add(new FieldMask() { FieldName = "id", MaskType = MaskType.None });
-            config.FieldMasks.Add(new FieldMask() 
+            config.FieldMasks.Add(new FieldMask()
             {
-                FieldName = "name", 
+                FieldName = "name",
                 MaskType = MaskType.Expression,
                 Expression = "Hero-{{id}}",
                 RegExMatch = "(...)(.*)",
@@ -453,7 +453,7 @@ namespace Dandraka.Zoro.Tests
             {
                 Assert.Equal(maskContents[i], contents[i]);
             }
-        }   
+        }
 
         [Fact]
         public void T14_Mask_JSON_Expression_Test()
@@ -484,7 +484,7 @@ namespace Dandraka.Zoro.Tests
             string origId = jsonObjOrig.Value<string>("id");
             string maskedName = jsonObjMasked.Value<string>("name");
             Assert.Equal($"Customer-{origId}", maskedName);
-        }       
+        }
 
         [Fact]
         public void T15_Mask_JSON_Expression_WrongJsonPath_Test()
@@ -496,7 +496,7 @@ namespace Dandraka.Zoro.Tests
             {
                 FieldName = "name",
                 MaskType = MaskType.Expression,
-                Expression = "Customer-{{$.i2d}}"
+                Expression = "Customer-{{$.SomeAttributeThatDoesntExist}}"
             });
             config.InputFile = config.InputFile.Replace("data2.json", "data5.json");
             config.OutputFile = config.OutputFile.Replace("data2.json", "data5.json");
@@ -504,17 +504,67 @@ namespace Dandraka.Zoro.Tests
             // === Act ===
             bool hasException = false;
             var masker = new DataMasking(config);
-            try 
+            try
             {
                 masker.Mask();
             }
-            catch(FieldNotFoundException)
+            catch (FieldNotFoundException)
             {
                 hasException = true;
             }
-            
+
             // === Assert ===
             Assert.True(hasException, "FieldNotFoundException was expected");
-        }                               
+        }
+
+        [Fact]
+        public void T16_Mask_JSON_Expression_Node_Test()
+        {
+            // === Arrange ===
+            var config = MaskConfig.ReadConfig(utility.TestInstanceConfigJSONfile);
+            config.InputFile = config.InputFile.Replace("data2.json", "data6.json");
+            config.OutputFile = config.OutputFile.Replace("data2.json", "data6.json");
+            config.FieldMasks.Clear();
+            // This field mask tests getting data 
+            // from the field's immediate parent.
+            // So for name=Aleksander Singh the id should be 1
+            // and for name=Alicja Bakshi the id should be 2.
+            config.FieldMasks.Add(new FieldMask()
+            {
+                FieldName = "name",
+                MaskType = MaskType.Expression,
+                Expression = "Customer {{$.id}}"
+            });
+            // This field mask tests getting data 
+            // from the Json root ($).
+            // So for all names the id should be 1.
+            config.FieldMasks.Add(new FieldMask()
+            {
+                FieldName = "spouse",
+                MaskType = MaskType.Expression,
+                Expression = "Spouse of Customer {{$.employees[0].id}}"
+            });
+
+            // === Act ===
+            var masker = new DataMasking(config);
+            masker.Mask();
+
+            // === Assert ===
+            var contentsOrig = new List<string>(File.ReadLines(config.InputFile));
+            var contents = new List<string>(File.ReadLines(config.OutputFile));
+            Assert.Equal(contentsOrig.Count, contents.Count);
+
+            var jsonObjOrig = JObject.Parse(File.ReadAllText(config.InputFile));
+            var jsonObjMasked = JObject.Parse(File.ReadAllText(config.OutputFile));
+
+            for (int i = 0; i < 2; i++)
+            {
+                string origId = jsonObjOrig.SelectToken($"employees[{i}].id").Value<string>();
+                string maskedCustomerName = jsonObjMasked.SelectToken($"employees[{i}].name").Value<string>();
+                string maskedSpouseName = jsonObjMasked.SelectToken($"employees[{i}].spouse").Value<string>();
+                Assert.Equal($"Customer {origId}", maskedCustomerName);
+                Assert.Equal($"Spouse of Customer 1", maskedSpouseName);
+            }
+        }
     }
 }

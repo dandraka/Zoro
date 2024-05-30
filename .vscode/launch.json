@@ -13,7 +13,8 @@
             "args": ["../Zoro.Tests/data/debugconfig.xml"],
             "cwd": "${workspaceFolder}/Zoro",
             "console": "internalConsole",
-            "stopAtEntry": false
+            "stopAtEntry": false,
+            "requireExactSource": true
         },
         {
             "name": ".NET Core Attach",

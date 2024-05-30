@@ -46,7 +46,25 @@ var masker = new Zoro.Processor.DataMasking(config);
 masker.Mask();
 ```
 
-**Sample config file:**
+## Documentation:
+
+### Masking types reference
+
+Please see the [anonymization and masking types reference doc](https://github.com/dandraka/Zoro/blob/master/MaskingTypes.md).
+
+### Developer documentation
+
+Please see the [generated docs](https://github.com/dandraka/Zoro/blob/master/docs/Zoro.Processor.md).
+
+### Notes on usage
+
+- If using a database to write data (DataDestination=Database), the names of parameters in SqlCommand ($field) must match the names of FieldMasks.
+- If input is a JSON file (DataSource=JsonFile) and one or more FieldMasks are type List (FieldMask.MaskType=List), one 1 Replacement entry is allowed, which has to have an empty Selector (Selector="").
+- If input is a JSON file (DataSource=JsonFile), FieldMasks that perform a database query (FieldMask.MaskType=Query) are not allowed.
+
+## Examples:
+
+**Sample config file for CSV source and destination**
 
 ```
 <?xml version="1.0"?>
@@ -87,7 +105,7 @@ ID;Name;BankAccount
 4;botaahjazlvojknub.qi;****************
 ```
 
-**A more complete sample of a config file is the following:**
+**Sample config file for DB source and destination using lists and queries**
 
 ```
 <?xml version="1.0"?>
@@ -137,15 +155,77 @@ ID;Name;BankAccount
 </MaskConfig>
 ```
 
-#### Notes on usage
+**Sample config file for JSON source and destination using an Expression and a List**
 
-- If using a database to write data (DataDestination=Database), the number and names of parameters in SqlCommand ($field) must match the number and names of FieldMasks.
-- If input is a JSON file (DataSource=JsonFile) and one or more FieldMasks are type List (FieldMask.MaskType=List), one 1 Replacement entry is allowed, which has to have an empty Selector (Selector="").
-- If input is a JSON file (DataSource=JsonFile), FieldMasks that perform a database query (FieldMask.MaskType=Query) are not allowed.
+```
+<?xml version="1.0"?>
+<MaskConfig xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <FieldMasks>
+    <FieldMask>
+      <FieldName>name</FieldName>
+      <MaskType>Expression</MaskType>
+      <Expression>Customer {{$.id}}</Expression>
+    </FieldMask>
+    <FieldMask>
+      <FieldName>salary</FieldName>
+      <MaskType>Similar</MaskType>
+    </FieldMask>  
+    <FieldMask>
+      <FieldName>spouse</FieldName>
+      <MaskType>List</MaskType>
+		<ListOfPossibleReplacements>
+			<Replacement Selector="" List="Eleni Koufaki,Athina Lefkogianaki,Mihaela Papadomanolaki" />
+		</ListOfPossibleReplacements>
+	</FieldMask>	  
+  </FieldMasks>
+  <InputFile>%TestInstanceDir%\data2.json</InputFile>
+  <OutputFile>%TestInstanceDir%\maskedata2.json</OutputFile>
+  <DataSource>JsonFile</DataSource>
+  <DataDestination>JsonFile</DataDestination>
+</MaskConfig>
+```
 
-### Developer documentation
+The above config file can process for example the following JSON:
 
-Please see the [generated docs](https://github.com/dandraka/Zoro/blob/master/docs/Zoro.Processor.md).
+```
+{
+    "employees": [
+        {
+            "id": "1",
+            "name": "Aleksander Singh",
+            "salary": 105000,
+            "spouse": "Ingrid Díaz"
+        },
+        {
+            "id": "2",
+            "name": "Alicja Bakshi",
+            "salary": 142500,
+            "spouse": "Ellinore Alvarez"
+        }
+    ]
+}
+```
+
+and the result will be something like the following:
+
+```
+{
+    "employees": [
+        {
+            "id": "1",
+            "name": "Customer-1",
+            "salary": 902473,
+            "spouse": "Mihaela Papadomanolaki"
+        },
+        {
+            "id": "2",
+            "name": "Customer-2",
+            "salary": 046795,
+            "spouse": "Eleni Koufaki"
+        }
+    ]
+}
+```
 
 ### Note:
 
