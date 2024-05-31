@@ -1,6 +1,6 @@
 # FieldMask.FieldName property
 
-The name of the field.
+The name of the field. Note that field names are case-insensitive for CSV files and DB queries, but case-sensitive for JSON files.
 
 ```csharp
 public string FieldName { get; set; }

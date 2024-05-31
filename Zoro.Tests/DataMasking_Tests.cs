@@ -463,9 +463,9 @@ namespace Dandraka.Zoro.Tests
             config.FieldMasks.Clear();
             config.FieldMasks.Add(new FieldMask()
             {
-                FieldName = "name",
+                FieldName = "Name",
                 MaskType = MaskType.Expression,
-                Expression = "Customer-{{$.id}}"
+                Expression = "Customer-{{$.Id}}"
             });
             config.InputFile = config.InputFile.Replace("data2.json", "data5.json");
             config.OutputFile = config.OutputFile.Replace("data2.json", "data5.json");
@@ -481,8 +481,8 @@ namespace Dandraka.Zoro.Tests
 
             var jsonObjOrig = JObject.Parse(File.ReadAllText(config.InputFile));
             var jsonObjMasked = JObject.Parse(File.ReadAllText(config.OutputFile));
-            string origId = jsonObjOrig.Value<string>("id");
-            string maskedName = jsonObjMasked.Value<string>("name");
+            string origId = jsonObjOrig.Value<string>("Id");
+            string maskedName = jsonObjMasked.Value<string>("Name");
             Assert.Equal($"Customer-{origId}", maskedName);
         }
 
@@ -494,7 +494,7 @@ namespace Dandraka.Zoro.Tests
             config.FieldMasks.Clear();
             config.FieldMasks.Add(new FieldMask()
             {
-                FieldName = "name",
+                FieldName = "Name",
                 MaskType = MaskType.Expression,
                 Expression = "Customer-{{$.SomeAttributeThatDoesntExist}}"
             });
@@ -531,18 +531,18 @@ namespace Dandraka.Zoro.Tests
             // and for name=Alicja Bakshi the id should be 2.
             config.FieldMasks.Add(new FieldMask()
             {
-                FieldName = "name",
+                FieldName = "Name",
                 MaskType = MaskType.Expression,
-                Expression = "Customer {{$.id}}"
+                Expression = "Customer {{$.Id}}"
             });
             // This field mask tests getting data 
             // from the Json root ($).
             // So for all names the id should be 1.
             config.FieldMasks.Add(new FieldMask()
             {
-                FieldName = "spouse",
+                FieldName = "Spouse",
                 MaskType = MaskType.Expression,
-                Expression = "Spouse of Customer {{$.employees[0].id}}"
+                Expression = "Spouse of Customer {{$.Employees[0].Id}}"
             });
 
             // === Act ===
@@ -559,9 +559,9 @@ namespace Dandraka.Zoro.Tests
 
             for (int i = 0; i < 2; i++)
             {
-                string origId = jsonObjOrig.SelectToken($"employees[{i}].id").Value<string>();
-                string maskedCustomerName = jsonObjMasked.SelectToken($"employees[{i}].name").Value<string>();
-                string maskedSpouseName = jsonObjMasked.SelectToken($"employees[{i}].spouse").Value<string>();
+                string origId = jsonObjOrig.SelectToken($"Employees[{i}].Id").Value<string>();
+                string maskedCustomerName = jsonObjMasked.SelectToken($"Employees[{i}].Name").Value<string>();
+                string maskedSpouseName = jsonObjMasked.SelectToken($"Employees[{i}].Spouse").Value<string>();
                 Assert.Equal($"Customer {origId}", maskedCustomerName);
                 Assert.Equal($"Spouse of Customer 1", maskedSpouseName);
             }

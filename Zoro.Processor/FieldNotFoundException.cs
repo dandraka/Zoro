@@ -18,7 +18,7 @@ namespace Dandraka.Zoro.Processor
         /// Creates a FieldNotFoundException specifying the field name.
         /// </summary>
         public FieldNotFoundException(string field)
-            : base($"Field or JsonPath {field} was not found.")
+            : base($"Field or JsonPath {field} was not found. Note that field names are case-insensitive for CSV files & DB queries, but case-sensitive for JSON files.")
         {
         }
 
@@ -26,7 +26,7 @@ namespace Dandraka.Zoro.Processor
         /// Creates a FieldNotFoundException specifying the field name and an inner exception.
         /// </summary>
         public FieldNotFoundException(string field, Exception inner)
-            : base($"Field or JsonPath {field} was not found.", inner)
+            : base($"Field or JsonPath {field} was not found. Note that field names are case-insensitive for CSV files & DB queries, but case-sensitive for JSON files.", inner)
         {
         }
     }

@@ -1,14 +1,14 @@
 {
-    "employees": [
+    "Employees": [
         {
-            "id": "1",
-            "name": "Aleksander Singh",
-            "spouse": "Ingrid Díaz"
+            "Id": "1",
+            "Name": "Aleksander Singh",
+            "Spouse": "Ingrid Díaz"
         },
         {
-            "id": "2",
-            "name": "Alicja Bakshi",
-            "spouse": "Ellinore Alvarez"
+            "Id": "2",
+            "Name": "Alicja Bakshi",
+            "Spouse": "Ellinore Alvarez"
         }
     ]
 }

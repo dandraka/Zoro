@@ -1,7 +1,7 @@
 {
-    "id": "1",
-    "name": "Aleksander Singh",
-    "salary": 117300,
-    "married": true,
-    "spouse": "Ingrid Díaz"
+    "Id": "1",
+    "Name": "Aleksander Singh",
+    "Salary": 117300,
+    "Married": true,
+    "Spouse": "Ingrid Díaz"
 }

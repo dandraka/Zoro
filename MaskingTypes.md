@@ -50,7 +50,7 @@ Example
 * MaskType = None
 * Asterisk: Ignored
 * Expression: Ignored
-* FieldName: Mandatory. The name of the field being sought.
+* FieldName: Mandatory. The name of the field being sought. Note that field names are case-insensitive for CSV files & DB queries, but case-sensitive for JSON files.
 * ListOfPossibleReplacements: Ignored
 * QueryReplacement: Ignored
 * RegExGroupToReplace: Ignored
@@ -77,7 +77,7 @@ With the usage of a regular expression, it is possible to change all or only par
 * MaskType = Similar
 * Asterisk: Ignored
 * Expression: Ignored
-* FieldName: Mandatory. The name of the field being sought.
+* FieldName: Mandatory. The name of the field being sought. Note that field names are case-insensitive for CSV files & DB queries, but case-sensitive for JSON files.
 * ListOfPossibleReplacements: Ignored
 * QueryReplacement: Ignored
 * RegExGroupToReplace: Optional. A number that specifies which regex group will be replaced.
@@ -126,7 +126,7 @@ With the usage of a regular expression, it is possible to change all or only par
 * MaskType = Asterisk
 * Asterisk: Optional. A character that will replace the original data. Defaults to an asterisk (*).
 * Expression: Ignored
-* FieldName: Mandatory. The name of the field being sought.
+* FieldName: Mandatory. The name of the field being sought. Note that field names are case-insensitive for CSV files & DB queries, but case-sensitive for JSON files.
 * ListOfPossibleReplacements: Ignored
 * QueryReplacement: Ignored
 * RegExGroupToReplace: Optional. A number that specifies which regex group will be replaced.
@@ -164,7 +164,7 @@ With the usage of a regular expression, it is possible to change all or only par
 * MaskType = Expression
 * Asterisk: Ignored
 * Expression: Mandatory. An expression consisting of fixed text and fields/JsonPaths enclosed in double curly brackets.
-* FieldName: Mandatory. The name of the field being sought.
+* FieldName: Mandatory. The name of the field being sought. Note that field names are case-insensitive for CSV files & DB queries, but case-sensitive for JSON files.
 * ListOfPossibleReplacements: Ignored
 * QueryReplacement: Ignored
 * RegExGroupToReplace: Optional. A number that specifies which regex group will be replaced.
@@ -256,7 +256,7 @@ In the case of Json, only one list with an empty selector (a.k.a. fallback) is a
 * MaskType = List
 * Asterisk: Ignored
 * Expression: Ignored
-* FieldName: Mandatory. The name of the field being sought.
+* FieldName: Mandatory. The name of the field being sought. Note that field names are case-insensitive for CSV files & DB queries, but case-sensitive for JSON files.
 * ListOfPossibleReplacements: A list of ```<Replacement>``` items. Each item must contain:
   * a Selector attribute, which can be either empty (fallback) or contain a field name from the data, the equality sign (=) and a constant value. E.g. ```Selector="Country=Greece"```.
   * and a List attribute, which is a comma-separated list of strings. E.g. ```List="Feta,Olives,Kasseri"```.
@@ -299,7 +299,7 @@ The field contents are substituted with a randomly picked item of one or more gi
 * MaskType = Query
 * Asterisk: Ignored
 * Expression: Ignored
-* FieldName: Mandatory. The name of the field being sought.
+* FieldName: Mandatory. The name of the field being sought. Note that field names are case-insensitive for CSV files & DB queries, but case-sensitive for JSON files.
 * ListOfPossibleReplacements: Ignored
 * QueryReplacement: Mandatory. Must contain all of the following attributes:
   * SelectorField: The name of the field _from the original data_ which will be used to match the reference records.

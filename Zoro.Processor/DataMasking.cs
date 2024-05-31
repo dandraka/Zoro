@@ -284,7 +284,7 @@ namespace Dandraka.Zoro.Processor
 
             foreach (Group rxGroup in r.Groups)
             {
-                string fieldName = rxGroup.Value.Replace("{{", "").Replace("}}", "").ToLower();
+                string fieldName = rxGroup.Value.Replace("{{", "").Replace("}}", "");
 
                 switch (this.config.DataSource)
                 {

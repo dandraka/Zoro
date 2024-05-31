@@ -20,7 +20,7 @@ namespace Dandraka.Zoro.Processor
         }
 
         /// <summary>
-        /// The name of the field.
+        /// The name of the field. Note that field names are case-insensitive for CSV files and DB queries, but case-sensitive for JSON files.
         /// </summary>
         public string FieldName { get; set; }
 
