@@ -21,7 +21,7 @@ namespace Dandraka.Zoro.Processor
 
         private readonly Random rnd = new Random(DateTime.Now.Millisecond);
 
-        private readonly Regex fieldsRegEx = new Regex("{{.*?}}");
+        private readonly Regex fieldsRegEx = new Regex("({{.*?}})");
 
         private char DbParamChar => this.config.GetConnection().GetType().ToString() == "System.Data.SqlClient.SqlConnection" ? '@' : '$';
 
@@ -280,11 +280,18 @@ namespace Dandraka.Zoro.Processor
 
         private string GetExpressionString(DataRow row, string expression, JProperty jsonNode)
         {
-            var r = fieldsRegEx.Match(expression);
+            var matches = fieldsRegEx.Matches(expression);
 
-            foreach (Group rxGroup in r.Groups)
+            // does it have any fields/jsonpaths?
+            if (matches.Count == 0)
             {
-                string fieldName = rxGroup.Value.Replace("{{", "").Replace("}}", "");
+                return expression;
+            }
+
+            foreach (Match match in matches)
+            {
+                string fieldName = match.Value.Replace("{{", "").Replace("}}", "");
+                string fieldValue = null;
 
                 switch (this.config.DataSource)
                 {
@@ -294,8 +301,8 @@ namespace Dandraka.Zoro.Processor
                         {
                             throw new FieldNotFoundException(fieldName);
                         }
-                        string fieldValue = Convert.ToString(row[fieldName]);
-                        expression = expression.Replace(rxGroup.Value, fieldValue);
+                        fieldValue = Convert.ToString(row[fieldName]);
+                        expression = expression.Replace(match.Value, fieldValue);
                         break;
                     case DataSource.JsonFile:
                         // field name is supposed to be a JsonPath
@@ -308,8 +315,10 @@ namespace Dandraka.Zoro.Processor
                                 throw new FieldNotFoundException(fieldName);
                             }
                         }
-                        fieldValue = jsonPathResult.Value<string>();
-                        expression = expression.Replace(rxGroup.Value, fieldValue);
+
+                        fieldValue = (jsonPathResult as JValue).Value<string>();
+                        
+                        expression = expression.Replace(match.Value, fieldValue);
                         break;
                     default:
                         throw new NotSupportedException($"Data source {this.config.DataSource} is not supported.");

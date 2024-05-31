@@ -16,6 +16,8 @@ namespace Dandraka.Zoro.Tests
         public string TestInstanceDir;
         public string TestInstanceConfigCSVfile;
         public string TestInstanceConfigJSONfile;
+
+        public string TestInstanceConfigJSON2file;
         public static string TestDataDir => Path.Combine(Utility.AssemblyDirectory, "data");
 
         public DbConnection TestDbConnection;
@@ -28,10 +30,11 @@ namespace Dandraka.Zoro.Tests
 
         public Utility()
         {
-            TestInstanceDir = Path.Combine(Path.GetTempPath(), "Zorotests_" + (Guid.NewGuid().ToString()));
+            TestInstanceDir = Path.Combine(Path.GetTempPath(), "Zorotests_" + Guid.NewGuid().ToString());
             Directory.CreateDirectory(TestInstanceDir);
             TestInstanceConfigCSVfile = Path.Combine(TestInstanceDir, "testconfig.xml");
             TestInstanceConfigJSONfile = Path.Combine(TestInstanceDir, "testconfigjson.xml");
+            TestInstanceConfigJSON2file = Path.Combine(TestInstanceDir, "testconfigjson2.xml");
 
             Console.WriteLine($"TestInstanceDir = {TestInstanceDir}");
         }
@@ -54,7 +57,7 @@ namespace Dandraka.Zoro.Tests
             this.TestTableName = tableName;
 
             var cmdCreateTable = this.TestDbConnection.CreateCommand();
-            cmdCreateTable.CommandType = System.Data.CommandType.Text;
+            cmdCreateTable.CommandType = CommandType.Text;
             cmdCreateTable.CommandText = $"CREATE TABLE {tableName} (ID int, Name nvarchar(100), BankAccount nvarchar(50), Address nvarchar(100), Country nvarchar(2))";
             cmdCreateTable.ExecuteNonQuery();
 
@@ -63,7 +66,7 @@ namespace Dandraka.Zoro.Tests
 
             string insertSql = $"INSERT INTO {tableName} (ID, Name, BankAccount,Address,Country) VALUES ({DbParamChar}ID, {DbParamChar}Name, {DbParamChar}BankAccount,{DbParamChar}Address,{DbParamChar}Country)";
             var cmdInsert = this.TestDbConnection.CreateCommand();
-            cmdInsert.CommandType = System.Data.CommandType.Text;
+            cmdInsert.CommandType = CommandType.Text;
             cmdInsert.CommandText = insertSql;
             foreach (string csvField in csvFields)
             {
@@ -91,7 +94,7 @@ namespace Dandraka.Zoro.Tests
             }
 
             var cmdSelect = this.TestDbConnection.CreateCommand();
-            cmdSelect.CommandType = System.Data.CommandType.Text;
+            cmdSelect.CommandType = CommandType.Text;
             cmdSelect.CommandText = $"SELECT * FROM {tableName}";
             var rd = cmdSelect.ExecuteReader();
             var tbl = new DataTable(tableName);
@@ -109,7 +112,7 @@ namespace Dandraka.Zoro.Tests
             foreach (string filename in Directory.EnumerateFiles(TestDataDir))
             {
                 File.Copy(filename, Path.Combine(TestInstanceDir, Path.GetFileName(filename)), true);
-                //Console.WriteLine($"Copied {filename} to {TestInstanceDir}");
+                Console.WriteLine($"Copied {filename} to {TestInstanceDir}");
             }
 
             if (!File.Exists(TestInstanceConfigCSVfile))
@@ -122,18 +125,23 @@ namespace Dandraka.Zoro.Tests
                 throw new FileNotFoundException(TestInstanceConfigJSONfile);
             }
 
-            string configContentsCSV = File.ReadAllText(TestInstanceConfigCSVfile);
-            configContentsCSV = configContentsCSV.Replace("%TestInstanceDir%", TestInstanceDir);
-            File.WriteAllText(TestInstanceConfigCSVfile, configContentsCSV);
-
-            string configContentsJSON = File.ReadAllText(TestInstanceConfigJSONfile);
-            configContentsJSON = configContentsJSON.Replace("%TestInstanceDir%", TestInstanceDir);
-            File.WriteAllText(TestInstanceConfigJSONfile, configContentsJSON);
+            var configFiles = new[] 
+            {
+                    TestInstanceConfigCSVfile, 
+                    TestInstanceConfigJSONfile, 
+                    TestInstanceConfigJSON2file
+            };
+            foreach (var configFile in configFiles)
+            {
+                string configContents = File.ReadAllText(configFile);
+                configContents = configContents.Replace("%TestInstanceDir%", TestInstanceDir);
+                File.WriteAllText(configFile, configContents);                
+            }
         }
 
         public string CreateFileInTestInstanceDir(string contents, string ext)
         {
-            string fileName = Path.Combine(this.TestInstanceDir, (Guid.NewGuid()) + "." + ext.Replace(".", ""));
+            string fileName = Path.Combine(this.TestInstanceDir, Guid.NewGuid() + "." + ext.Replace(".", ""));
             File.WriteAllText(fileName, contents);
             return fileName;
         }
@@ -159,7 +167,7 @@ namespace Dandraka.Zoro.Tests
                         foreach (string tblToDrop in tblsToDrop)
                         {
                             var cmdDropTable = this.TestDbConnection.CreateCommand();
-                            cmdDropTable.CommandType = System.Data.CommandType.Text;
+                            cmdDropTable.CommandType = CommandType.Text;
                             cmdDropTable.CommandText = $"DROP TABLE {tblToDrop}";
                             cmdDropTable.ExecuteNonQuery();
                             Console.WriteLine($"Dropped table {tblToDrop}");                            

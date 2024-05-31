@@ -566,5 +566,39 @@ namespace Dandraka.Zoro.Tests
                 Assert.Equal($"Spouse of Customer 1", maskedSpouseName);
             }
         }
+
+        [Fact]
+        public void T17_Mask_JSON_Expression_Flat_Test()
+        {
+            // === Arrange ===
+            var config = MaskConfig.ReadConfig(utility.TestInstanceConfigJSON2file);
+            config.InputFile = config.InputFile.Replace("data2.json", "sample.json");
+            config.OutputFile = config.OutputFile.Replace("data2.json", "sample.json");
+
+            // === Act ===
+            var masker = new DataMasking(config);
+            masker.Mask();
+
+            // === Assert ===
+            var contentsOrig = new List<string>(File.ReadLines(config.InputFile));
+            var contents = new List<string>(File.ReadLines(config.OutputFile));
+            Assert.Equal(contentsOrig.Count, contents.Count);
+
+            var jsonObjOrig = JObject.Parse(File.ReadAllText(config.InputFile));
+            var jsonObjMasked = JObject.Parse(File.ReadAllText(config.OutputFile));
+
+            string origNumber = jsonObjOrig.SelectToken($"Number").Value<string>();
+            string origCustomerNumber = jsonObjOrig.SelectToken($"CustomerNumber").Value<string>();
+            string origYear = jsonObjOrig.SelectToken($"FinancialYear").Value<string>();
+            string maskedName = jsonObjMasked.SelectToken($"Name").Value<string>();
+            string maskedCustomerName = jsonObjMasked.SelectToken($"CustomerName").Value<string>();
+            string maskedCorporateGroup = jsonObjMasked.SelectToken($"CorporateGroup").Value<string>();
+            string maskedLeadClientPartnerMail = jsonObjMasked.SelectToken($"LeadClientPartnerMail").Value<string>();
+
+            Assert.Equal($"Engagement {origNumber} for {origYear}", maskedName);
+            Assert.Equal($"Customer {origCustomerNumber}", maskedCustomerName);
+            Assert.Equal($"Group of {origCustomerNumber}", maskedCorporateGroup);
+            Assert.Equal($"tony@stark.com", maskedLeadClientPartnerMail);
+        }
     }
 }

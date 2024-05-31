@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<MaskConfig xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <FieldMasks>
+    <FieldMask>
+      <FieldName>Name</FieldName>
+      <MaskType>Expression</MaskType>
+	  <Expression>Engagement {{$.Number}} for {{$.FinancialYear}}</Expression>
+    </FieldMask>
+    <FieldMask>
+      <FieldName>CustomerName</FieldName>
+      <MaskType>Expression</MaskType>
+	  <Expression>Customer {{$.CustomerNumber}}</Expression>
+    </FieldMask>	
+    <FieldMask>
+      <FieldName>CorporateGroup</FieldName>
+      <MaskType>Expression</MaskType>
+	  <Expression>Group of {{$.CustomerNumber}}</Expression>
+    </FieldMask>	
+    <FieldMask>
+      <FieldName>LeadClientPartnerMail</FieldName>
+      <MaskType>Expression</MaskType>
+	  <Expression>tony@stark.com</Expression>
+    </FieldMask>
+    <FieldMask>
+      <FieldName>EngagementPartnerMail</FieldName>
+      <MaskType>Expression</MaskType>
+	  <Expression>hsolo@kpmgqa.com</Expression>
+    </FieldMask>
+    <FieldMask>
+      <FieldName>EngagementManagerMail</FieldName>
+      <MaskType>Expression</MaskType>
+	  <Expression>jdoe@kpmgqa.com</Expression>
+    </FieldMask>	
+  </FieldMasks>
+  <DataSource>JsonFile</DataSource>
+  <DataDestination>JsonFile</DataDestination>
+  <InputFile>%TestInstanceDir%\data2.json</InputFile>
+  <OutputFile>%TestInstanceDir%\data2.json</OutputFile>
+</MaskConfig>

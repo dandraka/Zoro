@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
   <metadata>
     <id>Dandraka.Zoro</id>
-    <version>2.3.2</version>
+    <version>2.3.3</version>
     <authors>Jim (Dimitrios) Andrakakis</authors>
     <requireLicenseAcceptance>true</requireLicenseAcceptance>
     <icon>icon.png</icon>
@@ -18,7 +18,7 @@
     Added masking types reference documentation.    		
 		Added developer docs. 
 		Addressed SQL Data Provider Security Feature Bypass Vulnerability CVE-2024-0056 on Microsoft.Data.SqlClient and System.Data.SqlClient.
-    Fixed case-sensitivity bug and updated to latest package versions.
+    Fixed case-sensitivity and regex bugs, updated to latest package versions.
 	</releaseNotes>
     <copyright>Copyright (c) 2017 Jim (Dimitrios) Andrakakis</copyright>
     <tags>data anonymization masking gdpr sql csv json</tags>

@@ -1,0 +1,22 @@
+﻿{
+  "LastUpdate": "2024-05-31 00:43:08.2560741",
+  "Number": "99999",
+  "OportunityId": " ",
+  "IndustrySegment": "1111",
+  "MarketSegment": "44",
+  "TaxonomyCode": "FG1234",
+  "Name": "Carol Danvers",
+  "StartingDate": "2021-05-30 00:00:00.0000000",
+  "FinancialYear": 2020,
+  "Closed": "0",
+  "FunctionName": "10-AA",
+  "ProfitCenter": "AA10-1515",
+  "CostCenterNumber": "AA10-1616",
+  "CustomerName": "Avengers US",
+  "CustomerNumber": "123456",
+  "GisNumber": "789456",
+  "CorporateGroup": "TonyStark Corp",
+  "LeadClientPartnerMail": "carol@avengers.com",
+  "EngagementPartnerMail": "hulk@avengers.com",
+  "EngagementManagerMail": "scarlet@avengers.com"
+}
