@@ -9,11 +9,11 @@ It can be used as a command line program or as a dotnet standard 2.1 library. To
 **As a command line utility:**
 
 [Win] Zoro.exe <path to config file> [<optional path to input file>] [<optional path to output file>]
-E.g. ```Zoro.exe c:\zoro\mask.xml```
+E.g. ```Zoro.exe c:\zoro\mask.xml``` or 
      ```Zoro.exe c:\zoro\mask.xml c:\data\original.csv c:\data\anonymized.csv```
 
 [Linux] ./zoro <path to config file> [<optional path to input file>] [<optional path to output file>]
-E.g. ```./zoro /home/jim/zoro/mask.xml```
+E.g. ```./zoro /home/jim/zoro/mask.xml``` or 
      ```./zoro /home/jim/zoro/mask.xml /home/jim/data\original.csv /home/jim/data\anonymized.csv```
 
 **As a library**
