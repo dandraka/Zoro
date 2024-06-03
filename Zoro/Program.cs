@@ -16,17 +16,18 @@ namespace Dandraka.Zoro
         static void Main(string[] args)
         {
             if (args.Length == 0)
-            {
-                Console.WriteLine(@"Usage: Zoro.exe <path to config file> [<optional path to input file>] [<optional path to output file>]");
+            {                
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
-                    Console.WriteLine(@"E.g. Zoro.exe c:\zoro\mask.xml");
-                    Console.WriteLine(@"     Zoro.exe c:\zoro\mask.xml c:\data\original.csv c:\data\anonymized.csv");
+                    Console.WriteLine(@"Usage: Zoro.exe <path to config file> [<optional path to input file>] [<optional path to output file>]");
+                    Console.WriteLine(@"E.g.   Zoro.exe c:\zoro\mask.xml");
+                    Console.WriteLine(@"       Zoro.exe c:\zoro\mask.xml c:\data\original.csv c:\data\anonymized.csv");
                 }
                 else
                 {
-                    Console.WriteLine(@"E.g. ./zoro /home/jim/zoro/mask.xml");
-                    Console.WriteLine(@"     ./zoro /home/jim/zoro/mask.xml /home/jim/data/original.csv /home/jim/data/anonymized.csv");
+                    Console.WriteLine(@"Usage: ./zoro <path to config file> [<optional path to input file>] [<optional path to output file>]");
+                    Console.WriteLine(@"E.g.   ./zoro /home/jim/zoro/mask.xml");
+                    Console.WriteLine(@"       ./zoro /home/jim/zoro/mask.xml /home/jim/data/original.csv /home/jim/data/anonymized.csv");
                 }
                 Console.WriteLine(@"     Input & Output files are optional, but if specified they");
                 Console.WriteLine(@"     take precedence over (i.e. are used instead of) the config file.");
