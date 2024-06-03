@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Runtime.InteropServices;
 using Dandraka.Zoro.Processor;
 
 namespace Dandraka.Zoro
@@ -17,8 +18,16 @@ namespace Dandraka.Zoro
             if (args.Length == 0)
             {
                 Console.WriteLine(@"Usage: Zoro.exe <path to config file> [<optional path to input file>] [<optional path to output file>]");
-                Console.WriteLine(@"E.g. Zoro.exe c:\zoro\mask.xml");
-                Console.WriteLine(@"     Zoro.exe c:\zoro\mask.xml c:\data\original.csv c:\data\anonymized.csv");
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    Console.WriteLine(@"E.g. Zoro.exe c:\zoro\mask.xml");
+                    Console.WriteLine(@"     Zoro.exe c:\zoro\mask.xml c:\data\original.csv c:\data\anonymized.csv");
+                }
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                {
+                    Console.WriteLine(@"E.g. ./zoro /home/jim/zoro/mask.xml");
+                    Console.WriteLine(@"     ./zoro /home/jim/zoro/mask.xml /home/jim/data/original.csv /home/jim/data/anonymized.csv");
+                }
                 Console.WriteLine(@"     Input & Output files are optional, but if specified they");
                 Console.WriteLine(@"     take precedence over (i.e. are used instead of) the config file.");
                 Console.WriteLine(@"Sample config file:");
