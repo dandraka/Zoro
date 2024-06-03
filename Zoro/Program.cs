@@ -23,7 +23,7 @@ namespace Dandraka.Zoro
                     Console.WriteLine(@"E.g. Zoro.exe c:\zoro\mask.xml");
                     Console.WriteLine(@"     Zoro.exe c:\zoro\mask.xml c:\data\original.csv c:\data\anonymized.csv");
                 }
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                else
                 {
                     Console.WriteLine(@"E.g. ./zoro /home/jim/zoro/mask.xml");
                     Console.WriteLine(@"     ./zoro /home/jim/zoro/mask.xml /home/jim/data/original.csv /home/jim/data/anonymized.csv");
