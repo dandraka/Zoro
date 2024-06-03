@@ -6,14 +6,21 @@ namespace Dandraka.Zoro
 {
     class Program
     {
-        private static string configfile;
+        private static string configFile = null;
+
+        private static string inFile = null;
+
+        private static string outFile = null;
 
         static void Main(string[] args)
         {
             if (args.Length == 0)
             {
-                Console.WriteLine(@"Usage: Zoro.exe <path to config file>");
-                Console.WriteLine(@"E.g. Zoro.exe c:\temp\mask.xml");
+                Console.WriteLine(@"Usage: Zoro.exe <path to config file> [<optional path to input file>] [<optional path to output file>]");
+                Console.WriteLine(@"E.g. Zoro.exe c:\zoro\mask.xml");
+                Console.WriteLine(@"     Zoro.exe c:\zoro\mask.xml c:\data\original.csv c:\data\anonymized.csv");
+                Console.WriteLine(@"     Input & Output files are optional, but if specified they");
+                Console.WriteLine(@"     take precedence over (i.e. are used instead of) the config file.");
                 Console.WriteLine(@"Sample config file:");
                 Console.WriteLine("<?xml version=\"1.0\"?>");
                 Console.WriteLine("<MaskConfig xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">");
@@ -60,20 +67,42 @@ namespace Dandraka.Zoro
             }
 
             // cross platform
-            configfile = Path.GetFullPath(args[0]
+            configFile = Path.GetFullPath(args[0]
                 .Replace('/', Path.DirectorySeparatorChar)
                 .Replace('\\', Path.DirectorySeparatorChar));
 
-            if (!File.Exists(configfile))
+            if (args.Length >= 2)
             {
-                Console.WriteLine($"WARNING: Config file {configfile} was not found, exiting.");
-                Console.WriteLine(@"Usage: Zoro.exe <path to config file>");              
+                inFile = Path.GetFullPath(args[1]
+                    .Replace('/', Path.DirectorySeparatorChar)
+                    .Replace('\\', Path.DirectorySeparatorChar));
+            }
+            if (args.Length >= 3)
+            {
+                outFile = Path.GetFullPath(args[2]
+                    .Replace('/', Path.DirectorySeparatorChar)
+                    .Replace('\\', Path.DirectorySeparatorChar));
+            }
+
+            if (!File.Exists(configFile))
+            {
+                Console.WriteLine($"WARNING: Config file {configFile} was not found, exiting.");
+                Console.WriteLine(@"Usage: Zoro.exe <path to config file> [<optional path to input file>] [<optional path to output file>]");              
                 return;
             }
 
             try
             {
-                var config = MaskConfig.ReadConfig(configfile);
+                var config = MaskConfig.ReadConfig(configFile);
+                if (!string.IsNullOrEmpty(inFile)) 
+                { 
+                    config.InputFile = inFile;
+                }
+                if (!string.IsNullOrEmpty(outFile))
+                {
+                    config.OutputFile = outFile;
+                }
+
                 var masker = new DataMasking(config);
                 masker.Mask();
             }
