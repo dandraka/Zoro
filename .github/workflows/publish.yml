@@ -22,9 +22,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v7
-    #- uses: NuGet/setup-nuget@v4
-    #  with:
-    #    nuget-api-key: ${{secrets.NUGET_API_KEY}}
     - name: Setup .NET
       uses: actions/setup-dotnet@v5
       with:
@@ -46,19 +43,12 @@ jobs:
       run: dotnet publish Zoro/Zoro.csproj --configuration Release --runtime win-x64 /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true --self-contained true
 
     - name: Generate executable (linux)
-      run: dotnet publish Zoro/Zoro.csproj --configuration Release --runtime linux-x64 /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true --self-contained true      
-        
-    #- name: Pack
-    #  run: nuget pack Zoro.Processor/Dandraka.Zoro.nuspec
-    #  
-    #- name: Publish
-    #  run: nuget push Dandraka.Zoro.*.nupkg -Source https://www.nuget.org/api/v2/package
+      run: dotnet publish Zoro/Zoro.csproj --configuration Release --runtime linux-x64 /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true --self-contained true              
 
     - name: Pack
       # Use dotnet pack instead of nuget pack
       # run: dotnet pack Zoro.Processor/Zoro.Processor.csproj --configuration Release --output ./nupkgs
       run: dotnet pack Zoro.Processor/Dandraka.Zoro.nuspec
-
 
     # for troubleshooting only
     #- name: Debug API Key
@@ -68,4 +58,4 @@ jobs:
 
     - name: Publish
       # Use dotnet nuget push instead of nuget push
-      run: dotnet nuget push ./nupkgs/*.nupkg --api-key ${{secrets.NUGET_API_KEY}} --source https://api.nuget.org/v3/index.json    
+      run: dotnet nuget push ./*.nupkg --api-key ${{secrets.NUGET_API_KEY}} --source https://api.nuget.org/v3/index.json    
