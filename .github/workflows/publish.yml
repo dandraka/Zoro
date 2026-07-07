@@ -11,6 +11,9 @@ on:
   #  paths:
   #  - "**.nuspec"
 
+permissions:
+  contents: write  # required to create the tag
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true      
@@ -56,6 +59,26 @@ jobs:
     #    KEY="${{ secrets.NUGET_API_KEY }}"
     #    echo "Key prefix: ${KEY:0:3}..."      
 
-    - name: Publish
-      # Use dotnet nuget push instead of nuget push
-      run: dotnet nuget push ./*.nupkg --api-key ${{secrets.NUGET_API_KEY}} --source https://api.nuget.org/v3/index.json    
+    #- name: Publish
+    #  # Use dotnet nuget push instead of nuget push
+    #  run: dotnet nuget push ./*.nupkg --api-key ${{secrets.NUGET_API_KEY}} --source https://api.nuget.org/v3/index.json    
+
+    - name: Create Git Tag
+      shell: pwsh
+      run: |
+        # 1. Read the version from your nuspec file
+        [xml]$xml = Get-Content -Path "Zoro.Processor/Dandraka.Zoro.nuspec"
+        $version = $xml.package.metadata.version
+        $tagName = "v$version"
+        
+        Write-Host "Creating tag: $tagName"
+
+        # 2. Configure Git
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        
+        # 3. Create and push the tag
+        # Use --force if you want to be able to overwrite the tag, 
+        # otherwise remove it to fail if the tag already exists.
+        git tag $tagName
+        git push origin $tagName      
