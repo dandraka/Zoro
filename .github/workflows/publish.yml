@@ -59,9 +59,9 @@ jobs:
     #    KEY="${{ secrets.NUGET_API_KEY }}"
     #    echo "Key prefix: ${KEY:0:3}..."      
 
-    #- name: Publish
-    #  # Use dotnet nuget push instead of nuget push
-    #  run: dotnet nuget push ./*.nupkg --api-key ${{secrets.NUGET_API_KEY}} --source https://api.nuget.org/v3/index.json    
+    - name: Publish
+      # Use dotnet nuget push instead of nuget push
+      run: dotnet nuget push ./*.nupkg --api-key ${{secrets.NUGET_API_KEY}} --source https://api.nuget.org/v3/index.json    
 
     - name: Create Git Tag
       shell: pwsh
