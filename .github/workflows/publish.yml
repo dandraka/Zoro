@@ -56,7 +56,7 @@ jobs:
 
     - name: Pack
       # Use dotnet pack instead of nuget pack
-      run: dotnet pack Zoro.Processor/Dandraka.Zoro.csproj --configuration Release --output ./nupkgs
+      run: dotnet pack Zoro.Processor/Zoro.Processor.csproj --configuration Release --output ./nupkgs
 
     - name: Publish
       # Use dotnet nuget push instead of nuget push
