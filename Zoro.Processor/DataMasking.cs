@@ -23,7 +23,7 @@ namespace Dandraka.Zoro.Processor
 
         private readonly Regex fieldsRegEx = new Regex("({{.*?}})");
 
-        private char DbParamChar => this.config.GetConnection().GetType().ToString() == "System.Data.SqlClient.SqlConnection" ? '@' : '$';
+        private char DbParamChar => this.config.GetConnection().GetType().ToString() == typeof(Microsoft.Data.SqlClient.SqlConnection).FullName ? '@' : '$';
 
         /// <summary>
         /// Creates an instance of DataMasking class.
@@ -38,8 +38,8 @@ namespace Dandraka.Zoro.Processor
         {
             switch(connType)
             {
-                case "System.Data.SqlClient":
-                    DbProviderFactories.RegisterFactory(connType, typeof(System.Data.SqlClient.SqlClientFactory));
+                case "Microsoft.Data.SqlClient":
+                    DbProviderFactories.RegisterFactory(connType, typeof(Microsoft.Data.SqlClient.SqlClientFactory));
                     break;
                 case "System.Data.OleDb":
                     DbProviderFactories.RegisterFactory(connType, typeof(System.Data.OleDb.OleDbFactory));

@@ -339,8 +339,8 @@ The field contents are substituted with a randomly picked item of one or more gi
   <DataSource>Database</DataSource>
   <DataDestination>Database</DataDestination>
   <ConnectionString>Server=DBSRV1;Database=appdb;Trusted_Connection=yes;</ConnectionString>
-  <!-- Currently System.Data.SqlClient and System.Data.OleDb are supported, but if needed, adding more is trivial -->
-  <ConnectionType>System.Data.SqlClient</ConnectionType>
+  <!-- Currently Microsoft.Data.SqlClient and System.Data.OleDb are supported, but if needed, adding more is trivial -->
+  <ConnectionType>Microsoft.Data.SqlClient</ConnectionType>
   <SqlSelect>SELECT ID, CustomerFullname, CustomerCity, CustomerCountry FROM customers</SqlSelect>
   <!-- Note that the parameter character is @ for Sql Server, $ elsewhere -->
   <SqlCommand>INSERT INTO customers_anonymous (ID, CustomerFullname, CustomerCity, CustomerCountry) VALUES (@ID, @CustomerFullname, @CustomerCity, @CustomerCountry)</SqlCommand>

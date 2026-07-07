@@ -108,7 +108,7 @@ namespace Dandraka.Zoro.Processor
         /// the System.Data section of Machine.Config.
         /// Examples:
         /// System.Data.Odbc, System.Data.OleDb, System.Data.SQLite, 
-        /// System.Data.OracleClient, System.Data.SqlClient.
+        /// System.Data.OracleClient, Microsoft.Data.SqlClient.
         /// See also https://downloads.teradata.com/blog/netfx/2010/12/dbproviderfactories-demystified
         /// for more info.
         /// </summary>

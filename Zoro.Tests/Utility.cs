@@ -5,7 +5,7 @@ using System.IO;
 using System.Reflection;
 using System.Text;
 using System.Data.SQLite;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -72,7 +72,7 @@ namespace Dandraka.Zoro.Tests
             {
                 switch (this.TestDbConnection.GetType().ToString())
                 {
-                    case "System.Data.SqlClient.SqlConnection":
+                    case "Microsoft.Data.SqlClient.SqlConnection":
                         var dbType = csvField == "ID" ? SqlDbType.Int : SqlDbType.NVarChar;
                         cmdInsert.Parameters.Add(new SqlParameter($"{DbParamChar}{csvField}", dbType));
                         break;
