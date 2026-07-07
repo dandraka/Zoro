@@ -1,6 +1,6 @@
 # MaskConfig.ConnectionType field
 
-The type of DB connection to instantiate, used when either `DataSource` is Database or when `DataDestination` is Database. This needs to be available to the DbProviderFactories class, which reads from the System.Data section of Machine.Config. Examples: System.Data.Odbc, System.Data.OleDb, System.Data.SQLite, System.Data.OracleClient, System.Data.SqlClient. See also https://downloads.teradata.com/blog/netfx/2010/12/dbproviderfactories-demystified for more info.
+The type of DB connection to instantiate, used when either `DataSource` is Database or when `DataDestination` is Database. This needs to be available to the DbProviderFactories class, which reads from the System.Data section of Machine.Config. Examples: System.Data.Odbc, System.Data.OleDb, System.Data.SQLite, System.Data.OracleClient, Microsoft.Data.SqlClient. See also https://downloads.teradata.com/blog/netfx/2010/12/dbproviderfactories-demystified for more info.
 
 ```csharp
 public string ConnectionType;

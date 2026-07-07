@@ -25,7 +25,7 @@ var configFromFile = Zoro.Processor.MaskConfig.ReadConfig("c:\temp\mask.xml");
 var config = new Zoro.Processor.MaskConfig()
 {
     ConnectionString = "Server=myDbServer;Database=myDb;User Id=myUser;Password=myPassword;",
-    ConnectionType = "System.Data.SqlClient",
+    ConnectionType = "Microsoft.Data.SqlClient",
     DataSource = DataSource.Database,
     DataDestination = DataDestination.CsvFile,
     SqlSelect = "SELECT * FROM testdata",
@@ -62,7 +62,7 @@ Please see the [generated docs](https://github.com/dandraka/Zoro/blob/master/doc
 
 - Input & Output files are optional, but if specified they take precedence over (i.e. are used instead of) the config file.
 - Field names are case-insensitive for CSV files & DB queries, but case-sensitive for JSON files.
-- If using a database to write data (DataDestination=Database), all names of parameters in SqlCommand (@field for SqlServer or $field elsewhere) must have a corresponding FieldMask, even if the MaskType is None. Also, currently connection types of ```System.Data.SqlClient``` and ```System.Data.OleDb``` are supported, but if anything else (e.g. MySql, Oracle) is needed please open an issue; adding more is trivial.
+- If using a database to write data (DataDestination=Database), all names of parameters in SqlCommand (@field for SqlServer or $field elsewhere) must have a corresponding FieldMask, even if the MaskType is None. Also, currently connection types of ```Microsoft.Data.SqlClient``` and ```System.Data.OleDb``` are supported, but if anything else (e.g. MySql, Oracle) is needed please open an issue; adding more is trivial.
 - If input is a JSON file (DataSource=JsonFile) and one or more FieldMasks are type List (FieldMask.MaskType=List), one 1 Replacement entry is allowed, which has to have an empty Selector (Selector="").
 - If input is a JSON file (DataSource=JsonFile), FieldMasks that perform a database query (FieldMask.MaskType=Query) are not allowed. This is planned to be supported in a later version.
 
@@ -160,8 +160,8 @@ ID;Name;BankAccount
   <DataSource>Database</DataSource>
   <DataDestination>Database</DataDestination>
   <ConnectionString>Server=DBSRV1;Database=appdb;Trusted_Connection=yes;</ConnectionString>
-  <!-- Currently System.Data.SqlClient and System.Data.OleDb are supported, but if needed, adding more is trivial -->
-  <ConnectionType>System.Data.SqlClient</ConnectionType>
+  <!-- Currently Microsoft.Data.SqlClient and System.Data.OleDb are supported, but if needed, adding more is trivial -->
+  <ConnectionType>Microsoft.Data.SqlClient</ConnectionType>
   <SqlSelect>SELECT ID, CustomerFullname, CustomerCity, CustomerCountry FROM customers</SqlSelect>
   <!-- Note that the parameter character is @ for Sql Server, $ elsewhere -->
   <SqlCommand>INSERT INTO customers_anonymous (ID, CustomerFullname, CustomerCity, CustomerCountry) VALUES (@ID, @CustomerFullname, @CustomerCity, @CustomerCountry)</SqlCommand>

@@ -27,6 +27,7 @@ namespace Dandraka.Zoro.Tests
         public void T01_TestSecret()
         {
             // test github secrets
+            // on local, use  $env:TESTSECRET = 'LALALA' in the terminal
             var secret = Environment.GetEnvironmentVariable("TESTSECRET");
             Skip.If(string.IsNullOrWhiteSpace(secret), "No secret info found, is the environment variable 'TESTSECRET' set?");
             Assert.Equal("LALALA", secret);
@@ -59,7 +60,7 @@ namespace Dandraka.Zoro.Tests
                 {
                     masker.Mask();
                 }
-                catch (System.Data.SqlClient.SqlException ex)
+                catch (Microsoft.Data.SqlClient.SqlException ex)
                 {
                     // error 40 - could not open connection to sql server
                     Skip.If(ex.Message.Contains("40"), $"Database seems not to respond, check if your SQL Server is running. {ex.Message}");
@@ -104,7 +105,7 @@ namespace Dandraka.Zoro.Tests
                 {
                     masker.Mask();
                 }
-                catch (System.Data.SqlClient.SqlException ex)
+                catch (Microsoft.Data.SqlClient.SqlException ex)
                 {
                     // error 40 - could not open connection to sql server
                     Skip.If(ex.Message.Contains("40"), $"Database seems not to respond, check if your SQL Server is running. {ex.Message}");
@@ -166,7 +167,7 @@ namespace Dandraka.Zoro.Tests
                 {
                     masker.Mask();
                 }
-                catch (System.Data.SqlClient.SqlException ex)
+                catch (Microsoft.Data.SqlClient.SqlException ex)
                 {
                     // error 40 - could not open connection to sql server
                     Skip.If(ex.Message.Contains("40"), $"Database seems not to respond, check if your SQL Server is running. {ex.Message}");
@@ -179,6 +180,13 @@ namespace Dandraka.Zoro.Tests
         {
             string tblName = $"T05_Db2Csv_{Guid.NewGuid().ToString().Substring(0, 8)}";
 
+            // Use either a github secret or
+            // on local, use  $env:SQLCONNSTRING = 'my conn string' in the terminal
+            // Examples:
+            // On prem SQL Server: 
+            // Server=DbServer;Integrated Security=true;Initial Catalog=DbName;
+            // Azure SQL Server: 
+            // Server=tcp:DbServer,1433;Initial Catalog=DbName;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;
             var connstr = Environment.GetEnvironmentVariable("SQLCONNSTRING");
 
             // skip if no db config found
@@ -213,7 +221,7 @@ namespace Dandraka.Zoro.Tests
                     contents.ForEach(x => Console.WriteLine(x));
                     Assert.Equal(5, contents.Count);
                 }
-                catch (System.Data.SqlClient.SqlException ex)
+                catch (Microsoft.Data.SqlClient.SqlException ex)
                 {
                     // error 40 - could not open connection to sql server
                     Skip.If(ex.Message.Contains("40"), $"Database seems not to respond, check if your SQL Server is running. {ex.Message}");
@@ -259,7 +267,7 @@ namespace Dandraka.Zoro.Tests
                     var masker = new DataMasking(config);
                     masker.Mask();
                 }
-                catch (System.Data.SqlClient.SqlException ex)
+                catch (Microsoft.Data.SqlClient.SqlException ex)
                 {
                     // error 40 - could not open connection to sql server
                     Skip.If(ex.Message.Contains("40"), $"Database seems not to respond, check if your SQL Server is running. {ex.Message}");
@@ -327,7 +335,7 @@ namespace Dandraka.Zoro.Tests
                     var masker = new DataMasking(config);
                     masker.Mask();
                 }
-                catch (System.Data.SqlClient.SqlException ex)
+                catch (Microsoft.Data.SqlClient.SqlException ex)
                 {
                     // error 40 - could not open connection to sql server
                     Skip.If(ex.Message.Contains("40"), $"Database seems not to respond, check if your SQL Server is running. {ex.Message}");
