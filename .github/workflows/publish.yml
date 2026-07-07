@@ -56,12 +56,15 @@ jobs:
 
     - name: Pack
       # Use dotnet pack instead of nuget pack
-      run: dotnet pack Zoro.Processor/Zoro.Processor.csproj --configuration Release --output ./nupkgs
+      # run: dotnet pack Zoro.Processor/Zoro.Processor.csproj --configuration Release --output ./nupkgs
+      run: dotnet pack Zoro.Processor/Dandraka.Zoro.nuspec
 
-    - name: Debug API Key
-      run: |
-        KEY="${{ secrets.NUGET_API_KEY }}"
-        echo "Key prefix: ${KEY:0:3}..."      
+
+    # for troubleshooting only
+    #- name: Debug API Key
+    #  run: |
+    #    KEY="${{ secrets.NUGET_API_KEY }}"
+    #    echo "Key prefix: ${KEY:0:3}..."      
 
     - name: Publish
       # Use dotnet nuget push instead of nuget push
