@@ -22,7 +22,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v7
-    - uses: NuGet/setup-nuget@v3
+    - uses: NuGet/setup-nuget@v4
       with:
         nuget-api-key: ${{secrets.NUGET_API_KEY}}
     - name: Setup .NET
