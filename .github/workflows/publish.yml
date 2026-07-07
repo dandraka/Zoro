@@ -2,14 +2,14 @@ name: Build test and publish
 
 on:
   workflow_dispatch:
-  push:
-    branches: [ master ]
-    paths:
-    - "**.nuspec"
-  pull_request:
-    branches: [ master ]
-    paths:
-    - "**.nuspec"
+  #push:
+  #  branches: [ master ]
+  #  paths:
+  #  - "**.nuspec"
+  #pull_request:
+  #  branches: [ master ]
+  #  paths:
+  #  - "**.nuspec"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}

@@ -37,7 +37,7 @@
     <file src="bin/Release/netstandard2.1/LICENSE.txt" target="" />
     <file src="bin/Release/netstandard2.1/README.md" target="" />
     <file src="bin/Release/netstandard2.1/Zoro.Processor.dll" target="lib/netstandard2.1" />
-    <file src="../Zoro/bin/Release/net8.0/win-x64/publish/*" target="tools/win-x64" />
-    <file src="../Zoro/bin/Release/net8.0/linux-x64/publish/*" target="tools/linux-x64" />
+    <file src="../Zoro/bin/Release/net10.0/win-x64/publish/*" target="tools/win-x64" />
+    <file src="../Zoro/bin/Release/net10.0/linux-x64/publish/*" target="tools/linux-x64" />
   </files>  
 </package>
