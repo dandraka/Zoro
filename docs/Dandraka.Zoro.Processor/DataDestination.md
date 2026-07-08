@@ -13,6 +13,7 @@ public enum DataDestination
 | CsvFile | `0` | The data will be written to a csv file. |
 | Database | `1` | The data will be INSERTed in a db using an SQL query. |
 | JsonFile | `2` | The data will be written to a JSON file. |
+| DocXFile | `3` | The data will be written to a DOCX file. |
 
 ## See Also
 

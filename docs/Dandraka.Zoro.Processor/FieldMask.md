@@ -13,11 +13,11 @@ public class FieldMask
 | [FieldMask](FieldMask/FieldMask.md)() | Creates an instance of FieldMask class. |
 | [Asterisk](FieldMask/Asterisk.md) { get; set; } | In case of `MaskType.Asterisk`, the character to apply. The default is asterisk (*). |
 | [Expression](FieldMask/Expression.md) { get; set; } | In case of `MaskType.Expression`, the expression to use. The field contents are substituted with a combination of a constant string and values from other fields. Must be filled with a constant string and field names enclosed in double curly brackets. For example "Customer-{{CustomerID}}" (without the quotes). When the data source is Json, a JsonPath is expected in the place of field name. The JsonPath will be applied on the root of the Json. For example "Customer-{{$.CustomerID}}" (without the quotes). |
-| [FieldName](FieldMask/FieldName.md) { get; set; } | The name of the field. Note that field names are case-insensitive for CSV files and DB queries, but case-sensitive for JSON files. |
+| [FieldName](FieldMask/FieldName.md) { get; set; } | The name of the field. Note that field names are case-insensitive for CSV files and DB queries, but case-sensitive for JSON files. For Office documents, it's used to match the content processed. |
 | [ListOfPossibleReplacements](FieldMask/ListOfPossibleReplacements.md) { get; set; } | In case of `MaskType.List`, the comma-separated list of items to choose from. |
 | [MaskType](FieldMask/MaskType.md) { get; set; } | The type of masking to apply. The default is None. |
 | [QueryReplacement](FieldMask/QueryReplacement.md) { get; set; } | In case of `MaskType.Query`, the SQL query to get the list of replacements from. |
-| [RegExGroupToReplace](FieldMask/RegExGroupToReplace.md) { get; set; } | Valid only if `RegExMatch` is filled. |
+| [RegExGroupToReplace](FieldMask/RegExGroupToReplace.md) { get; set; } | Valid only if `RegExMatch` is filled. The number is 1-based, not 0-based, i.e. the first group is 1. |
 | [RegExMatch](FieldMask/RegExMatch.md) { get; set; } | If filled, only matches from the regular expression are changed. If not, the whole field is changed. |
 
 ## See Also

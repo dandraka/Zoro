@@ -13,6 +13,7 @@ public enum DataSource
 | CsvFile | `0` | The data comes from a csv file. |
 | Database | `1` | The data is obtained by executing a DB query. |
 | JsonFile | `2` | The data comes from a JSON file. |
+| DocXFile | `3` | The data comes from a DOCX file. |
 
 ## See Also
 

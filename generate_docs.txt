@@ -1,1 +1,2 @@
+dotnet tool install -g xmldocmd
 xmldocmd .\bin\Debug\netstandard2.1\Zoro.Processor.dll ..\docs --clean
