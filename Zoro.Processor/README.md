@@ -8,13 +8,17 @@ It can be used as a command line program or as a dotnet standard 2.1 library. To
 
 **As a command line utility:**
 
-[Win] Zoro.exe <path to config file> [<optional path to input file>] [<optional path to output file>]
-E.g. ```Zoro.exe c:\zoro\mask.xml``` or 
-     ```Zoro.exe c:\zoro\mask.xml c:\data\original.csv c:\data\anonymized.csv```
+**[Win]** Zoro.exe [mandatory: path to config file] [optional: path to input file] [optional: path to output file]
 
-[Linux] ./zoro <path to config file> [<optional path to input file>] [<optional path to output file>]
-E.g. ```./zoro /home/jim/zoro/mask.xml``` or 
-     ```./zoro /home/jim/zoro/mask.xml /home/jim/data\original.csv /home/jim/data\anonymized.csv```
+E.g. ```Zoro.exe c:\zoro\mask.xml```
+
+or ```Zoro.exe c:\zoro\mask.xml c:\data\original.csv c:\data\anonymized.csv```
+
+**[Linux]** ./zoro [mandatory: path to config file] [optional: path to input file] [optional: path to output file]
+
+E.g. ```./zoro /home/jim/zoro/mask.xml```
+
+or ```./zoro /home/jim/zoro/mask.xml /home/jim/data\original.csv /home/jim/data\anonymized.csv```
 
 **As a library**
 
@@ -63,8 +67,9 @@ Please see the [generated docs](https://github.com/dandraka/Zoro/blob/master/doc
 - Input & Output files are optional, but if specified they take precedence over (i.e. are used instead of) the config file.
 - Field names are case-insensitive for CSV files & DB queries, but case-sensitive for JSON files.
 - If using a database to write data (DataDestination=Database), all names of parameters in SqlCommand (@field for SqlServer or $field elsewhere) must have a corresponding FieldMask, even if the MaskType is None. Also, currently connection types of ```Microsoft.Data.SqlClient``` and ```System.Data.OleDb``` are supported, but if anything else (e.g. MySql, Oracle) is needed please open an issue; adding more is trivial.
-- If input is a JSON file (DataSource=JsonFile) and one or more FieldMasks are type List (FieldMask.MaskType=List), one 1 Replacement entry is allowed, which has to have an empty Selector (Selector="").
-- If input is a JSON file (DataSource=JsonFile), FieldMasks that perform a database query (FieldMask.MaskType=Query) are not allowed. This is planned to be supported in a later version.
+- If input is a JSON of an Office file type (Docx, Xlsx, Pptx) and one or more FieldMasks are type List (FieldMask.MaskType=List), one 1 Replacement entry is allowed, which has to have an empty Selector (Selector="").
+- If input is a JSON file type, FieldMasks that perform a database query (FieldMask.MaskType=Query) are not allowed. This is planned to be supported in a later version.
+- If the input is an Office file type (Docx, Xlsx, Pptx), the output must be of the same type.
 
 ## Examples:
 

@@ -86,7 +86,7 @@ namespace Dandraka.Zoro.Tests
         [Fact]
         public void T03_Mask_MaskType_None_Test()
         {
-            // Arrange
+            // === Arrange ===
             string csvContent = "id;name\r\n1;Carol Danvers\r\n2;Bruce Banner\r\n3;Peter Parker\r\n";
             string csvFilename = this.utility.CreateFileInTestInstanceDir(csvContent, "csv");
             var config = new MaskConfig()
@@ -97,11 +97,11 @@ namespace Dandraka.Zoro.Tests
             config.FieldMasks.Add(new FieldMask() { FieldName = "id", MaskType = MaskType.None });
             config.FieldMasks.Add(new FieldMask() { FieldName = "name", MaskType = MaskType.None });
 
-            // Act
+            // === Act ===
             var masker = new DataMasking(config);
             masker.Mask();
 
-            // Assert
+            // === Assert ===
             Assert.True(File.Exists(config.OutputFile));
             var maskContents = new List<string>(csvContent.Split("\r\n"));
             var contents = new List<string>(File.ReadLines(config.OutputFile));
@@ -115,7 +115,7 @@ namespace Dandraka.Zoro.Tests
         [Fact]
         public void T04_Mask_MaskType_Asterisk_Test()
         {
-            // Arrange
+            // === Arrange ===
             string csvContent = "id;name\r\n1;Carol Danvers\r\n2;Bruce Banner\r\n3;Peter Parker\r\n";
             string csvMaskedContent = "id;name\r\n1;***** *******\r\n2;***** ******\r\n3;***** ******\r\n";
             string csvFilename = this.utility.CreateFileInTestInstanceDir(csvContent, "csv");
@@ -127,11 +127,11 @@ namespace Dandraka.Zoro.Tests
             config.FieldMasks.Add(new FieldMask() { FieldName = "id", MaskType = MaskType.None });
             config.FieldMasks.Add(new FieldMask() { FieldName = "name", MaskType = MaskType.Asterisk });
 
-            // Act
+            // === Act ===
             var masker = new DataMasking(config);
             masker.Mask();
 
-            // Assert
+            // === Assert ===
             Assert.True(File.Exists(config.OutputFile));
             var maskContents = new List<string>(csvMaskedContent.Split("\r\n"));
             var contents = new List<string>(File.ReadLines(config.OutputFile));
@@ -145,7 +145,7 @@ namespace Dandraka.Zoro.Tests
         [Fact]
         public void T05_Mask_MaskType_List_Test()
         {
-            // Arrange
+            // === Arrange ===
             string csvContent = "id;name\r\n1;Carol Danvers\r\n2;Bruce Banner\r\n3;Peter Parker\r\n";
             string csvMaskedContent = "id;name\r\n1;Charles Xavier\r\n2;Jean Grey\r\n3;Charles Xavier\r\n";
             string csvFilename = this.utility.CreateFileInTestInstanceDir(csvContent, "csv");
@@ -159,11 +159,11 @@ namespace Dandraka.Zoro.Tests
             config.FieldMasks[1].ListOfPossibleReplacements.Add(new Replacement() { Selector = "id=2", ReplacementList = "Jean Grey" });
             config.FieldMasks[1].ListOfPossibleReplacements.Add(new Replacement() { Selector = "", ReplacementList = "Charles Xavier" });
 
-            // Act
+            // === Act ===
             var masker = new DataMasking(config);
             masker.Mask();
 
-            // Assert
+            // === Assert ===
             Assert.True(File.Exists(config.OutputFile));
             var maskContents = new List<string>(csvMaskedContent.Split("\r\n"));
             var contents = new List<string>(File.ReadLines(config.OutputFile));
@@ -386,7 +386,7 @@ namespace Dandraka.Zoro.Tests
         [Fact]
         public void T12_Mask_MaskType_Expression_Test()
         {
-            // Arrange
+            // === Arrange ===
             string csvContent = "Id;Name\r\n1;Carol Danvers\r\n2;Bruce Banner\r\n3;Peter Parker\r\n";
             string csvMaskedContent = "Id;Name\r\n1;Hero-1\r\n2;Hero-2\r\n3;Hero-3\r\n";
             string csvFilename = this.utility.CreateFileInTestInstanceDir(csvContent, "csv");
@@ -403,11 +403,11 @@ namespace Dandraka.Zoro.Tests
                 Expression = "Hero-{{id}}"
             });
 
-            // Act
+            // === Act ===
             var masker = new DataMasking(config);
             masker.Mask();
 
-            // Assert
+            // === Assert ===
             Assert.True(File.Exists(config.OutputFile));
             var maskContents = new List<string>(csvMaskedContent.Split("\r\n"));
             var contents = new List<string>(File.ReadLines(config.OutputFile));
@@ -421,7 +421,7 @@ namespace Dandraka.Zoro.Tests
         [Fact]
         public void T13_Mask_MaskType_Expression_Regex_Test()
         {
-            // Arrange
+            // === Arrange ===
             string csvContent = "Id;Name\r\n1;Carol Danvers\r\n2;Bruce Banner\r\n3;Peter Parker\r\n";
             string csvMaskedContent = "Id;Name\r\n1;CarHero-1\r\n2;BruHero-2\r\n3;PetHero-3\r\n";
             string csvFilename = this.utility.CreateFileInTestInstanceDir(csvContent, "csv");
@@ -440,11 +440,11 @@ namespace Dandraka.Zoro.Tests
                 RegExGroupToReplace = 2
             });
 
-            // Act
+            // === Act ===
             var masker = new DataMasking(config);
             masker.Mask();
 
-            // Assert
+            // === Assert ===
             Assert.True(File.Exists(config.OutputFile));
             var maskContents = new List<string>(csvMaskedContent.Split("\r\n"));
             var contents = new List<string>(File.ReadLines(config.OutputFile));

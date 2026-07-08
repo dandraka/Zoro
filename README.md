@@ -67,8 +67,9 @@ Please see the [generated docs](https://github.com/dandraka/Zoro/blob/master/doc
 - Input & Output files are optional, but if specified they take precedence over (i.e. are used instead of) the config file.
 - Field names are case-insensitive for CSV files & DB queries, but case-sensitive for JSON files.
 - If using a database to write data (DataDestination=Database), all names of parameters in SqlCommand (@field for SqlServer or $field elsewhere) must have a corresponding FieldMask, even if the MaskType is None. Also, currently connection types of ```Microsoft.Data.SqlClient``` and ```System.Data.OleDb``` are supported, but if anything else (e.g. MySql, Oracle) is needed please open an issue; adding more is trivial.
-- If input is a JSON file (DataSource=JsonFile) and one or more FieldMasks are type List (FieldMask.MaskType=List), one 1 Replacement entry is allowed, which has to have an empty Selector (Selector="").
-- If input is a JSON file (DataSource=JsonFile), FieldMasks that perform a database query (FieldMask.MaskType=Query) are not allowed. This is planned to be supported in a later version.
+- If input is a JSON of an Office file type (Docx, Xlsx, Pptx) and one or more FieldMasks are type List (FieldMask.MaskType=List), one 1 Replacement entry is allowed, which has to have an empty Selector (Selector="").
+- If input is a JSON file type, FieldMasks that perform a database query (FieldMask.MaskType=Query) are not allowed. This is planned to be supported in a later version.
+- If the input is an Office file type (Docx, Xlsx, Pptx), the output must be of the same type.
 
 ## Examples:
 

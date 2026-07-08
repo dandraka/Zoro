@@ -20,7 +20,7 @@ namespace Dandraka.Zoro.Processor
     {
         private readonly MaskConfig config;
 
-        private readonly Random rnd = new Random(DateTime.Now.Millisecond);
+        private Random rnd = new Random(DateTime.Now.Millisecond);
 
         private readonly Regex fieldsRegEx = new Regex("({{.*?}})");
 
@@ -35,32 +35,13 @@ namespace Dandraka.Zoro.Processor
             this.config = config;
         }
 
-        private static DbProviderFactory GetDbFactory(string connType)
-        {
-            switch (connType)
-            {
-                case "Microsoft.Data.SqlClient":
-                    DbProviderFactories.RegisterFactory(connType, typeof(Microsoft.Data.SqlClient.SqlClientFactory));
-                    break;
-                case "System.Data.OleDb":
-                    DbProviderFactories.RegisterFactory(connType, typeof(System.Data.OleDb.OleDbFactory));
-                    break;
-                /*                    
-                case "System.Data.Odbc":
-                    DbProviderFactories.RegisterFactory(connType, typeof(System.Data.Odbc.OdbcFactory));
-                    break;
-                */
-                default:
-                    throw new NotSupportedException($"Connection type {connType} is not yet supported");
-            }
-            return DbProviderFactories.GetFactory(connType);
-        }
-
         /// <summary>
         /// Performs masking.
         /// </summary>
         public void Mask()
         {
+            PerformSanityChecks();
+
             object dt = GetData();
 
             switch (config.DataSource)
@@ -84,6 +65,72 @@ namespace Dandraka.Zoro.Processor
 
             SaveData(dt);
         }
+
+        private void PerformSanityChecks()
+        {
+            switch (config.DataSource)
+            {
+                case DataSource.DocXFile:
+                    if (config.DataDestination != DataDestination.DocXFile) { throw new NotSupportedException("For docx source, only docx destination is supported."); }
+                    break;
+                default:
+                    break;
+            }
+        }        
+
+        private object GetData()
+        {
+            return config.DataSource switch
+            {
+                DataSource.CsvFile => ReadDataFromCSVFile(),
+                DataSource.JsonFile => ReadDataFromJSONFile(),
+                DataSource.Database => ReadDataFromDb(),
+                DataSource.DocXFile => ReadDataFromDocxFile(),
+                _ => throw new NotSupportedException(),
+            };
+        }        
+
+        private void SaveData(object dt)
+        {
+            switch (config.DataDestination)
+            {
+                case DataDestination.CsvFile:
+                    SaveDataToCSVFile((DataTable)dt);
+                    break;
+                case DataDestination.JsonFile:
+                    SaveDataToJSONFile((JContainer)dt);
+                    break;
+                case DataDestination.Database:
+                    SaveDataToDb((DataTable)dt);
+                    break;
+                case DataDestination.DocXFile:
+                    SaveDataToDocxFile((WordprocessingDocument)dt);
+                    break;
+                default:
+                    throw new NotSupportedException();
+            }
+        }     
+
+        private void AnonymizeFlatData(DataTable dt)
+        {
+            for (int r = 0; r < dt.Rows.Count; r++)
+            {
+                for (int c = 0; c < config.FieldMasks.Count; c++)
+                {
+                    string colName = config.FieldMasks[c].FieldName;
+                    if (r == 0)
+                    {
+                        if (!dt.Columns.Contains(colName))
+                        {
+                            throw new InvalidDataException(string.Format("File '{0}' does not contain field '{1}'",
+                                config.InputFile, colName));
+                        }
+                    }
+
+                    dt.Rows[r][colName] = GetMaskedString(Convert.ToString(dt.Rows[r][colName]), config.FieldMasks[c], dt.Rows[r]);
+                }
+            }
+        }           
 
         private void AnonymizeJSONData(JContainer jsonContainer)
         {
@@ -141,6 +188,27 @@ namespace Dandraka.Zoro.Processor
                     }
                 }
             }
+        }        
+
+        private static DbProviderFactory GetDbFactory(string connType)
+        {
+            switch (connType)
+            {
+                case "Microsoft.Data.SqlClient":
+                    DbProviderFactories.RegisterFactory(connType, typeof(Microsoft.Data.SqlClient.SqlClientFactory));
+                    break;
+                case "System.Data.OleDb":
+                    DbProviderFactories.RegisterFactory(connType, typeof(System.Data.OleDb.OleDbFactory));
+                    break;
+                /*                    
+                case "System.Data.Odbc":
+                    DbProviderFactories.RegisterFactory(connType, typeof(System.Data.Odbc.OdbcFactory));
+                    break;
+                */
+                default:
+                    throw new NotSupportedException($"Connection type {connType} is not yet supported");
+            }
+            return DbProviderFactories.GetFactory(connType);
         }
 
         private void AnonymizeJSONProperty(JProperty c)
@@ -174,39 +242,6 @@ namespace Dandraka.Zoro.Processor
                 {
                     AnonymizeJSONData((JContainer)jsonChild);
                 }
-            }
-        }
-
-        private object GetData()
-        {
-            return config.DataSource switch
-            {
-                DataSource.CsvFile => ReadDataFromCSVFile(),
-                DataSource.JsonFile => ReadDataFromJSONFile(),
-                DataSource.Database => ReadDataFromDb(),
-                DataSource.DocXFile => ReadDataFromDocxFile(),
-                _ => throw new NotSupportedException(),
-            };
-        }
-
-        private void SaveData(object dt)
-        {
-            switch (config.DataDestination)
-            {
-                case DataDestination.CsvFile:
-                    SaveDataToCSVFile((DataTable)dt);
-                    break;
-                case DataDestination.JsonFile:
-                    SaveDataToJSONFile((JContainer)dt);
-                    break;
-                case DataDestination.Database:
-                    SaveDataToDb((DataTable)dt);
-                    break;
-                case DataDestination.DocXFile:
-                    SaveDataToDocxFile((WordprocessingDocument)dt);
-                    break;
-                default:
-                    throw new NotSupportedException();
             }
         }
 
@@ -247,27 +282,6 @@ namespace Dandraka.Zoro.Processor
             doDbSelect();
 
             return dt;
-        }
-
-        private void AnonymizeFlatData(DataTable dt)
-        {
-            for (int r = 0; r < dt.Rows.Count; r++)
-            {
-                for (int c = 0; c < config.FieldMasks.Count; c++)
-                {
-                    string colName = config.FieldMasks[c].FieldName;
-                    if (r == 0)
-                    {
-                        if (!dt.Columns.Contains(colName))
-                        {
-                            throw new InvalidDataException(string.Format("File '{0}' does not contain field '{1}'",
-                                config.InputFile, colName));
-                        }
-                    }
-
-                    dt.Rows[r][colName] = GetMaskedString(Convert.ToString(dt.Rows[r][colName]), config.FieldMasks[c], dt.Rows[r]);
-                }
-            }
         }
 
         private string GetMaskedString(string data, FieldMask fieldMask, DataRow row, JProperty jsonNode = null)
