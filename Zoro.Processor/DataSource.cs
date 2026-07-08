@@ -24,6 +24,11 @@ namespace Dandraka.Zoro.Processor
         /// <summary>
         /// The data comes from a JSON file.
         /// </summary>
-        JsonFile
+        JsonFile,
+
+        /// <summary>
+        /// The data comes from a DOCX file.
+        /// </summary>
+        DocXFile
     }
 }

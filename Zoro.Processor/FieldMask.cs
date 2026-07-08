@@ -21,6 +21,7 @@ namespace Dandraka.Zoro.Processor
 
         /// <summary>
         /// The name of the field. Note that field names are case-insensitive for CSV files and DB queries, but case-sensitive for JSON files.
+        /// For Office documents, it's used to match the content processed.
         /// </summary>
         public string FieldName { get; set; }
 
@@ -41,7 +42,7 @@ namespace Dandraka.Zoro.Processor
         public string RegExMatch { get; set; }
 
         /// <summary>
-        /// Valid only if <c>RegExMatch</c> is filled.
+        /// Valid only if <c>RegExMatch</c> is filled. The number is 1-based, not 0-based, i.e. the first group is 1.
         /// </summary>
         public int RegExGroupToReplace { get; set; }
 

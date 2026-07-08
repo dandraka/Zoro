@@ -30,7 +30,7 @@ namespace Dandraka.Zoro.Tests
 
         public Utility()
         {
-            TestInstanceDir = Path.Combine(Path.GetTempPath(), "Zorotests_" + Guid.NewGuid().ToString());
+            TestInstanceDir = Path.Combine(Path.GetTempPath(), "Zorotests_" + Guid.NewGuid().ToString().Split("-")[0]);
             Directory.CreateDirectory(TestInstanceDir);
             TestInstanceConfigCSVfile = Path.Combine(TestInstanceDir, "testconfig.xml");
             TestInstanceConfigJSONfile = Path.Combine(TestInstanceDir, "testconfigjson.xml");
@@ -141,7 +141,7 @@ namespace Dandraka.Zoro.Tests
 
         public string CreateFileInTestInstanceDir(string contents, string ext)
         {
-            string fileName = Path.Combine(this.TestInstanceDir, Guid.NewGuid() + "." + ext.Replace(".", ""));
+            string fileName = Path.Combine(this.TestInstanceDir, Guid.NewGuid().ToString().Split("-")[0] + "." + ext.Replace(".", ""));
             File.WriteAllText(fileName, contents);
             return fileName;
         }

@@ -129,7 +129,7 @@ With the usage of a regular expression, it is possible to change all or only par
 * FieldName: Mandatory. The name of the field being sought. Note that field names are case-insensitive for CSV files & DB queries, but case-sensitive for JSON files.
 * ListOfPossibleReplacements: Ignored
 * QueryReplacement: Ignored
-* RegExGroupToReplace: Optional. A number that specifies which regex group will be replaced.
+* RegExGroupToReplace: Optional. A number that specifies which regex group will be replaced. The number is 1-based, not 0-based, i.e. the first group is 1.
 * RegExMatch: Optional. A regular expression with one or more groups e.g. (.*). If this omitted, the whole field is replaced.
 
 #### Example
@@ -167,7 +167,7 @@ With the usage of a regular expression, it is possible to change all or only par
 * FieldName: Mandatory. The name of the field being sought. Note that field names are case-insensitive for CSV files & DB queries, but case-sensitive for JSON files.
 * ListOfPossibleReplacements: Ignored
 * QueryReplacement: Ignored
-* RegExGroupToReplace: Optional. A number that specifies which regex group will be replaced.
+* RegExGroupToReplace: Optional. A number that specifies which regex group will be replaced. The number is 1-based, not 0-based, i.e. the first group is 1.
 * RegExMatch: Optional. A regular expression with one or more groups e.g. (.*). If this omitted, the whole field is replaced.
 
 #### Example for CSV or DB query
@@ -261,7 +261,7 @@ In the case of Json, only one list with an empty selector (a.k.a. fallback) is a
   * a Selector attribute, which can be either empty (fallback) or contain a field name from the data, the equality sign (=) and a constant value. E.g. ```Selector="Country=Greece"```.
   * and a List attribute, which is a comma-separated list of strings. E.g. ```List="Feta,Olives,Kasseri"```.
 * QueryReplacement: Ignored
-* RegExGroupToReplace: Optional. A number that specifies which regex group will be replaced.
+* RegExGroupToReplace: Optional. A number that specifies which regex group will be replaced. The number is 1-based, not 0-based, i.e. the first group is 1.
 * RegExMatch: Optional. A regular expression with one or more groups e.g. (.*). If this omitted, the whole field is replaced.
 
 #### Example for CSV or DB query
@@ -306,7 +306,7 @@ The field contents are substituted with a randomly picked item of one or more gi
   * GroupField: The name of the field from the reference query (see Query below) which needs to match the values from the SelectorField.
   * ValueField: The name of the field from the reference query (see Query below)which will be used as value after a random record (from the records where SelectorField=GroupField) is picked.
   * Query: The SQL query which will be executed to fetch the reference records.
-* RegExGroupToReplace: Optional. A number that specifies which regex group will be replaced.
+* RegExGroupToReplace: Optional. A number that specifies which regex group will be replaced. The number is 1-based, not 0-based, i.e. the first group is 1.
 * RegExMatch: Optional. A regular expression with one or more groups e.g. (.*). If this omitted, the whole field is replaced.
 
 ### Example for a DB query
