@@ -33,12 +33,19 @@ namespace Dandraka.Zoro.Tests
         [Fact]
         public void T01_Mask_CSV_Test()
         {
+            // === Arrange ===
+            string testName = System.Reflection.MethodBase.GetCurrentMethod().Name;
+            Console.WriteLine($"Starting {testName}");
+
             var config = MaskConfig.ReadConfig(utility.TestInstanceConfigCSVfile);
             //Console.WriteLine($"Config: InputFile = {config.InputFile}");
             //Console.WriteLine($"Config: OutputFile = {config.OutputFile}");
+
+            // === Act ===
             var masker = new DataMasking(config);
             masker.Mask();
 
+            // === Assert ===
             Assert.True(File.Exists(config.OutputFile));
             var contents = new List<string>(File.ReadLines(config.OutputFile));
             Assert.Equal(5, contents.Count);
@@ -47,11 +54,15 @@ namespace Dandraka.Zoro.Tests
         [SkippableFact]
         public void T02_Mask_DB_Test()
         {
+            // === Arrange ===
+            string testName = System.Reflection.MethodBase.GetCurrentMethod().Name;
+            Console.WriteLine($"Starting {testName}");
+
             var config = new MaskConfig()
             {
                 DataSource = DataSource.Database,
                 SqlSelect = $"SELECT * FROM {utility.TestTableName}",
-                OutputFile = Path.Combine(utility.TestInstanceDir, "maskeddata_db_02.csv")
+                OutputFile = Path.Combine(utility.TestInstanceDir, $"maskeddata_{testName}.csv")
             };
             config.SetConnection(utility.TestDbConnection);
             config.FieldMasks.Add(new FieldMask() { FieldName = "Name", MaskType = MaskType.Similar });
@@ -65,6 +76,7 @@ namespace Dandraka.Zoro.Tests
             config.FieldMasks[3].ListOfPossibleReplacements.Add(new Replacement()
             { Selector = "", ReplacementList = "Main Street 9,Fifth Avenue 104,Ranch rd. 1" });
 
+            // === Act ===
             var masker = new DataMasking(config);
             try
             {
@@ -76,6 +88,7 @@ namespace Dandraka.Zoro.Tests
                 Skip.If(ex.Message.Contains("40"), $"Database seems not to respond, check if your SQL Server is running. {ex.Message}");
             }
 
+            // === Assert ===
             Assert.True(File.Exists(config.OutputFile));
             var contents = new List<string>(File.ReadLines(config.OutputFile));
             Console.WriteLine($"Contents of {config.OutputFile}");
@@ -87,6 +100,9 @@ namespace Dandraka.Zoro.Tests
         public void T03_Mask_MaskType_None_Test()
         {
             // === Arrange ===
+            string testName = System.Reflection.MethodBase.GetCurrentMethod().Name;
+            Console.WriteLine($"Starting {testName}");
+
             string csvContent = "id;name\r\n1;Carol Danvers\r\n2;Bruce Banner\r\n3;Peter Parker\r\n";
             string csvFilename = this.utility.CreateFileInTestInstanceDir(csvContent, "csv");
             var config = new MaskConfig()
@@ -116,6 +132,9 @@ namespace Dandraka.Zoro.Tests
         public void T04_Mask_MaskType_Asterisk_Test()
         {
             // === Arrange ===
+            string testName = System.Reflection.MethodBase.GetCurrentMethod().Name;
+            Console.WriteLine($"Starting {testName}");
+
             string csvContent = "id;name\r\n1;Carol Danvers\r\n2;Bruce Banner\r\n3;Peter Parker\r\n";
             string csvMaskedContent = "id;name\r\n1;***** *******\r\n2;***** ******\r\n3;***** ******\r\n";
             string csvFilename = this.utility.CreateFileInTestInstanceDir(csvContent, "csv");
@@ -146,6 +165,9 @@ namespace Dandraka.Zoro.Tests
         public void T05_Mask_MaskType_List_Test()
         {
             // === Arrange ===
+            string testName = System.Reflection.MethodBase.GetCurrentMethod().Name;
+            Console.WriteLine($"Starting {testName}");
+
             string csvContent = "id;name\r\n1;Carol Danvers\r\n2;Bruce Banner\r\n3;Peter Parker\r\n";
             string csvMaskedContent = "id;name\r\n1;Charles Xavier\r\n2;Jean Grey\r\n3;Charles Xavier\r\n";
             string csvFilename = this.utility.CreateFileInTestInstanceDir(csvContent, "csv");
@@ -177,7 +199,10 @@ namespace Dandraka.Zoro.Tests
         [Fact]
         public void T06_Mask_MaskType_Similar_Test()
         {
-            // ===== Arrange
+            // === Arrange ===
+            string testName = System.Reflection.MethodBase.GetCurrentMethod().Name;
+            Console.WriteLine($"Starting {testName}");
+
             string csvContent = "id;name\r\n1;Carol Danvers\r\n2;Bruce Banner\r\n3;Peter Parker\r\n";
             string csvFilename = this.utility.CreateFileInTestInstanceDir(csvContent, "csv");
             var config = new MaskConfig()
@@ -188,11 +213,11 @@ namespace Dandraka.Zoro.Tests
             config.FieldMasks.Add(new FieldMask() { FieldName = "id", MaskType = MaskType.None });
             config.FieldMasks.Add(new FieldMask() { FieldName = "name", MaskType = MaskType.Similar });
 
-            // ===== Act
+            // === Act ===
             var masker = new DataMasking(config);
             masker.Mask();
 
-            // ===== Assert
+            // === Assert ===
             Assert.True(File.Exists(config.OutputFile));
             var contents = new List<string>(File.ReadLines(config.OutputFile));
             Assert.Equal(4, contents.Count);
@@ -207,7 +232,10 @@ namespace Dandraka.Zoro.Tests
         [Fact]
         public void T07_Mask_MaskType_Query_Test()
         {
-            // ===== Arrange
+            // === Arrange ===
+            string testName = System.Reflection.MethodBase.GetCurrentMethod().Name;
+            Console.WriteLine($"Starting {testName}");
+
             string csvContent = "ID;Name;City;Country\r\n1;Roche;Basel;CH\r\n2;ABB;Baden;CH\r\n3;BMW;München;DE\r\n4;Barilla;Parma;IT\r\n5;FAGE;Athens;GR";
             string csvFilename = this.utility.CreateFileInTestInstanceDir(csvContent, "csv");
             var config = new MaskConfig()
@@ -247,11 +275,11 @@ namespace Dandraka.Zoro.Tests
             cmdTbl.ExecuteNonQuery();
             utility.TestTablesToDrop = "cities";
 
-            // ===== Act
+            // === Act ===
             var masker = new DataMasking(config);
             masker.Mask();
 
-            // ===== Assert
+            // === Assert ===
             Assert.True(File.Exists(config.OutputFile));
             var contents = new List<string>(File.ReadLines(config.OutputFile));
             Assert.Equal(6, contents.Count);
@@ -291,6 +319,9 @@ namespace Dandraka.Zoro.Tests
         public void T08_Mask_JSON_Array_Test()
         {
             // === Arrange ===
+            string testName = System.Reflection.MethodBase.GetCurrentMethod().Name;
+            Console.WriteLine($"Starting {testName}");
+
             var config = MaskConfig.ReadConfig(utility.TestInstanceConfigJSONfile);
 
             // === Act ===
@@ -314,6 +345,9 @@ namespace Dandraka.Zoro.Tests
         public void T09_Mask_JSON_SingleElement_Test()
         {
             // === Arrange ===
+            string testName = System.Reflection.MethodBase.GetCurrentMethod().Name;
+            Console.WriteLine($"Starting {testName}");
+
             var config = MaskConfig.ReadConfig(utility.TestInstanceConfigJSONfile);
             config.InputFile = config.InputFile.Replace("data2.json", "data3.json");
             config.OutputFile = config.OutputFile.Replace("data2.json", "data3.json");
@@ -339,6 +373,9 @@ namespace Dandraka.Zoro.Tests
         public void T10_Mask_JSON_SingleElement_NoHeader_Test()
         {
             // === Arrange ===
+            string testName = System.Reflection.MethodBase.GetCurrentMethod().Name;
+            Console.WriteLine($"Starting {testName}");
+
             var config = MaskConfig.ReadConfig(utility.TestInstanceConfigJSONfile);
             config.InputFile = config.InputFile.Replace("data2.json", "data4.json");
             config.OutputFile = config.OutputFile.Replace("data2.json", "data4.json");
@@ -363,6 +400,9 @@ namespace Dandraka.Zoro.Tests
         public void T11_Mask_JSON_Deep_Test()
         {
             // === Arrange ===
+            string testName = System.Reflection.MethodBase.GetCurrentMethod().Name;
+            Console.WriteLine($"Starting {testName}");
+
             var config = MaskConfig.ReadConfig(utility.TestInstanceConfigJSONfile);
             config.InputFile = config.InputFile.Replace("data2.json", "nested2WithArray.json");
             config.OutputFile = config.OutputFile.Replace("data2.json", "nested2WithArray.json");
@@ -387,6 +427,9 @@ namespace Dandraka.Zoro.Tests
         public void T12_Mask_MaskType_Expression_Test()
         {
             // === Arrange ===
+            string testName = System.Reflection.MethodBase.GetCurrentMethod().Name;
+            Console.WriteLine($"Starting {testName}");
+
             string csvContent = "Id;Name\r\n1;Carol Danvers\r\n2;Bruce Banner\r\n3;Peter Parker\r\n";
             string csvMaskedContent = "Id;Name\r\n1;Hero-1\r\n2;Hero-2\r\n3;Hero-3\r\n";
             string csvFilename = this.utility.CreateFileInTestInstanceDir(csvContent, "csv");
@@ -422,6 +465,9 @@ namespace Dandraka.Zoro.Tests
         public void T13_Mask_MaskType_Expression_Regex_Test()
         {
             // === Arrange ===
+            string testName = System.Reflection.MethodBase.GetCurrentMethod().Name;
+            Console.WriteLine($"Starting {testName}");
+
             string csvContent = "Id;Name\r\n1;Carol Danvers\r\n2;Bruce Banner\r\n3;Peter Parker\r\n";
             string csvMaskedContent = "Id;Name\r\n1;CarHero-1\r\n2;BruHero-2\r\n3;PetHero-3\r\n";
             string csvFilename = this.utility.CreateFileInTestInstanceDir(csvContent, "csv");
@@ -459,6 +505,9 @@ namespace Dandraka.Zoro.Tests
         public void T14_Mask_JSON_Expression_Test()
         {
             // === Arrange ===
+            string testName = System.Reflection.MethodBase.GetCurrentMethod().Name;
+            Console.WriteLine($"Starting {testName}");
+
             var config = MaskConfig.ReadConfig(utility.TestInstanceConfigJSONfile);
             config.FieldMasks.Clear();
             config.FieldMasks.Add(new FieldMask()
@@ -490,6 +539,9 @@ namespace Dandraka.Zoro.Tests
         public void T15_Mask_JSON_Expression_WrongJsonPath_Test()
         {
             // === Arrange ===
+            string testName = System.Reflection.MethodBase.GetCurrentMethod().Name;
+            Console.WriteLine($"Starting {testName}");
+
             var config = MaskConfig.ReadConfig(utility.TestInstanceConfigJSONfile);
             config.FieldMasks.Clear();
             config.FieldMasks.Add(new FieldMask()
@@ -521,6 +573,9 @@ namespace Dandraka.Zoro.Tests
         public void T16_Mask_JSON_Expression_Node_Test()
         {
             // === Arrange ===
+            string testName = System.Reflection.MethodBase.GetCurrentMethod().Name;
+            Console.WriteLine($"Starting {testName}");
+
             var config = MaskConfig.ReadConfig(utility.TestInstanceConfigJSONfile);
             config.InputFile = config.InputFile.Replace("data2.json", "data6.json");
             config.OutputFile = config.OutputFile.Replace("data2.json", "data6.json");
@@ -571,6 +626,9 @@ namespace Dandraka.Zoro.Tests
         public void T17_Mask_JSON_Expression_Flat_Test()
         {
             // === Arrange ===
+            string testName = System.Reflection.MethodBase.GetCurrentMethod().Name;
+            Console.WriteLine($"Starting {testName}");
+            
             var config = MaskConfig.ReadConfig(utility.TestInstanceConfigJSON2file);
             config.InputFile = config.InputFile.Replace("data2.json", "sample.json");
             config.OutputFile = config.OutputFile.Replace("data2.json", "sample.json");

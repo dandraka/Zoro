@@ -25,10 +25,50 @@ namespace Dandraka.Zoro.Tests
             //
         }
 
+        [Fact]
+        public void T01_Docx_InvalidOutputType()
+        {
+            // === Arrange ===
+            string testName = System.Reflection.MethodBase.GetCurrentMethod().Name;
+            Console.WriteLine($"Starting {testName}");
+            using (var utility = new Utility())
+            {
+                utility.PrepareTestInstanceDir();
+
+                var config = new MaskConfig()
+                {
+                    DataSource = DataSource.DocXFile,
+                    DataDestination = DataDestination.CsvFile,
+                    InputFile = Path.Combine(utility.TestInstanceDir, "SecretCombination.docx"),
+                    OutputFile = Path.Combine(utility.TestInstanceDir, $"{testName}.docx")
+                };
+                config.FieldMasks.Add(new FieldMask() { FieldName = "book", MaskType = MaskType.Asterisk });
+
+                // === Act ===
+                Exception ex = null;
+                var masker = new DataMasking(config);
+                try
+                {
+                    masker.Mask();    
+                }
+                catch (System.Exception e)
+                {
+                    ex = e;
+                }                
+
+                // === Assert ===
+
+                // Examine exception
+                Assert.NotNull(ex);
+                Assert.IsType<NotSupportedException>(ex);
+                Assert.Equal("For docx source, only docx destination is supported.", ex.Message);
+            }
+        }            
+
         [Theory]
         [InlineData("secret", "My ****** combination", 10)]
         [InlineData("mystery", "It's a ******* for you", 5)]
-        public void T01_Docx_Asterisk(string wordToReplace, string expectedPhrase, int replacementsExpected)
+        public void T02_Docx_Asterisk(string wordToReplace, string expectedPhrase, int replacementsExpected)
         {
             // === Arrange ===
             string testName = System.Reflection.MethodBase.GetCurrentMethod().Name;
@@ -78,7 +118,7 @@ namespace Dandraka.Zoro.Tests
         [Theory]
         [InlineData("book", "tablet,newspaper,cellphone,", "An open %R%", 2)]
         [InlineData("heart", "soul,mind,thoughts,attention,sight,affection", "In the center of my %R%", 6)]
-        public void T02_Docx_List(string wordToReplace, string replacements, string expected, int replacementsExpected)
+        public void T03_Docx_List(string wordToReplace, string replacements, string expected, int replacementsExpected)
         {
             // === Arrange ===
             string testName = System.Reflection.MethodBase.GetCurrentMethod().Name;
@@ -135,14 +175,16 @@ namespace Dandraka.Zoro.Tests
                 }
                 Assert.Equal(0, replacementsToBeDone);
             }
-        }
+        }    
 
-        [Fact]
-        public void T03_Docx_InvalidOutputType()
+        [Theory]
+        [InlineData("book", "tablet,newspaper,cellphone,", "An open %R%", 2)]
+        [InlineData("heart", "soul,mind,thoughts,attention,sight,affection", "In the center of my %R%", 6)]
+        public void T04_Docx_Db(string wordToReplace, string replacements, string expected, int replacementsExpected)
         {
             // === Arrange ===
             string testName = System.Reflection.MethodBase.GetCurrentMethod().Name;
-            Console.WriteLine($"Starting {testName}");
+            Console.WriteLine($"Starting {testName}");            
             using (var utility = new Utility())
             {
                 utility.PrepareTestInstanceDir();
@@ -150,30 +192,50 @@ namespace Dandraka.Zoro.Tests
                 var config = new MaskConfig()
                 {
                     DataSource = DataSource.DocXFile,
-                    DataDestination = DataDestination.CsvFile,
+                    DataDestination = DataDestination.DocXFile,
                     InputFile = Path.Combine(utility.TestInstanceDir, "SecretCombination.docx"),
                     OutputFile = Path.Combine(utility.TestInstanceDir, $"{testName}.docx")
                 };
-                config.FieldMasks.Add(new FieldMask() { FieldName = "book", MaskType = MaskType.Asterisk });
+                config.FieldMasks.Add(new FieldMask()
+                {
+                    FieldName = wordToReplace,
+                    MaskType = MaskType.List,
+                    ListOfPossibleReplacements = new List<Replacement>()
+                    {
+                        new Replacement() { Selector = "", ReplacementList = replacements }
+                    }
+                });
 
                 // === Act ===
-                Exception ex = null;
                 var masker = new DataMasking(config);
-                try
-                {
-                    masker.Mask();    
-                }
-                catch (System.Exception e)
-                {
-                    ex = e;
-                }                
+                masker.Mask();
 
                 // === Assert ===
 
-                // Examine exception
-                Assert.NotNull(ex);
-                Assert.IsType<NotSupportedException>(ex);
-                Assert.Equal("For docx source, only docx destination is supported.", ex.Message);
+                // Manually examine                
+                // OpenDocument(config.OutputFile);
+                // does the file exist?
+                Assert.True(File.Exists(config.OutputFile));
+
+                // Examine the document
+                int replacementsToBeDone = replacementsExpected;
+                using (var doc = WordprocessingDocument.Open(config.OutputFile, false))
+                {
+                    var body = doc.MainDocumentPart.Document.Body;
+                    foreach (var textNode in body.Descendants<DocumentFormat.OpenXml.Wordprocessing.Text>())
+                    {
+                        foreach (string possibleReplacement in replacements.Split(","))
+                        {
+                            string expectedPhrase = expected.Replace("%R%", possibleReplacement);
+                            if (textNode.Text == expectedPhrase)
+                            {
+                                Console.WriteLine($"Replacement found: {textNode.Text}");
+                                replacementsToBeDone--;
+                            }
+                        }
+                    }
+                }
+                Assert.Equal(0, replacementsToBeDone);
             }
         }        
 

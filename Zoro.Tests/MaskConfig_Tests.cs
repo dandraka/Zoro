@@ -26,6 +26,10 @@ namespace Dandraka.Zoro.Tests
         [Fact]
         public void T01_Save_Read_Config_Test()
         {
+            // === Arrange ===
+            string testName = System.Reflection.MethodBase.GetCurrentMethod().Name;
+            Console.WriteLine($"Starting {testName}");
+
             var config = new MaskConfig()
             {
                 InputFile = Path.Combine(utility.TestInstanceDir, "data2.csv"),
@@ -52,7 +56,7 @@ namespace Dandraka.Zoro.Tests
             string[] zipFields = new[]
             {
                 "ZIP1", "ZIP2", "ZIP3"
-            };            
+            };
 
 
             foreach (string field in fields.Where(x => !nameFields.Contains(x) && !zipFields.Contains(x)))
@@ -80,7 +84,7 @@ namespace Dandraka.Zoro.Tests
                 {
                     FieldName = field,
                     MaskType = MaskType.Query,
-                    QueryReplacement = new QueryReplacement() 
+                    QueryReplacement = new QueryReplacement()
                     {
                         Query = "SELECT postcode, country FROM postcode",
                         ValueDbField = "postcode",
@@ -88,10 +92,14 @@ namespace Dandraka.Zoro.Tests
                         SelectorField = "LAND"
                     }
                 });
-            }            
+            }
 
             testConfigFile = Path.Combine(utility.TestInstanceDir, $"config_{Guid.NewGuid()}.xml");
+
+            // === Act ===
             MaskConfig.SaveConfig(testConfigFile, config);
+
+            // === Assert ===
 
             // test writing
             Assert.True(File.Exists(utility.TestInstanceConfigCSVfile));
@@ -106,8 +114,14 @@ namespace Dandraka.Zoro.Tests
         [Fact]
         public void T02_Read_Config_Test()
         {
+            // === Arrange ===
+            string testName = System.Reflection.MethodBase.GetCurrentMethod().Name;
+            Console.WriteLine($"Starting {testName}");
+
+            // === Act ===
             var config = MaskConfig.ReadConfig(utility.TestInstanceConfigCSVfile);
 
+            // === Assert ===
             Assert.Equal(2, config.FieldMasks.Count);
         }
     }

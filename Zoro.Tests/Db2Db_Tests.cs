@@ -36,7 +36,11 @@ namespace Dandraka.Zoro.Tests
         [Fact]
         public void T02_Db2Csv_Sqlite()
         {
-            string tblName = $"T01_Db2Csv_{Guid.NewGuid().ToString().Substring(0, 8)}";
+            // === Arrange ===
+            string testName = System.Reflection.MethodBase.GetCurrentMethod().Name;
+            Console.WriteLine($"Starting {testName}");
+
+            string tblName = $"{testName}_{Guid.NewGuid().ToString().Substring(0, 8)}";
             using (var utility = new Utility())
             {
                 utility.PrepareTestInstanceDir();
@@ -55,6 +59,7 @@ namespace Dandraka.Zoro.Tests
                 config.FieldMasks.Add(new FieldMask() { FieldName = "Country", MaskType = MaskType.None });
                 config.FieldMasks.Add(new FieldMask() { FieldName = "Address", MaskType = MaskType.None });
 
+                // === Act ===
                 var masker = new DataMasking(config);
                 try
                 {
@@ -66,6 +71,7 @@ namespace Dandraka.Zoro.Tests
                     Skip.If(ex.Message.Contains("40"), $"Database seems not to respond, check if your SQL Server is running. {ex.Message}");
                 }
 
+                // === Assert ===
                 Assert.True(File.Exists(config.OutputFile));
                 var contents = new List<string>(File.ReadLines(config.OutputFile));
                 Console.WriteLine($"Contents of {config.OutputFile}");
@@ -77,8 +83,12 @@ namespace Dandraka.Zoro.Tests
         [Fact]
         public void T03_Csv2Db_Sqlite()
         {
-            string tblName = $"T02_Csv2Db_{Guid.NewGuid().ToString().Substring(0, 8)}";
-            string tblName2 = $"T02_Csv2Db_{Guid.NewGuid().ToString().Substring(0, 8)}";
+            // === Arrange ===
+            string testName = System.Reflection.MethodBase.GetCurrentMethod().Name;
+            Console.WriteLine($"Starting {testName}");
+
+            string tblName = $"{testName}_{Guid.NewGuid().ToString().Substring(0, 8)}";
+            string tblName2 = $"{testName}_{Guid.NewGuid().ToString().Substring(0, 8)}";
             using (var utility = new Utility())
             {
                 utility.PrepareTestInstanceDir();
@@ -100,6 +110,7 @@ namespace Dandraka.Zoro.Tests
                 cmdTbl.CommandText = $"CREATE TABLE {tblName2} (ID int, Name nvarchar(100), BankAccount varchar(50))";
                 cmdTbl.ExecuteNonQuery();
 
+                // === Act ===
                 var masker = new DataMasking(config);
                 try
                 {
@@ -111,6 +122,7 @@ namespace Dandraka.Zoro.Tests
                     Skip.If(ex.Message.Contains("40"), $"Database seems not to respond, check if your SQL Server is running. {ex.Message}");
                 }
 
+                // === Assert ===
                 var cmdSel = utility.TestDbConnection.CreateCommand();
                 cmdSel.CommandText = $"SELECT * FROM {tblName2}";
                 var dt = new DataTable();
@@ -123,7 +135,11 @@ namespace Dandraka.Zoro.Tests
         [Fact]
         public void T04_Db2Db_Sqlite()
         {
-            string tblName = $"T03_Db2Db_{Guid.NewGuid().ToString().Substring(0, 8)}";
+            // === Arrange ===
+            string testName = System.Reflection.MethodBase.GetCurrentMethod().Name;
+            Console.WriteLine($"Starting {testName}");
+
+            string tblName = $"{testName}_{Guid.NewGuid().ToString().Substring(0, 8)}";
             using (var utility = new Utility())
             {
                 utility.PrepareTestInstanceDir();
@@ -162,6 +178,7 @@ namespace Dandraka.Zoro.Tests
                 config.FieldMasks[3].ListOfPossibleReplacements.Add(new Replacement()
                 { Selector = "", ReplacementList = "Main Street 9,Fifth Avenue 104,Ranch rd. 1" });
 
+                // === Act ===
                 var masker = new DataMasking(config);
                 try
                 {
@@ -172,13 +189,20 @@ namespace Dandraka.Zoro.Tests
                     // error 40 - could not open connection to sql server
                     Skip.If(ex.Message.Contains("40"), $"Database seems not to respond, check if your SQL Server is running. {ex.Message}");
                 }
+
+                // === Assert ===
+                // if no error, test passes                
             }
         }
 
         [SkippableFact]
         public void T05_Db2Csv_SqlServer()
         {
-            string tblName = $"T05_Db2Csv_{Guid.NewGuid().ToString().Substring(0, 8)}";
+            // === Arrange ===
+            string testName = System.Reflection.MethodBase.GetCurrentMethod().Name;
+            Console.WriteLine($"Starting {testName}");
+
+            string tblName = $"{testName}_{Guid.NewGuid().ToString().Substring(0, 8)}";
 
             // Use either a github secret or
             // on local, use  $env:SQLCONNSTRING = 'my conn string' in the terminal
@@ -212,9 +236,11 @@ namespace Dandraka.Zoro.Tests
                     config.FieldMasks.Add(new FieldMask() { FieldName = "Country", MaskType = MaskType.None });
                     config.FieldMasks.Add(new FieldMask() { FieldName = "Address", MaskType = MaskType.None });
 
+                    // === Act ===
                     var masker = new DataMasking(config);
                     masker.Mask();
 
+                    // === Assert ===
                     Assert.True(File.Exists(config.OutputFile));
                     var contents = new List<string>(File.ReadLines(config.OutputFile));
                     Console.WriteLine($"Contents of {config.OutputFile}");
@@ -232,8 +258,12 @@ namespace Dandraka.Zoro.Tests
         [SkippableFact]
         public void T06_Csv2Db_SqlServer()
         {
-            string tblName = $"T06_Csv2Db_{Guid.NewGuid().ToString().Substring(0, 8)}";
-            string tblName2 = $"T06_Csv2Db_{Guid.NewGuid().ToString().Substring(0, 8)}";
+            // === Arrange ===
+            string testName = System.Reflection.MethodBase.GetCurrentMethod().Name;
+            Console.WriteLine($"Starting {testName}");
+
+            string tblName = $"{testName}_{Guid.NewGuid().ToString().Substring(0, 8)}";
+            string tblName2 = $"{testName}_{Guid.NewGuid().ToString().Substring(0, 8)}";
 
             var connstr = Environment.GetEnvironmentVariable("SQLCONNSTRING");
 
@@ -264,6 +294,7 @@ namespace Dandraka.Zoro.Tests
                     cmdTbl.ExecuteNonQuery();
                     utility.TestTablesToDrop = tblName2;
 
+                    // === Act ===
                     var masker = new DataMasking(config);
                     masker.Mask();
                 }
@@ -273,6 +304,7 @@ namespace Dandraka.Zoro.Tests
                     Skip.If(ex.Message.Contains("40"), $"Database seems not to respond, check if your SQL Server is running. {ex.Message}");
                 }
 
+                // === Assert ===
                 var cmdSel = utility.TestDbConnection.CreateCommand();
                 cmdSel.CommandText = $"SELECT * FROM {tblName2}";
                 var dt = new DataTable();
@@ -285,7 +317,11 @@ namespace Dandraka.Zoro.Tests
         [SkippableFact]
         public void T07_Db2Db_SqlServer()
         {
-            string tblName = $"T03_Db2Db_{Guid.NewGuid().ToString().Substring(0, 8)}";
+            // === Arrange ===
+            string testName = System.Reflection.MethodBase.GetCurrentMethod().Name;
+            Console.WriteLine($"Starting {testName}");
+
+            string tblName = $"{testName}_{Guid.NewGuid().ToString().Substring(0, 8)}";
 
             var connstr = Environment.GetEnvironmentVariable("SQLCONNSTRING");
 
@@ -332,6 +368,7 @@ namespace Dandraka.Zoro.Tests
                     config.FieldMasks[3].ListOfPossibleReplacements.Add(new Replacement()
                     { Selector = "", ReplacementList = "Main Street 9,Fifth Avenue 104,Ranch rd. 1" });
 
+                    // === Act ===
                     var masker = new DataMasking(config);
                     masker.Mask();
                 }
@@ -340,6 +377,9 @@ namespace Dandraka.Zoro.Tests
                     // error 40 - could not open connection to sql server
                     Skip.If(ex.Message.Contains("40"), $"Database seems not to respond, check if your SQL Server is running. {ex.Message}");
                 }
+
+                // === Assert ===
+                // if no error, test passes       
             }
         }
     }
