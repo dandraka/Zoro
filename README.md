@@ -18,7 +18,7 @@ or ```Zoro.exe c:\zoro\mask.xml c:\data\original.csv c:\data\anonymized.csv```
 
 E.g. ```./zoro /home/jim/zoro/mask.xml```
 
-or ```./zoro /home/jim/zoro/mask.xml /home/jim/data\original.csv /home/jim/data\anonymized.csv```
+or ```./zoro /home/jim/zoro/mask.xml /home/jim/data\original.csv /home/jim/data/anonymized.csv```
 
 **As a library**
 
