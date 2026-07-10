@@ -27,6 +27,27 @@ This is how Zoro supports these techniques:
 | Synthetic (fake) data         | Fully, current version                           |                                   |
 | Hiding                        | Fully, current version                           |                                   |
 
+### Note about FieldName in Office file types
+
+Obviously, Office documents are different than CSV or JSON files. Documents contain semi-structured data as opposed to structured data that can be found in a CSV. There are no fields to choose from; it's just a stream of words.
+
+For this reason, the FieldName in all masking types is used somewhat differently in Office documents:
+- In a CSV, it's used to choose which column the program will modify.
+- But in a document, it's either used to choose the text block to process or, if paired with a regular expression, ignored.
+
+Two concrete examples (here using MaskType=Asterisk for simplicity, but Similar, List and Query can be used as well, though not Expression):
+
+- FieldName = "coffee" will go block by block (which usually means line by line) and, using the regular expression ```(.*)(coffee)(.*)```, will replace the 2nd match. 
+
+  That replaces the word coffee with ****** (or whatever is being used as asterisk).
+
+- But sometimes certain words are found in slightly different forms, and they all need to be replaced. A document might contain the words coffee, coffeecup, coffeehouse etc. To replace all of these, the following can be used:
+  - FieldName = "coffee" (which is ignored for replacement purposes)
+  - RegExMatch = ```"\b(coffee\w*)\b"```
+  - RegExGroupToReplace = 1
+
+  That replaces all words that start with coffee with ****** (as many asterisks as the word being replaced).
+
 ## Masking types reference
 
 For every instance of a [Field Mask](https://github.com/dandraka/Zoro/blob/master/docs/Dandraka.Zoro.Processor/FieldMask.md) the following [masking types](https://github.com/dandraka/Zoro/blob/master/docs/Dandraka.Zoro.Processor/MaskType.md) are available:
@@ -129,7 +150,7 @@ With the usage of a regular expression, it is possible to change all or only par
 * FieldName: Mandatory. The name of the field being sought. Note that field names are case-insensitive for CSV files & DB queries, but case-sensitive for JSON files.
 * ListOfPossibleReplacements: Ignored
 * QueryReplacement: Ignored
-* RegExGroupToReplace: Optional. A number that specifies which regex group will be replaced.
+* RegExGroupToReplace: Optional. A number that specifies which regex group will be replaced. The number is 1-based, not 0-based, i.e. the first group is 1.
 * RegExMatch: Optional. A regular expression with one or more groups e.g. (.*). If this omitted, the whole field is replaced.
 
 #### Example
@@ -159,6 +180,8 @@ In the case of Json and in order to facilitate complex scenarios, when a node wi
 
 With the usage of a regular expression, it is possible to change all or only part of the original data.
 
+Please note that for Office input types (docx, xlsx, pptx), this masking type is not supported as it doesn't make sense; there's no "field" in a document to get values from. Using an Expression masking type with an Office input type throws an error.
+
 #### Mandatory, optional and ignored fields
 
 * MaskType = Expression
@@ -167,7 +190,7 @@ With the usage of a regular expression, it is possible to change all or only par
 * FieldName: Mandatory. The name of the field being sought. Note that field names are case-insensitive for CSV files & DB queries, but case-sensitive for JSON files.
 * ListOfPossibleReplacements: Ignored
 * QueryReplacement: Ignored
-* RegExGroupToReplace: Optional. A number that specifies which regex group will be replaced.
+* RegExGroupToReplace: Optional. A number that specifies which regex group will be replaced. The number is 1-based, not 0-based, i.e. the first group is 1.
 * RegExMatch: Optional. A regular expression with one or more groups e.g. (.*). If this omitted, the whole field is replaced.
 
 #### Example for CSV or DB query
@@ -261,7 +284,7 @@ In the case of Json, only one list with an empty selector (a.k.a. fallback) is a
   * a Selector attribute, which can be either empty (fallback) or contain a field name from the data, the equality sign (=) and a constant value. E.g. ```Selector="Country=Greece"```.
   * and a List attribute, which is a comma-separated list of strings. E.g. ```List="Feta,Olives,Kasseri"```.
 * QueryReplacement: Ignored
-* RegExGroupToReplace: Optional. A number that specifies which regex group will be replaced.
+* RegExGroupToReplace: Optional. A number that specifies which regex group will be replaced. The number is 1-based, not 0-based, i.e. the first group is 1.
 * RegExMatch: Optional. A regular expression with one or more groups e.g. (.*). If this omitted, the whole field is replaced.
 
 #### Example for CSV or DB query
@@ -294,6 +317,8 @@ Sample input and output
 
 The field contents are substituted with a randomly picked item of one or more given lists which are fetched using a database query. A selector can be used to pick the correct list (for example, streets that martch the country). If a match is not found, a DataNotFound exception is raised (no fallback possible).
 
+Please note that for Office input types (docx, xlsx, pptx), the selector is ignored as it doesn't make sense; there's no "field" in a document to group and select values with.
+
 #### Mandatory, optional and ignored fields
 
 * MaskType = Query
@@ -302,11 +327,11 @@ The field contents are substituted with a randomly picked item of one or more gi
 * FieldName: Mandatory. The name of the field being sought. Note that field names are case-insensitive for CSV files & DB queries, but case-sensitive for JSON files.
 * ListOfPossibleReplacements: Ignored
 * QueryReplacement: Mandatory. Must contain all of the following attributes:
-  * SelectorField: The name of the field _from the original data_ which will be used to match the reference records.
-  * GroupField: The name of the field from the reference query (see Query below) which needs to match the values from the SelectorField.
+  * SelectorField: The name of the field _from the original data_ which will be used to match the reference records. Ignored for Office input types.
+  * GroupField: The name of the field from the reference query (see Query below) which needs to match the values from the SelectorField. If GroupField is empty, all data in the ValueDbField retrieved from the Query will be used as a single group; the SelectorField will be ignored. Ignored for Office input types (i.e. same as if set to empty).
   * ValueField: The name of the field from the reference query (see Query below)which will be used as value after a random record (from the records where SelectorField=GroupField) is picked.
   * Query: The SQL query which will be executed to fetch the reference records.
-* RegExGroupToReplace: Optional. A number that specifies which regex group will be replaced.
+* RegExGroupToReplace: Optional. A number that specifies which regex group will be replaced. The number is 1-based, not 0-based, i.e. the first group is 1.
 * RegExMatch: Optional. A regular expression with one or more groups e.g. (.*). If this omitted, the whole field is replaced.
 
 ### Example for a DB query

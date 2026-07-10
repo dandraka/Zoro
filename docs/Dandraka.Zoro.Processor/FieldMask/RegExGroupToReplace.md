@@ -1,6 +1,6 @@
 # FieldMask.RegExGroupToReplace property
 
-Valid only if `RegExMatch` is filled.
+Valid only if `RegExMatch` is filled. The number is 1-based, not 0-based, i.e. the first group is 1.
 
 ```csharp
 public int RegExGroupToReplace { get; set; }

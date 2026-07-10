@@ -38,6 +38,9 @@ namespace Dandraka.Zoro.Processor
         /// The field from the db data (retrieved form the query) that will be used
         /// to create individual lists.
         /// E.g. "country"
+        /// If empty, all data in the <c>ValueDbField</c> retrieved from
+        /// the <c>Query</c> will be used as a single group; the <c>SelectorField</c>
+        /// will be ignored.
         /// </summary>
         [XmlAttribute(AttributeName = "GroupField")]
         public string GroupDbField { get; set; }

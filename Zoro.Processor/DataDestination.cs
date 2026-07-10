@@ -25,6 +25,11 @@ namespace Dandraka.Zoro.Processor
         /// <summary>
         /// The data will be written to a JSON file.
         /// </summary>
-        JsonFile
+        JsonFile,
+
+        /// <summary>
+        /// The data will be written to a DOCX file.
+        /// </summary>
+        DocXFile        
     }
 }

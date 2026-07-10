@@ -1,6 +1,6 @@
 # FieldMask.FieldName property
 
-The name of the field. Note that field names are case-insensitive for CSV files and DB queries, but case-sensitive for JSON files.
+The name of the field. Note that field names are case-insensitive for CSV files and DB queries, but case-sensitive for JSON files. For Office documents, it's used to match the content processed.
 
 ```csharp
 public string FieldName { get; set; }

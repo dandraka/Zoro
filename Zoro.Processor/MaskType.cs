@@ -29,6 +29,7 @@ namespace Dandraka.Zoro.Processor
         /// When the data source is Json, a JsonPath is expected in the place of field name. The JsonPath
         /// will be applied on the root of the Json.
         /// For example "Customer-{{$.CustomerID}}" (without the quotes).
+        /// Note: for Office input types (docx, xlsx, pptx), this masking type is not supported.
         /// </summary>
         Expression,        
 

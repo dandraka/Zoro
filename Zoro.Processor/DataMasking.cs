@@ -1,4 +1,5 @@
-﻿using GenericParsing;
+﻿using DocumentFormat.OpenXml.Packaging;
+using GenericParsing;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -19,7 +20,7 @@ namespace Dandraka.Zoro.Processor
     {
         private readonly MaskConfig config;
 
-        private readonly Random rnd = new Random(DateTime.Now.Millisecond);
+        private Random rnd = new Random(DateTime.Now.Millisecond);
 
         private readonly Regex fieldsRegEx = new Regex("({{.*?}})");
 
@@ -30,36 +31,17 @@ namespace Dandraka.Zoro.Processor
         /// </summary>
         /// <param name="config"></param>
         public DataMasking(MaskConfig config)
-        {            
-            this.config = config;            
-        }
-
-        private static DbProviderFactory GetDbFactory(string connType)
         {
-            switch(connType)
-            {
-                case "Microsoft.Data.SqlClient":
-                    DbProviderFactories.RegisterFactory(connType, typeof(Microsoft.Data.SqlClient.SqlClientFactory));
-                    break;
-                case "System.Data.OleDb":
-                    DbProviderFactories.RegisterFactory(connType, typeof(System.Data.OleDb.OleDbFactory));
-                    break; 
-                /*                    
-                case "System.Data.Odbc":
-                    DbProviderFactories.RegisterFactory(connType, typeof(System.Data.Odbc.OdbcFactory));
-                    break;
-                */                                      
-                default:
-                    throw new NotSupportedException($"Connection type {connType} is not yet supported");
-            }            
-            return DbProviderFactories.GetFactory(connType);
-        }        
+            this.config = config;
+        }
 
         /// <summary>
         /// Performs masking.
         /// </summary>
         public void Mask()
         {
+            PerformSanityChecks();
+
             object dt = GetData();
 
             switch (config.DataSource)
@@ -73,11 +55,98 @@ namespace Dandraka.Zoro.Processor
                 case DataSource.JsonFile:
                     AnonymizeJSONData((JContainer)dt);
                     break;
+                // MS Word
+                case DataSource.DocXFile:
+                    AnonymizeDocxData((WordprocessingDocument)dt);
+                    break;
                 default:
                     throw new NotImplementedException($"{Enum.GetName(typeof(DataSource), config.DataSource)} is not implemented");
             }
 
             SaveData(dt);
+        }
+
+        private void PerformSanityChecks()
+        {
+            switch (config.DataSource)
+            {
+                case DataSource.DocXFile:
+                    if (config.DataDestination != DataDestination.DocXFile) { throw new NotSupportedException("For docx source, only docx destination is supported."); }
+                    foreach (var m in config.FieldMasks)
+                    {
+                        if (m.MaskType == MaskType.Expression) { throw new NotSupportedException("For docx source, Expression mask type is not supported."); }
+                        // selector and group are ignored
+                        if (m.QueryReplacement != null)
+                        {
+                            if (!string.IsNullOrWhiteSpace(m.QueryReplacement.SelectorField)) { m.QueryReplacement.SelectorField = string.Empty; }
+                            if (!string.IsNullOrWhiteSpace(m.QueryReplacement.GroupDbField)) { m.QueryReplacement.GroupDbField = string.Empty; }
+                        }
+                        if (m.ListOfPossibleReplacements != null && m.ListOfPossibleReplacements.Count > 0)
+                        {
+                            foreach (var r in m.ListOfPossibleReplacements)
+                            {
+                                r.Selector = string.Empty;
+                            }
+                        }
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        private object GetData()
+        {
+            return config.DataSource switch
+            {
+                DataSource.CsvFile => ReadDataFromCSVFile(),
+                DataSource.JsonFile => ReadDataFromJSONFile(),
+                DataSource.Database => ReadDataFromDb(),
+                DataSource.DocXFile => ReadDataFromDocxFile(),
+                _ => throw new NotSupportedException(),
+            };
+        }
+
+        private void SaveData(object dt)
+        {
+            switch (config.DataDestination)
+            {
+                case DataDestination.CsvFile:
+                    SaveDataToCSVFile((DataTable)dt);
+                    break;
+                case DataDestination.JsonFile:
+                    SaveDataToJSONFile((JContainer)dt);
+                    break;
+                case DataDestination.Database:
+                    SaveDataToDb((DataTable)dt);
+                    break;
+                case DataDestination.DocXFile:
+                    SaveDataToDocxFile((WordprocessingDocument)dt);
+                    break;
+                default:
+                    throw new NotSupportedException();
+            }
+        }
+
+        private void AnonymizeFlatData(DataTable dt)
+        {
+            for (int r = 0; r < dt.Rows.Count; r++)
+            {
+                for (int c = 0; c < config.FieldMasks.Count; c++)
+                {
+                    string colName = config.FieldMasks[c].FieldName;
+                    if (r == 0)
+                    {
+                        if (!dt.Columns.Contains(colName))
+                        {
+                            throw new InvalidDataException(string.Format("File '{0}' does not contain field '{1}'",
+                                config.InputFile, colName));
+                        }
+                    }
+
+                    dt.Rows[r][colName] = GetMaskedString(Convert.ToString(dt.Rows[r][colName]), config.FieldMasks[c], dt.Rows[r]);
+                }
+            }
         }
 
         private void AnonymizeJSONData(JContainer jsonContainer)
@@ -102,6 +171,60 @@ namespace Dandraka.Zoro.Processor
                 default:
                     throw new NotImplementedException(jsonContainer.GetType().FullName);
             }
+        }
+
+        private void AnonymizeDocxData(WordprocessingDocument doc)
+        {
+            // Prepare masks for docx
+            // By default: RegExMatch = "(.*)(secret)(.*)", RegExGroupToReplace = 2
+            foreach (var textMask in config.FieldMasks)
+            {
+                if (string.IsNullOrWhiteSpace(textMask.RegExMatch))
+                {
+                    textMask.RegExMatch = $"({textMask.FieldName})";
+                    textMask.RegExGroupToReplace = 1;
+                }
+            }
+
+            var body = doc.MainDocumentPart.Document.Body;
+
+            // Iterate through all "Text" elements in the document
+            foreach (var textNode in body.Descendants<DocumentFormat.OpenXml.Wordprocessing.Text>())
+            {
+                foreach (var textMask in config.FieldMasks)
+                {
+                    if (!Regex.IsMatch(textNode.Text, textMask.RegExMatch))
+                    {
+                        continue;
+                    }
+                    string s = GetMaskedString(textNode.Text, textMask, null, null);
+                    if (textNode.Text != s)
+                    {
+                        textNode.Text = s;
+                    }
+                }
+            }
+        }
+
+        private static DbProviderFactory GetDbFactory(string connType)
+        {
+            switch (connType)
+            {
+                case "Microsoft.Data.SqlClient":
+                    DbProviderFactories.RegisterFactory(connType, typeof(Microsoft.Data.SqlClient.SqlClientFactory));
+                    break;
+                case "System.Data.OleDb":
+                    DbProviderFactories.RegisterFactory(connType, typeof(System.Data.OleDb.OleDbFactory));
+                    break;
+                /*                    
+                case "System.Data.Odbc":
+                    DbProviderFactories.RegisterFactory(connType, typeof(System.Data.Odbc.OdbcFactory));
+                    break;
+                */
+                default:
+                    throw new NotSupportedException($"Connection type {connType} is not yet supported");
+            }
+            return DbProviderFactories.GetFactory(connType);
         }
 
         private void AnonymizeJSONProperty(JProperty c)
@@ -135,35 +258,6 @@ namespace Dandraka.Zoro.Processor
                 {
                     AnonymizeJSONData((JContainer)jsonChild);
                 }
-            }
-        }
-
-        private object GetData()
-        {
-            return config.DataSource switch
-            {
-                DataSource.CsvFile => ReadDataFromCSVFile(),
-                DataSource.JsonFile => ReadDataFromJSONFile(),
-                DataSource.Database => ReadDataFromDb(),
-                _ => throw new NotSupportedException(),
-            };
-        }
-
-        private void SaveData(object dt)
-        {
-            switch (config.DataDestination)
-            {
-                case DataDestination.CsvFile:
-                    SaveDataToCSVFile((DataTable)dt);
-                    break;
-                case DataDestination.JsonFile:
-                    SaveDataToJSONFile((JContainer)dt);
-                    break;
-                case DataDestination.Database:
-                    SaveDataToDb((DataTable)dt);
-                    break;
-                default:
-                    throw new NotSupportedException();
             }
         }
 
@@ -204,27 +298,6 @@ namespace Dandraka.Zoro.Processor
             doDbSelect();
 
             return dt;
-        }
-
-        private void AnonymizeFlatData(DataTable dt)
-        {
-            for (int r = 0; r < dt.Rows.Count; r++)
-            {
-                for (int c = 0; c < config.FieldMasks.Count; c++)
-                {
-                    string colName = config.FieldMasks[c].FieldName;
-                    if (r == 0)
-                    {
-                        if (!dt.Columns.Contains(colName))
-                        {
-                            throw new InvalidDataException(string.Format("File '{0}' does not contain field '{1}'",
-                                config.InputFile, colName));
-                        }
-                    }
-
-                    dt.Rows[r][colName] = GetMaskedString(Convert.ToString(dt.Rows[r][colName]), config.FieldMasks[c], dt.Rows[r]);
-                }
-            }
         }
 
         private string GetMaskedString(string data, FieldMask fieldMask, DataRow row, JProperty jsonNode = null)
@@ -317,7 +390,7 @@ namespace Dandraka.Zoro.Processor
                         }
 
                         fieldValue = (jsonPathResult as JValue).Value<string>();
-                        
+
                         expression = expression.Replace(match.Value, fieldValue);
                         break;
                     default:
@@ -427,21 +500,35 @@ namespace Dandraka.Zoro.Processor
                 }
 
                 // generate lists
-                var groupList = dt.Rows.OfType<DataRow>()
-                    .Select(r => Convert.ToString(r[queryReplacement.GroupDbField]))
-                    .Distinct()
-                    .ToList();
-                foreach (string group in groupList)
+                if (string.IsNullOrWhiteSpace(queryReplacement.GroupDbField))
                 {
                     var valueList = dt.Rows.OfType<DataRow>()
-                        .Where(r => Convert.ToString(r[queryReplacement.GroupDbField]) == group)
                         .Select(r => Convert.ToString(r[queryReplacement.ValueDbField]))
                         .ToList();
                     queryReplacement.ListOfPossibleReplacements.Add(new Replacement()
                     {
-                        Selector = $"{queryReplacement.SelectorField}={group}",
+                        Selector = string.Empty,
                         ReplacementList = string.Join(',', valueList)
                     });
+                }
+                else
+                {
+                    var groupList = dt.Rows.OfType<DataRow>()
+                        .Select(r => Convert.ToString(r[queryReplacement.GroupDbField]))
+                        .Distinct()
+                        .ToList();
+                    foreach (string group in groupList)
+                    {
+                        var valueList = dt.Rows.OfType<DataRow>()
+                            .Where(r => Convert.ToString(r[queryReplacement.GroupDbField]) == group)
+                            .Select(r => Convert.ToString(r[queryReplacement.ValueDbField]))
+                            .ToList();
+                        queryReplacement.ListOfPossibleReplacements.Add(new Replacement()
+                        {
+                            Selector = $"{queryReplacement.SelectorField}={group}",
+                            ReplacementList = string.Join(',', valueList)
+                        });
+                    }
                 }
             }
 
@@ -542,6 +629,19 @@ namespace Dandraka.Zoro.Processor
             return jsonObj;
         }
 
+        private WordprocessingDocument ReadDataFromDocxFile()
+        {
+            if (!File.Exists(config.InputFile))
+            {
+                throw new FileNotFoundException(config.InputFile);
+            }
+
+            // copy the original to make sure we don't change it
+            File.Copy(config.InputFile, config.OutputFile);
+            var doc = WordprocessingDocument.Open(config.OutputFile, true);
+            return doc;
+        }
+
         private void SaveDataToCSVFile(DataTable dt)
         {
             StringBuilder sb = new StringBuilder();
@@ -578,6 +678,19 @@ namespace Dandraka.Zoro.Processor
         {
             File.WriteAllText(config.OutputFile, dt.ToString(), Encoding.UTF8);
             config.OutputFile.ToString();
+        }
+
+        private void SaveDataToDocxFile(WordprocessingDocument doc)
+        {
+            try
+            {
+                doc.MainDocumentPart.Document.Save();
+            }
+            finally
+            {
+                doc.Dispose();
+                doc = null;
+            }
         }
 
         private void SaveDataToDb(DataTable dt)
@@ -625,7 +738,7 @@ namespace Dandraka.Zoro.Processor
         /// <summary>Creates and opens a db connection, if needed.</summary>
         /// <returns>True if the connection was already open, false otherwise.</returns>
         private bool EnsureOpenDbConnection()
-        {            
+        {
             bool wasOpen = false;
             if (config.GetConnection() == null)
             {
