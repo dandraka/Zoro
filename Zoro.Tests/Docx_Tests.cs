@@ -338,8 +338,8 @@ namespace Dandraka.Zoro.Tests
             }
         }
 
-        //[Fact(Skip = "Only for debugging")]
-        [Fact]
+        [Fact(Skip = "Only for debugging")]
+        //[Fact]
         public void T99_AdhocTestForDebugging()
         {
             // === Arrange ===
