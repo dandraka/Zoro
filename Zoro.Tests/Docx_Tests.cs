@@ -7,6 +7,7 @@ using Dandraka.Zoro.Tests;
 using System.IO;
 using System.Diagnostics;
 using DocumentFormat.OpenXml.Packaging;
+using System.Linq;
 
 namespace Dandraka.Zoro.Tests
 {
@@ -178,16 +179,19 @@ namespace Dandraka.Zoro.Tests
         }    
 
         [Theory]
-        [InlineData("book", "tablet,newspaper,cellphone,", "An open %R%", 2)]
-        [InlineData("heart", "soul,mind,thoughts,attention,sight,affection", "In the center of my %R%", 6)]
-        public void T04_Docx_Db(string wordToReplace, string replacements, string expected, int replacementsExpected)
+        [InlineData("imagination", "Address", "Use your %R%", 5)]
+        [InlineData("center", "Country", "In the %R% of my heart", 6)]
+        public void T04_Docx_Db(string wordToReplace, string dbfield, string expected, int replacementsExpected)
         {
             // === Arrange ===
             string testName = System.Reflection.MethodBase.GetCurrentMethod().Name;
-            Console.WriteLine($"Starting {testName}");            
+            Console.WriteLine($"Starting {testName}");        
+
+            string tblName = $"{testName}_{Guid.NewGuid().ToString().Substring(0, 8)}";
             using (var utility = new Utility())
             {
                 utility.PrepareTestInstanceDir();
+                utility.PrepareSqliteDb(tblName);
 
                 var config = new MaskConfig()
                 {
@@ -196,13 +200,17 @@ namespace Dandraka.Zoro.Tests
                     InputFile = Path.Combine(utility.TestInstanceDir, "SecretCombination.docx"),
                     OutputFile = Path.Combine(utility.TestInstanceDir, $"{testName}.docx")
                 };
+                config.SetConnection(utility.TestDbConnection);
                 config.FieldMasks.Add(new FieldMask()
                 {
                     FieldName = wordToReplace,
-                    MaskType = MaskType.List,
-                    ListOfPossibleReplacements = new List<Replacement>()
+                    MaskType = MaskType.Query,
+                    QueryReplacement = new QueryReplacement()
                     {
-                        new Replacement() { Selector = "", ReplacementList = replacements }
+                        Query = $"SELECT {dbfield} FROM {tblName}",
+                        ValueDbField = dbfield,
+                        GroupDbField = string.Empty,
+                        SelectorField = string.Empty
                     }
                 });
 
@@ -211,6 +219,9 @@ namespace Dandraka.Zoro.Tests
                 masker.Mask();
 
                 // === Assert ===
+
+                // get the data we have in the db from the csv
+                var replacements = utility.GetCSVFieldValues("data1.csv", dbfield);
 
                 // Manually examine                
                 // OpenDocument(config.OutputFile);
@@ -224,7 +235,7 @@ namespace Dandraka.Zoro.Tests
                     var body = doc.MainDocumentPart.Document.Body;
                     foreach (var textNode in body.Descendants<DocumentFormat.OpenXml.Wordprocessing.Text>())
                     {
-                        foreach (string possibleReplacement in replacements.Split(","))
+                        foreach (string possibleReplacement in replacements)
                         {
                             string expectedPhrase = expected.Replace("%R%", possibleReplacement);
                             if (textNode.Text == expectedPhrase)

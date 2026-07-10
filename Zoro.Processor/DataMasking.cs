@@ -76,7 +76,7 @@ namespace Dandraka.Zoro.Processor
                 default:
                     break;
             }
-        }        
+        }
 
         private object GetData()
         {
@@ -88,7 +88,7 @@ namespace Dandraka.Zoro.Processor
                 DataSource.DocXFile => ReadDataFromDocxFile(),
                 _ => throw new NotSupportedException(),
             };
-        }        
+        }
 
         private void SaveData(object dt)
         {
@@ -109,7 +109,7 @@ namespace Dandraka.Zoro.Processor
                 default:
                     throw new NotSupportedException();
             }
-        }     
+        }
 
         private void AnonymizeFlatData(DataTable dt)
         {
@@ -130,7 +130,7 @@ namespace Dandraka.Zoro.Processor
                     dt.Rows[r][colName] = GetMaskedString(Convert.ToString(dt.Rows[r][colName]), config.FieldMasks[c], dt.Rows[r]);
                 }
             }
-        }           
+        }
 
         private void AnonymizeJSONData(JContainer jsonContainer)
         {
@@ -188,7 +188,7 @@ namespace Dandraka.Zoro.Processor
                     }
                 }
             }
-        }        
+        }
 
         private static DbProviderFactory GetDbFactory(string connType)
         {
@@ -484,21 +484,35 @@ namespace Dandraka.Zoro.Processor
                 }
 
                 // generate lists
-                var groupList = dt.Rows.OfType<DataRow>()
-                    .Select(r => Convert.ToString(r[queryReplacement.GroupDbField]))
-                    .Distinct()
-                    .ToList();
-                foreach (string group in groupList)
+                if (string.IsNullOrWhiteSpace(queryReplacement.GroupDbField))
                 {
                     var valueList = dt.Rows.OfType<DataRow>()
-                        .Where(r => Convert.ToString(r[queryReplacement.GroupDbField]) == group)
                         .Select(r => Convert.ToString(r[queryReplacement.ValueDbField]))
                         .ToList();
                     queryReplacement.ListOfPossibleReplacements.Add(new Replacement()
                     {
-                        Selector = $"{queryReplacement.SelectorField}={group}",
+                        Selector = string.Empty,
                         ReplacementList = string.Join(',', valueList)
                     });
+                }
+                else
+                {
+                    var groupList = dt.Rows.OfType<DataRow>()
+                        .Select(r => Convert.ToString(r[queryReplacement.GroupDbField]))
+                        .Distinct()
+                        .ToList();
+                    foreach (string group in groupList)
+                    {
+                        var valueList = dt.Rows.OfType<DataRow>()
+                            .Where(r => Convert.ToString(r[queryReplacement.GroupDbField]) == group)
+                            .Select(r => Convert.ToString(r[queryReplacement.ValueDbField]))
+                            .ToList();
+                        queryReplacement.ListOfPossibleReplacements.Add(new Replacement()
+                        {
+                            Selector = $"{queryReplacement.SelectorField}={group}",
+                            ReplacementList = string.Join(',', valueList)
+                        });
+                    }
                 }
             }
 

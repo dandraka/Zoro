@@ -79,7 +79,7 @@ namespace Dandraka.Zoro.Tests
                     default:
                         cmdInsert.Parameters.Add(new SQLiteParameter($"{DbParamChar}{csvField}"));
                         break;
-                }                
+                }
             }
 
             for (int i = 1; i < csvContents.Count; i++)
@@ -125,17 +125,17 @@ namespace Dandraka.Zoro.Tests
                 throw new FileNotFoundException(TestInstanceConfigJSONfile);
             }
 
-            var configFiles = new[] 
+            var configFiles = new[]
             {
-                    TestInstanceConfigCSVfile, 
-                    TestInstanceConfigJSONfile, 
+                    TestInstanceConfigCSVfile,
+                    TestInstanceConfigJSONfile,
                     TestInstanceConfigJSON2file
             };
             foreach (var configFile in configFiles)
             {
                 string configContents = File.ReadAllText(configFile);
                 configContents = configContents.Replace("%TestInstanceDir%", TestInstanceDir);
-                File.WriteAllText(configFile, configContents);                
+                File.WriteAllText(configFile, configContents);
             }
         }
 
@@ -144,6 +144,20 @@ namespace Dandraka.Zoro.Tests
             string fileName = Path.Combine(this.TestInstanceDir, Guid.NewGuid().ToString().Split("-")[0] + "." + ext.Replace(".", ""));
             File.WriteAllText(fileName, contents);
             return fileName;
+        }
+
+        public List<string> GetCSVFieldValues(string csvName, string dbField)
+        {
+            List<string> csvLines = System.IO.File.ReadLines(System.IO.Path.Join(this.TestInstanceDir, csvName)).ToList<string>();
+            string[] headers = csvLines[0].Split(';');
+            int fieldIndex = Array.IndexOf(headers, dbField);
+            csvLines.RemoveAt(0);
+            List<string> valuesList = new List<string>();
+            foreach (string csvLine in csvLines)
+            {
+                valuesList.Add(csvLine.Split(";")[fieldIndex]);
+            }
+            return valuesList;
         }
 
         // perform clean up
@@ -170,7 +184,7 @@ namespace Dandraka.Zoro.Tests
                             cmdDropTable.CommandType = CommandType.Text;
                             cmdDropTable.CommandText = $"DROP TABLE {tblToDrop}";
                             cmdDropTable.ExecuteNonQuery();
-                            Console.WriteLine($"Dropped table {tblToDrop}");                            
+                            Console.WriteLine($"Dropped table {tblToDrop}");
                         }
                     }
                     catch

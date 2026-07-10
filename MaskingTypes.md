@@ -303,7 +303,7 @@ The field contents are substituted with a randomly picked item of one or more gi
 * ListOfPossibleReplacements: Ignored
 * QueryReplacement: Mandatory. Must contain all of the following attributes:
   * SelectorField: The name of the field _from the original data_ which will be used to match the reference records.
-  * GroupField: The name of the field from the reference query (see Query below) which needs to match the values from the SelectorField.
+  * GroupField: The name of the field from the reference query (see Query below) which needs to match the values from the SelectorField. If GroupField is empty, all data in the ValueDbField retrieved from the Query will be used as a single group; the SelectorField will be ignored.
   * ValueField: The name of the field from the reference query (see Query below)which will be used as value after a random record (from the records where SelectorField=GroupField) is picked.
   * Query: The SQL query which will be executed to fetch the reference records.
 * RegExGroupToReplace: Optional. A number that specifies which regex group will be replaced. The number is 1-based, not 0-based, i.e. the first group is 1.
