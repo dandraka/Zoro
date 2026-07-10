@@ -1,8 +1,13 @@
 # Zoro - The masked avenger
 
-Zoro is a data masking and anonymization utility. It fetches data from a database, a JSON or a CSV file, and either creates a JSON file, a CSV file or runs SQL statements with the masked data.
+## IMPORTANT UPDATE
+From version 3.x onwards, support for Office files (.docx, .xlsx, .pptx) is gradually added. See Scope below and Release notes for list of currently supported file types.
 
-It can be used as a command line program or as a dotnet standard 2.1 library. To run the command line program, simply copy the ```tools``` dir from the [Nuget package](https://www.nuget.org/packages/Dandraka.Zoro). Windows and Linux versions, both 64-bit, are available.
+## Purpose and scope
+
+Zoro is a data masking and anonymization utility. It fetches data from a database, a JSON or a CSV file, and either creates a JSON file, a CSV file or runs SQL statements with the masked data. If can also be used with Office file types (currently .docx files are supported) to anonymize their content.
+
+The tool can be used both as a command line program and as a dotnet standard 2.1 library. To run the command line program, simply copy the ```tools``` dir from the [Nuget package](https://www.nuget.org/packages/Dandraka.Zoro). Windows and Linux versions, both 64-bit, are available.
 
 ## Usage:
 
@@ -196,8 +201,8 @@ ID;Name;BankAccount
 		</ListOfPossibleReplacements>
 	</FieldMask>	  
   </FieldMasks>
-  <InputFile>%TestInstanceDir%\data2.json</InputFile>
-  <OutputFile>%TestInstanceDir%\maskedata2.json</OutputFile>
+  <InputFile>C:\temp\Zorotests\data2.json</InputFile>
+  <OutputFile>C:\temp\Zorotests\maskedata2.json</OutputFile>
   <DataSource>JsonFile</DataSource>
   <DataDestination>JsonFile</DataDestination>
 </MaskConfig>
@@ -244,6 +249,31 @@ and the result will be something like the following:
     ]
 }
 ```
+
+**Sample config file using a List to replace IBANs in a document (.docx)**
+
+```
+<?xml version="1.0"?>
+<MaskConfig xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <FieldMasks>
+    <FieldMask>
+      <FieldName>IBAN</FieldName>
+      <MaskType>List</MaskType>
+      <RegExMatch>\b([A-Za-z]{2}\w{16})\b</RegExMatch>
+      <RegExGroupToReplace>1</RegExGroupToReplace>         
+		<ListOfPossibleReplacements>
+			<Replacement Selector="" List="NL1111111111111111,GR2222222222222222,CH3333333333333333" />
+		</ListOfPossibleReplacements>
+	</FieldMask>	  
+  </FieldMasks>
+  <InputFile>C:\temp\Zorotests\report.docx</InputFile>
+  <OutputFile>C:\temp\Zorotests\report_masked.docx</OutputFile>
+  <DataSource>DocXFile</DataSource>
+  <DataDestination>DocXFile</DataDestination>
+</MaskConfig>
+```
+
+That will replace all words starting with 2 letters and followed by 16 letters or numbers (which is a simplified version of what an IBAN looks like) with one replacement from the list.
 
 ### Note:
 

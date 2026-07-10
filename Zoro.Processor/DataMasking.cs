@@ -72,6 +72,23 @@ namespace Dandraka.Zoro.Processor
             {
                 case DataSource.DocXFile:
                     if (config.DataDestination != DataDestination.DocXFile) { throw new NotSupportedException("For docx source, only docx destination is supported."); }
+                    foreach (var m in config.FieldMasks)
+                    {
+                        if (m.MaskType == MaskType.Expression) { throw new NotSupportedException("For docx source, Expression mask type is not supported."); }
+                        // selector and group are ignored
+                        if (m.QueryReplacement != null)
+                        {
+                            if (!string.IsNullOrWhiteSpace(m.QueryReplacement.SelectorField)) { m.QueryReplacement.SelectorField = string.Empty; }
+                            if (!string.IsNullOrWhiteSpace(m.QueryReplacement.GroupDbField)) { m.QueryReplacement.GroupDbField = string.Empty; }
+                        }
+                        if (m.ListOfPossibleReplacements != null && m.ListOfPossibleReplacements.Count > 0)
+                        {
+                            foreach (var r in m.ListOfPossibleReplacements)
+                            {
+                                r.Selector = string.Empty;
+                            }
+                        }
+                    }
                     break;
                 default:
                     break;
@@ -164,8 +181,8 @@ namespace Dandraka.Zoro.Processor
             {
                 if (string.IsNullOrWhiteSpace(textMask.RegExMatch))
                 {
-                    textMask.RegExMatch = $"(.*)({textMask.FieldName})(.*)";
-                    textMask.RegExGroupToReplace = 2;
+                    textMask.RegExMatch = $"({textMask.FieldName})";
+                    textMask.RegExGroupToReplace = 1;
                 }
             }
 
@@ -176,8 +193,7 @@ namespace Dandraka.Zoro.Processor
             {
                 foreach (var textMask in config.FieldMasks)
                 {
-                    // in docx, fieldname is a regex
-                    if (!Regex.IsMatch(textNode.Text, textMask.FieldName))
+                    if (!Regex.IsMatch(textNode.Text, textMask.RegExMatch))
                     {
                         continue;
                     }
