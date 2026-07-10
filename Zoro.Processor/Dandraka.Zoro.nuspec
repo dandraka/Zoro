@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
   <metadata>
     <id>Dandraka.Zoro</id>
-    <version>2.4.0</version>
+    <version>3.0.0</version>
     <authors>Jim (Dimitrios) Andrakakis</authors>
     <requireLicenseAcceptance>true</requireLicenseAcceptance>
     <icon>icon.png</icon>
@@ -13,14 +13,10 @@
       The library can be used both in a dotnet standard 2.1 library and also as a command line utility. 
       You can copy the tools directory to use the tool as a standalone program for Windows and Linux, both 64bit.</description>
     <releaseNotes>
-    Added new masking type 'Expression'.
-    Added full JSON support. 
-    Added masking types reference documentation.    		
-		Added developer docs. 
-		Addressed SQL Data Provider Security Feature Bypass Vulnerability CVE-2024-0056 on Microsoft.Data.SqlClient and Microsoft.Data.SqlClient.
-    Fixed case-sensitivity and regex bugs, updated to latest package versions.
+    [2.x] Added new masking type 'Expression'. Added full JSON support. Added masking types reference documentation. Added developer docs. Addressed SQL Data Provider Security Feature Bypass Vulnerability CVE-2024-0056 on Microsoft.Data.SqlClient and Microsoft.Data.SqlClient. Fixed case-sensitivity and regex bugs, updated to latest package versions.
     [2.3.5] Updated to dotnet 8 and latest package versions.
     [2.4.0] Updated to dotnet 10, replaced obsolete System.Data.SqlClient with Microsoft.Data.SqlClient and updated to latest package versions.
+    [3.0.0] Added Office documents (.docx) support.
 	</releaseNotes>
     <copyright>Copyright (c) 2017 Jim (Dimitrios) Andrakakis</copyright>
     <tags>data anonymization masking gdpr sql csv json</tags>
