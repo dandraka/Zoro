@@ -40,7 +40,7 @@ var config = new Zoro.Processor.MaskConfig()
     SqlSelect = "SELECT * FROM testdata",
     OutputFile = Path.Combine(utility.TestInstanceDir, "maskeddata_db_02.csv")
 };
-config.FieldMasks.Add(new FieldMask() { FieldName = "name", MaskType = MaskType.Similar });
+config.FieldMasks.Add(new FieldMask() { FieldName = "name", MaskType = MaskType.Random });
 config.FieldMasks.Add(new FieldMask() { FieldName = "iban", MaskType = MaskType.Asterisk });
 config.FieldMasks.Add(new FieldMask() { FieldName = "country", MaskType = MaskType.None });
 config.FieldMasks.Add(new FieldMask() { FieldName = "address", MaskType = MaskType.List });
@@ -86,7 +86,7 @@ Please see the [generated docs](https://github.com/dandraka/Zoro/blob/master/doc
   <FieldMasks>
     <FieldMask>
       <FieldName>Name</FieldName>
-      <MaskType>Similar</MaskType>
+      <MaskType>Random</MaskType>
     </FieldMask>
     <FieldMask>
       <FieldName>BankAccount</FieldName>
@@ -139,7 +139,7 @@ ID;Name;BankAccount
     </FieldMask>      
     <FieldMask>
       <FieldName>MainPhone</FieldName>
-      <MaskType>Similar</MaskType>
+      <MaskType>Random</MaskType>
       <RegExMatch>^(\+\d\d)?(.*)$</RegExMatch>
       <RegExGroupToReplace>2</RegExGroupToReplace>
     </FieldMask>   
@@ -191,7 +191,7 @@ ID;Name;BankAccount
     </FieldMask>
     <FieldMask>
       <FieldName>salary</FieldName>
-      <MaskType>Similar</MaskType>
+      <MaskType>Random</MaskType>
     </FieldMask>  
     <FieldMask>
       <FieldName>spouse</FieldName>

@@ -9,17 +9,24 @@ namespace Dandraka.Zoro.Processor
         /// <summary>
         /// The field contents are not masked. This is the default.
         /// </summary>
-        None,
+        None = 0,
 
         /// <summary>
         /// The field contents are substituted with different content, e.g. a different name or post code.
+        /// From v.3.1 we assign a synonym: "Random" is the new "Similar" (because it is more intuitive).
+        /// Similar is kept for backwards compatibility.
         /// </summary>
-        Similar,
+        Random = 1,
+
+        /// <summary>
+        /// Same as Random, kept for backwards compatibility.
+        /// </summary>        
+        Similar = 1,
 
         /// <summary>
         /// The field contents are substituted with a character, e.g. asterisks or spaces.
         /// </summary>
-        Asterisk,
+        Asterisk = 2,
 
         /// <summary>
         /// The field contents are substituted with a combination of a constant string and values from other fields.
@@ -31,17 +38,17 @@ namespace Dandraka.Zoro.Processor
         /// For example "Customer-{{$.CustomerID}}" (without the quotes).
         /// Note: for Office input types (docx, xlsx, pptx), this masking type is not supported.
         /// </summary>
-        Expression,        
+        Expression = 3,        
 
         /// <summary>
         /// The field contents are substituted with a randomly picked item of a given list.
         /// </summary>
-        List,
+        List = 4,
 
         /// <summary>
         /// The field contents are substituted with a randomly picked item from the result of q query.
         /// The query must return only one field.
         /// </summary>
-        Query
+        Query = 5
     }
 }

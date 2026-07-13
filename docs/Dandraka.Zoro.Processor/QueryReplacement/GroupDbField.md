@@ -1,6 +1,6 @@
 # QueryReplacement.GroupDbField property
 
-The field from the db data (retrieved form the query) that will be used to create individual lists. E.g. "country"
+The field from the db data (retrieved form the query) that will be used to create individual lists. E.g. "country" If empty, all data in the `ValueDbField` retrieved from the `Query` will be used as a single group; the `SelectorField` will be ignored.
 
 ```csharp
 public string GroupDbField { get; set; }

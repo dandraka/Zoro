@@ -17,7 +17,7 @@
     [2.3.5] Updated to dotnet 8 and latest package versions.
     [2.4.0] Updated to dotnet 10, replaced obsolete System.Data.SqlClient with Microsoft.Data.SqlClient and updated to latest package versions.
     [3.0.0] Added Office documents (.docx) support.
-    [3.1.0] Added Office spreadsheets (.xlsx) support.
+    [3.1.0] Added Office spreadsheets (.xlsx) support. Renamed mask type Similar to Random (more intuitive) but kept Similar for backwards compatibility.
 	</releaseNotes>
     <copyright>Copyright (c) 2017 Jim (Dimitrios) Andrakakis</copyright>
     <tags>data anonymization masking gdpr sql csv json</tags>

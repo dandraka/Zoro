@@ -35,7 +35,7 @@ For this reason, the FieldName in all masking types is used somewhat differently
 - In a CSV, it's used to choose which column the program will modify.
 - But in a document, it's either used to choose the text block to process or, if paired with a regular expression, ignored.
 
-Two concrete examples (here using MaskType=Asterisk for simplicity, but Similar, List and Query can be used as well, though not Expression):
+Two concrete examples (here using MaskType=Asterisk for simplicity, but Random, List and Query can be used as well, though not Expression):
 
 - FieldName = "coffee" will go block by block (which usually means line by line) and, using the regular expression ```(.*)(coffee)(.*)```, will replace the 2nd match. 
 
@@ -83,7 +83,9 @@ Sample input and output
 |--------------:|------------:|
 | 1             | 1           |
 
-### MaskType=Similar
+### MaskType=Random
+
+Note: Old mask type "Similar" was renamed to "Random", as it is more intuitive. Similar is kept for backwards compatibility, so existing configs do not need to change.
 
 Each character of the original data is substituted by a random character taking the following into account:
 
@@ -95,7 +97,7 @@ With the usage of a regular expression, it is possible to change all or only par
 
 #### Mandatory, optional and ignored fields
 
-* MaskType = Similar
+* MaskType = Random
 * Asterisk: Ignored
 * Expression: Ignored
 * FieldName: Mandatory. The name of the field being sought. Note that field names are case-insensitive for CSV files & DB queries, but case-sensitive for JSON files.
@@ -109,7 +111,7 @@ With the usage of a regular expression, it is possible to change all or only par
 ```
     <FieldMask>
       <FieldName>ProductDescription</FieldName>
-      <MaskType>Similar</MaskType>
+      <MaskType>Random</MaskType>
     </FieldMask>  
 ```
 
@@ -124,7 +126,7 @@ Sample input and output
 ```
     <FieldMask>
       <FieldName>MainPhone</FieldName>
-      <MaskType>Similar</MaskType>
+      <MaskType>Random</MaskType>
       <RegExMatch>^(\+\d\d\d\d\d)?(.*)$</RegExMatch>
       <RegExGroupToReplace>2</RegExGroupToReplace>
     </FieldMask>  

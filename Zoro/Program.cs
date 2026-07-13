@@ -37,11 +37,11 @@ namespace Dandraka.Zoro
                 Console.WriteLine(@"  <FieldMasks>");
                 Console.WriteLine(@"    <FieldMask>");
                 Console.WriteLine(@"      <FieldName>Name</FieldName>");
-                Console.WriteLine(@"      <MaskType>Similar</MaskType>");
+                Console.WriteLine(@"      <MaskType>Random</MaskType>");
                 Console.WriteLine(@"    </FieldMask>");
                 Console.WriteLine(@"    <FieldMask>");
                 Console.WriteLine(@"      <FieldName>MainPhone</FieldName>");
-                Console.WriteLine(@"      <MaskType>Similar</MaskType>");
+                Console.WriteLine(@"      <MaskType>Random</MaskType>");
                 Console.WriteLine(@"      <RegExMatch>^(\+\d\d)?(.*)$</RegExMatch>");
                 Console.WriteLine(@"      <RegExGroupToReplace>2</RegExGroupToReplace>");
                 Console.WriteLine(@"    </FieldMask>");

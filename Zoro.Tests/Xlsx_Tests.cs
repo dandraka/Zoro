@@ -167,7 +167,7 @@ namespace Dandraka.Zoro.Tests
             [Theory]
             [InlineData("secret", "My (\\w{6}) combination", 10)]
             [InlineData("mystery", "It's a (\\w{7}) for you", 5)]
-            public void T04_Xlsx_Similar(string wordToReplace, string expectedPhrase, int replacementsExpected)
+            public void T04_Xlsx_Random(string wordToReplace, string expectedPhrase, int replacementsExpected)
             {
                 // === Arrange ===
                 string testName = System.Reflection.MethodBase.GetCurrentMethod().Name;
@@ -183,7 +183,7 @@ namespace Dandraka.Zoro.Tests
                         InputFile = Path.Combine(utility.TestInstanceDir, "SecretCombination.docx"),
                         OutputFile = Path.Combine(utility.TestInstanceDir, $"{testName}.docx")
                     };
-                    config.FieldMasks.Add(new FieldMask() { FieldName = wordToReplace, MaskType = MaskType.Similar });
+                    config.FieldMasks.Add(new FieldMask() { FieldName = wordToReplace, MaskType = MaskType.Random });
 
                     // === Act ===
                     var masker = new DataMasking(config);
@@ -375,7 +375,7 @@ namespace Dandraka.Zoro.Tests
                     config.FieldMasks.Add(new FieldMask()
                     {
                         FieldName = "coffee",
-                        MaskType = MaskType.Similar
+                        MaskType = MaskType.Random
                     });                
                     config.FieldMasks[0].ListOfPossibleReplacements.Add(new Replacement()
                     {

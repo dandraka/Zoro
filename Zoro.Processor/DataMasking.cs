@@ -335,7 +335,7 @@ namespace Dandraka.Zoro.Processor
                         s = fieldMask.MaskType switch
                         {
                             MaskType.Asterisk => GetAsteriskString(matchData, fieldMask.Asterisk[0]),
-                            MaskType.Similar => GetSimilarString(matchData),
+                            MaskType.Random => GetRandomString(matchData),
                             MaskType.List => GetStringFromList(row, fieldMask.ListOfPossibleReplacements),
                             MaskType.Query => GetStringFromQuery(row, fieldMask.QueryReplacement),
                             MaskType.Expression => GetExpressionString(row, fieldMask.Expression, jsonNode),
@@ -353,7 +353,7 @@ namespace Dandraka.Zoro.Processor
                 return fieldMask.MaskType switch
                 {
                     MaskType.Asterisk => GetAsteriskString(data, fieldMask.Asterisk[0]),
-                    MaskType.Similar => GetSimilarString(data),
+                    MaskType.Random => GetRandomString(data),
                     MaskType.List => GetStringFromList(row, fieldMask.ListOfPossibleReplacements),
                     MaskType.Query => GetStringFromQuery(row, fieldMask.QueryReplacement),
                     MaskType.Expression => GetExpressionString(row, fieldMask.Expression, jsonNode),
@@ -413,7 +413,7 @@ namespace Dandraka.Zoro.Processor
             return expression;
         }
 
-        private string GetSimilarString(string data)
+        private string GetRandomString(string data)
         {
             char method(char c)
             {
