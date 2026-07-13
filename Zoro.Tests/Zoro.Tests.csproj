@@ -4,7 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <IsPackable>false</IsPackable>
     <Authors>Jim (Dimitrios) Andrakakis</Authors>
-    <Version>3.0.0</Version>    
+    <Version>3.1.0</Version>    
   </PropertyGroup>
 
   <ItemGroup>

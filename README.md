@@ -5,7 +5,7 @@ From version 3.x onwards, support for Office files (.docx, .xlsx, .pptx) is grad
 
 ## Purpose and scope
 
-Zoro is a data masking and anonymization utility. It fetches data from a database, a JSON or a CSV file, and either creates a JSON file, a CSV file or runs SQL statements with the masked data. It can also be used with Office file types (currently .docx files are supported) to anonymize their content.
+Zoro is a data masking and anonymization utility. It fetches data from a database, a JSON or a CSV file, and either creates a JSON file, a CSV file or runs SQL statements with the masked data. It can also be used with Office file types (currently .docx and .xlsx files are supported) to anonymize their content.
 
 The tool can be used both as a command line program and as a dotnet standard 2.1 library. To run the command line program, simply copy the ```tools``` dir from the [Nuget package](https://www.nuget.org/packages/Dandraka.Zoro). Windows and Linux versions, both 64-bit, are available.
 
