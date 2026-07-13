@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Dandraka.Zoro.Processor
+﻿namespace Dandraka.Zoro.Processor
 {
     /// <summary>
     /// Specifies where the data should be sent to.
@@ -30,6 +24,11 @@ namespace Dandraka.Zoro.Processor
         /// <summary>
         /// The data will be written to a DOCX file.
         /// </summary>
-        DocXFile        
+        DocXFile,
+
+        /// <summary>
+        /// The data will be written to an XLSX file.
+        /// </summary>
+        XlsXFile                       
     }
 }

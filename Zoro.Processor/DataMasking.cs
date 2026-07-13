@@ -40,7 +40,7 @@ namespace Dandraka.Zoro.Processor
         /// </summary>
         public void Mask()
         {
-            PerformSanityChecks();
+            Validator.PerformSanityChecks(this.config);
 
             object dt = GetData();
 
@@ -55,44 +55,19 @@ namespace Dandraka.Zoro.Processor
                 case DataSource.JsonFile:
                     AnonymizeJSONData((JContainer)dt);
                     break;
-                // MS Word
+                // Documents
                 case DataSource.DocXFile:
                     AnonymizeDocxData((WordprocessingDocument)dt);
                     break;
+                // Spreadsheets
+                case DataSource.XlsXFile:
+                    AnonymizeXlsxData((SpreadsheetDocument)dt);
+                    break;                    
                 default:
                     throw new NotImplementedException($"{Enum.GetName(typeof(DataSource), config.DataSource)} is not implemented");
             }
 
             SaveData(dt);
-        }
-
-        private void PerformSanityChecks()
-        {
-            switch (config.DataSource)
-            {
-                case DataSource.DocXFile:
-                    if (config.DataDestination != DataDestination.DocXFile) { throw new NotSupportedException("For docx source, only docx destination is supported."); }
-                    foreach (var m in config.FieldMasks)
-                    {
-                        if (m.MaskType == MaskType.Expression) { throw new NotSupportedException("For docx source, Expression mask type is not supported."); }
-                        // selector and group are ignored
-                        if (m.QueryReplacement != null)
-                        {
-                            if (!string.IsNullOrWhiteSpace(m.QueryReplacement.SelectorField)) { m.QueryReplacement.SelectorField = string.Empty; }
-                            if (!string.IsNullOrWhiteSpace(m.QueryReplacement.GroupDbField)) { m.QueryReplacement.GroupDbField = string.Empty; }
-                        }
-                        if (m.ListOfPossibleReplacements != null && m.ListOfPossibleReplacements.Count > 0)
-                        {
-                            foreach (var r in m.ListOfPossibleReplacements)
-                            {
-                                r.Selector = string.Empty;
-                            }
-                        }
-                    }
-                    break;
-                default:
-                    break;
-            }
         }
 
         private object GetData()
@@ -103,6 +78,7 @@ namespace Dandraka.Zoro.Processor
                 DataSource.JsonFile => ReadDataFromJSONFile(),
                 DataSource.Database => ReadDataFromDb(),
                 DataSource.DocXFile => ReadDataFromDocxFile(),
+                DataSource.XlsXFile => ReadDataFromXlsxFile(),
                 _ => throw new NotSupportedException(),
             };
         }
@@ -123,6 +99,9 @@ namespace Dandraka.Zoro.Processor
                 case DataDestination.DocXFile:
                     SaveDataToDocxFile((WordprocessingDocument)dt);
                     break;
+                case DataDestination.XlsXFile:
+                    SaveDataToXlsxFile((SpreadsheetDocument)dt);
+                    break;                    
                 default:
                     throw new NotSupportedException();
             }
@@ -205,6 +184,39 @@ namespace Dandraka.Zoro.Processor
                 }
             }
         }
+
+        private void AnonymizeXlsxData(SpreadsheetDocument doc)
+        {
+            // Prepare masks for docx
+            // By default: RegExMatch = "(.*)(secret)(.*)", RegExGroupToReplace = 2
+            foreach (var textMask in config.FieldMasks)
+            {
+                if (string.IsNullOrWhiteSpace(textMask.RegExMatch))
+                {
+                    textMask.RegExMatch = $"({textMask.FieldName})";
+                    textMask.RegExGroupToReplace = 1;
+                }
+            }
+
+            var body = doc.WorkbookPart.SharedStringTablePart;
+
+            // Iterate through all "Text" elements in the document
+            foreach (var textNode in body.SharedStringTable.Elements<DocumentFormat.OpenXml.Spreadsheet.SharedStringItem>())
+            {
+                foreach (var textMask in config.FieldMasks)
+                {
+                    if (!Regex.IsMatch(textNode.Text.Text, textMask.RegExMatch))
+                    {
+                        continue;
+                    }
+                    string s = GetMaskedString(textNode.Text.Text, textMask, null, null);
+                    if (textNode.Text.Text != s)
+                    {
+                        textNode.Text.Text = s;
+                    }
+                }
+            }
+        }        
 
         private static DbProviderFactory GetDbFactory(string connType)
         {
@@ -642,6 +654,19 @@ namespace Dandraka.Zoro.Processor
             return doc;
         }
 
+        private SpreadsheetDocument ReadDataFromXlsxFile()
+        {
+            if (!File.Exists(config.InputFile))
+            {
+                throw new FileNotFoundException(config.InputFile);
+            }
+
+            // copy the original to make sure we don't change it
+            File.Copy(config.InputFile, config.OutputFile);
+            var doc = SpreadsheetDocument.Open(config.OutputFile, true);
+            return doc;
+        }        
+
         private void SaveDataToCSVFile(DataTable dt)
         {
             StringBuilder sb = new StringBuilder();
@@ -692,6 +717,19 @@ namespace Dandraka.Zoro.Processor
                 doc = null;
             }
         }
+
+        private void SaveDataToXlsxFile(SpreadsheetDocument doc)
+        {
+            try
+            {
+                doc.WorkbookPart.SharedStringTablePart.SharedStringTable.Save();
+            }
+            finally
+            {
+                doc.Dispose();
+                doc = null;
+            }
+        }        
 
         private void SaveDataToDb(DataTable dt)
         {

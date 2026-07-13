@@ -3,7 +3,6 @@ using System.Data;
 using System.Collections.Generic;
 using Xunit;
 using Dandraka.Zoro.Processor;
-using Dandraka.Zoro.Tests;
 using System.IO;
 
 namespace Dandraka.Zoro.Tests

@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Dandraka.Zoro.Processor
+﻿namespace Dandraka.Zoro.Processor
 {
     /// <summary>
     /// Specifies where the data is coming from.
@@ -29,6 +23,11 @@ namespace Dandraka.Zoro.Processor
         /// <summary>
         /// The data comes from a DOCX file.
         /// </summary>
-        DocXFile
+        DocXFile,
+
+        /// <summary>
+        /// The data comes from an XLSX file.
+        /// </summary>
+        XlsXFile        
     }
 }

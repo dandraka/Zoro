@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using Xunit;
 using Dandraka.Zoro.Processor;
 using System.IO;
-using System.Diagnostics;
 using DocumentFormat.OpenXml.Packaging;
 using System.Text.RegularExpressions;
 
@@ -39,7 +38,7 @@ namespace Dandraka.Zoro.Tests
                     DataSource = DataSource.DocXFile,
                     DataDestination = DataDestination.CsvFile,
                     InputFile = Path.Combine(utility.TestInstanceDir, "SecretCombination.docx"),
-                    OutputFile = Path.Combine(utility.TestInstanceDir, $"{testName}.docx")
+                    OutputFile = Path.Combine(utility.TestInstanceDir, $"{testName}.csv")
                 };
                 config.FieldMasks.Add(new FieldMask() { FieldName = "book", MaskType = MaskType.Asterisk });
 
@@ -100,7 +99,7 @@ namespace Dandraka.Zoro.Tests
                 // Examine exception
                 Assert.NotNull(ex);
                 Assert.IsType<NotSupportedException>(ex);
-                Assert.Equal("For docx source, Expression mask type is not supported.", ex.Message);
+                Assert.Equal("For Office file types, the Expression mask type is not supported.", ex.Message);
             }
         }
 
@@ -132,7 +131,7 @@ namespace Dandraka.Zoro.Tests
                 // === Assert ===
 
                 // Manually examine                
-                // OpenDocument(config.OutputFile);
+                // Utility.OpenDocument(config.OutputFile);
                 // does the file exist?
                 Assert.True(File.Exists(config.OutputFile));
 
@@ -182,7 +181,7 @@ namespace Dandraka.Zoro.Tests
                 // === Assert ===
 
                 // Manually examine                
-                // OpenDocument(config.OutputFile);
+                // Utility.OpenDocument(config.OutputFile);
                 // does the file exist?
                 Assert.True(File.Exists(config.OutputFile));
 
@@ -240,7 +239,7 @@ namespace Dandraka.Zoro.Tests
                 // === Assert ===
 
                 // Manually examine                
-                // OpenDocument(config.OutputFile);
+                // Utility.OpenDocument(config.OutputFile);
                 // does the file exist?
                 Assert.True(File.Exists(config.OutputFile));
 
@@ -312,7 +311,7 @@ namespace Dandraka.Zoro.Tests
                 var replacements = utility.GetCSVFieldValues("data1.csv", dbfield);
 
                 // Manually examine                
-                // OpenDocument(config.OutputFile);
+                // Utility.OpenDocument(config.OutputFile);
                 // does the file exist?
                 Assert.True(File.Exists(config.OutputFile));
 
@@ -380,20 +379,10 @@ namespace Dandraka.Zoro.Tests
                 // === Assert ===
 
                 // Manually examine                
-                // OpenDocument(config.OutputFile);
+                // Utility.OpenDocument(config.OutputFile);
                 // does the file exist?
                 Assert.True(File.Exists(config.OutputFile));
             }
-        }
-
-        private static void OpenDocument(string filename)
-        {
-            ProcessStartInfo psi = new ProcessStartInfo
-            {
-                FileName = filename,
-                UseShellExecute = true
-            };
-            Process.Start(psi);
         }
     }
 }

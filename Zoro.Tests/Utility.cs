@@ -8,6 +8,7 @@ using System.Data.SQLite;
 using Microsoft.Data.SqlClient;
 using System.Collections.Generic;
 using System.Linq;
+using System.Diagnostics;
 
 namespace Dandraka.Zoro.Tests
 {
@@ -37,7 +38,7 @@ namespace Dandraka.Zoro.Tests
             TestInstanceConfigJSON2file = Path.Combine(TestInstanceDir, "testconfigjson2.xml");
 
             Console.WriteLine($"TestInstanceDir = {TestInstanceDir}");
-        }
+        }        
 
         public void PrepareSqliteDb(string tableName)
         {
@@ -231,5 +232,15 @@ namespace Dandraka.Zoro.Tests
             }
             return data;
         }
+
+        internal static void OpenDocument(string filename)
+        {
+            ProcessStartInfo psi = new ProcessStartInfo
+            {
+                FileName = filename,
+                UseShellExecute = true
+            };
+            Process.Start(psi);
+        }        
     }
 }
