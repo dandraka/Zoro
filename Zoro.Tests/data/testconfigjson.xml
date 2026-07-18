@@ -3,15 +3,15 @@
   <FieldMasks>
     <FieldMask>
       <FieldName>name</FieldName>
-      <MaskType>Similar</MaskType>
+      <MaskType>Random</MaskType>
     </FieldMask>
     <FieldMask>
       <FieldName>salary</FieldName>
-      <MaskType>Similar</MaskType>
+      <MaskType>Random</MaskType>
     </FieldMask>
 	<FieldMask>
 		<FieldName>CategoryName</FieldName>
-		<MaskType>Similar</MaskType>
+		<MaskType>Random</MaskType>
 	</FieldMask>	  
     <FieldMask>
       <FieldName>spouse</FieldName>

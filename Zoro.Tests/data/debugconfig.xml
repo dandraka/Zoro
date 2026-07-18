@@ -3,7 +3,7 @@
   <FieldMasks>
     <FieldMask>
       <FieldName>Name</FieldName>
-      <MaskType>Similar</MaskType>
+      <MaskType>Random</MaskType>
     </FieldMask>
     <FieldMask>
       <FieldName>BankAccount</FieldName>

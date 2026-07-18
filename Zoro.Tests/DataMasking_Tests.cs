@@ -65,7 +65,7 @@ namespace Dandraka.Zoro.Tests
                 OutputFile = Path.Combine(utility.TestInstanceDir, $"maskeddata_{testName}.csv")
             };
             config.SetConnection(utility.TestDbConnection);
-            config.FieldMasks.Add(new FieldMask() { FieldName = "Name", MaskType = MaskType.Similar });
+            config.FieldMasks.Add(new FieldMask() { FieldName = "Name", MaskType = MaskType.Random });
             config.FieldMasks.Add(new FieldMask() { FieldName = "BankAccount", MaskType = MaskType.Asterisk });
             config.FieldMasks.Add(new FieldMask() { FieldName = "Country", MaskType = MaskType.None });
             config.FieldMasks.Add(new FieldMask() { FieldName = "Address", MaskType = MaskType.List });
@@ -197,7 +197,7 @@ namespace Dandraka.Zoro.Tests
         }
 
         [Fact]
-        public void T06_Mask_MaskType_Similar_Test()
+        public void T06_Mask_MaskType_Random_Test()
         {
             // === Arrange ===
             string testName = System.Reflection.MethodBase.GetCurrentMethod().Name;
@@ -211,7 +211,7 @@ namespace Dandraka.Zoro.Tests
                 OutputFile = csvFilename.Replace(".csv", "_out.csv")
             };
             config.FieldMasks.Add(new FieldMask() { FieldName = "id", MaskType = MaskType.None });
-            config.FieldMasks.Add(new FieldMask() { FieldName = "name", MaskType = MaskType.Similar });
+            config.FieldMasks.Add(new FieldMask() { FieldName = "name", MaskType = MaskType.Random });
 
             // === Act ===
             var masker = new DataMasking(config);

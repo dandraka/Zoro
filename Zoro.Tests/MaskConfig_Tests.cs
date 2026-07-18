@@ -61,7 +61,7 @@ namespace Dandraka.Zoro.Tests
 
             foreach (string field in fields.Where(x => !nameFields.Contains(x) && !zipFields.Contains(x)))
             {
-                config.FieldMasks.Add(new FieldMask() { FieldName = field, MaskType = MaskType.Similar });
+                config.FieldMasks.Add(new FieldMask() { FieldName = field, MaskType = MaskType.Random });
             }
 
             foreach (string field in nameFields)

@@ -14,6 +14,7 @@ public enum DataSource
 | Database | `1` | The data is obtained by executing a DB query. |
 | JsonFile | `2` | The data comes from a JSON file. |
 | DocXFile | `3` | The data comes from a DOCX file. |
+| XlsXFile | `4` | The data comes from an XLSX file. |
 
 ## See Also
 

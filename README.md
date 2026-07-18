@@ -5,7 +5,7 @@ From version 3.x onwards, support for Office files (.docx, .xlsx, .pptx) is grad
 
 ## Purpose and scope
 
-Zoro is a data masking and anonymization utility. It fetches data from a database, a JSON or a CSV file, and either creates a JSON file, a CSV file or runs SQL statements with the masked data. It can also be used with Office file types (currently .docx files are supported) to anonymize their content.
+Zoro is a data masking and anonymization utility. It fetches data from a database, a JSON or a CSV file, and either creates a JSON file, a CSV file or runs SQL statements with the masked data. It can also be used with Office file types (currently .docx and .xlsx files are supported) to anonymize their content.
 
 The tool can be used both as a command line program and as a dotnet standard 2.1 library. To run the command line program, simply copy the ```tools``` dir from the [Nuget package](https://www.nuget.org/packages/Dandraka.Zoro). Windows and Linux versions, both 64-bit, are available.
 
@@ -40,7 +40,7 @@ var config = new Zoro.Processor.MaskConfig()
     SqlSelect = "SELECT * FROM testdata",
     OutputFile = Path.Combine(utility.TestInstanceDir, "maskeddata_db_02.csv")
 };
-config.FieldMasks.Add(new FieldMask() { FieldName = "name", MaskType = MaskType.Similar });
+config.FieldMasks.Add(new FieldMask() { FieldName = "name", MaskType = MaskType.Random });
 config.FieldMasks.Add(new FieldMask() { FieldName = "iban", MaskType = MaskType.Asterisk });
 config.FieldMasks.Add(new FieldMask() { FieldName = "country", MaskType = MaskType.None });
 config.FieldMasks.Add(new FieldMask() { FieldName = "address", MaskType = MaskType.List });
@@ -86,7 +86,7 @@ Please see the [generated docs](https://github.com/dandraka/Zoro/blob/master/doc
   <FieldMasks>
     <FieldMask>
       <FieldName>Name</FieldName>
-      <MaskType>Similar</MaskType>
+      <MaskType>Random</MaskType>
     </FieldMask>
     <FieldMask>
       <FieldName>BankAccount</FieldName>
@@ -139,7 +139,7 @@ ID;Name;BankAccount
     </FieldMask>      
     <FieldMask>
       <FieldName>MainPhone</FieldName>
-      <MaskType>Similar</MaskType>
+      <MaskType>Random</MaskType>
       <RegExMatch>^(\+\d\d)?(.*)$</RegExMatch>
       <RegExGroupToReplace>2</RegExGroupToReplace>
     </FieldMask>   
@@ -191,7 +191,7 @@ ID;Name;BankAccount
     </FieldMask>
     <FieldMask>
       <FieldName>salary</FieldName>
-      <MaskType>Similar</MaskType>
+      <MaskType>Random</MaskType>
     </FieldMask>  
     <FieldMask>
       <FieldName>spouse</FieldName>
