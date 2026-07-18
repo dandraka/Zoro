@@ -12,7 +12,10 @@ namespace Dandraka.Zoro.Processor
         None = 0,
 
         /// <summary>
-        /// The field contents are substituted with different content, e.g. a different name or post code.
+        /// The field contents are substituted with random content. 
+        /// Letters are substituted with a random letter of the same case, vowels with vowels and consonants with consonants. 
+        /// Numbers are substituted with a random number. 
+        /// Symbols, auch as - + % etc are left as is.
         /// From v.3.1 we assign a synonym: "Random" is the new "Similar" (because it is more intuitive).
         /// Similar is kept for backwards compatibility.
         /// </summary>
