@@ -16,6 +16,7 @@ public class FieldMask
 | [FieldName](FieldMask/FieldName.md) { get; set; } | The name of the field. Note that field names are case-insensitive for CSV files and DB queries, but case-sensitive for JSON files. For Office documents, it's used to match the content processed. |
 | [ListOfPossibleReplacements](FieldMask/ListOfPossibleReplacements.md) { get; set; } | In case of `MaskType.List`, the comma-separated list of items to choose from. |
 | [MaskType](FieldMask/MaskType.md) { get; set; } | The type of masking to apply. The default is None. |
+| [OnListExhausted](FieldMask/OnListExhausted.md) { get; set; } | In case of `MaskType.ReplacementList` or `MaskType.ReplacementQuery`, what happens when a value finds no replacement left. The default is Asterisk. |
 | [QueryReplacement](FieldMask/QueryReplacement.md) { get; set; } | In case of `MaskType.Query`, the SQL query to get the list of replacements from. |
 | [RegExGroupToReplace](FieldMask/RegExGroupToReplace.md) { get; set; } | Valid only if `RegExMatch` is filled. The number is 1-based, not 0-based, i.e. the first group is 1. |
 | [RegExMatch](FieldMask/RegExMatch.md) { get; set; } | If filled, only matches from the regular expression are changed. If not, the whole field is changed. |

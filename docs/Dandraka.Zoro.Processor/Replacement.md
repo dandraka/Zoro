@@ -1,6 +1,6 @@
 # Replacement class
 
-Possible replacement, in case of `MaskType.List`.
+Possible replacement, in case of `MaskType.List` or `MaskType.ReplacementList`.
 
 ```csharp
 public class Replacement
@@ -11,6 +11,7 @@ public class Replacement
 | name | description |
 | --- | --- |
 | [Replacement](Replacement/Replacement.md)() | The default constructor. |
+| [Mappings](Replacement/Mappings.md) { get; set; } | Explicit original value to replacement pairs, in case of `MaskType.ReplacementList`. They take precedence over `ReplacementList`, and their replacements are not picked again from it. |
 | [ReplacementList](Replacement/ReplacementList.md) { get; set; } | Replacement list. |
 | [Selector](Replacement/Selector.md) { get; set; } | E.g. "Sex=F" |
 

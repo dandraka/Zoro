@@ -79,6 +79,7 @@ Please see the [generated docs](https://github.com/dandraka/Zoro/blob/master/doc
 - If input is a JSON of an Office file type (Docx, Xlsx, Pptx) and one or more FieldMasks are type List (FieldMask.MaskType=List), one 1 Replacement entry is allowed, which has to have an empty Selector (Selector="").
 - If input is a JSON file type, FieldMasks that perform a database query (FieldMask.MaskType=Query) are not allowed. This is planned to be supported in a later version.
 - If the input is an Office file type (Docx, Xlsx, Pptx), the output must be of the same type.
+- The masking types ReplacementList and ReplacementQuery work like List and Query, but the masking is consistent (pseudonymisation): the same original value always gets the same replacement. If a value has no replacement left, it is masked with asterisks by default and the console program prints a warning; see ```OnListExhausted``` in the [masking types reference](https://github.com/dandraka/Zoro/blob/master/MaskingTypes.md).
 
 ## Examples:
 

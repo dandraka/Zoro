@@ -1,0 +1,496 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text.RegularExpressions;
+using DocumentFormat.OpenXml.Packaging;
+using Dandraka.Zoro.Processor;
+using Newtonsoft.Json.Linq;
+using Xunit;
+
+namespace Dandraka.Zoro.Tests
+{
+    /// <summary>
+    /// Tests for the <c>ReplacementList</c> and <c>ReplacementQuery</c> mask types (consistent masking).
+    /// </summary>
+    public class ReplacementMask_Tests : IDisposable
+    {
+        private readonly Utility utility = new();
+
+        public ReplacementMask_Tests()
+        {
+            utility.PrepareTestInstanceDir();
+            utility.PrepareSqliteDb("ReplacementMask_Tests");
+        }
+
+        public void Dispose()
+        {
+            utility.Dispose();
+            GC.SuppressFinalize(this);
+        }
+
+        private static FieldMask ListMask(string fieldName, params Replacement[] replacements)
+        {
+            var mask = new FieldMask() { FieldName = fieldName, MaskType = MaskType.ReplacementList };
+            mask.ListOfPossibleReplacements.AddRange(replacements);
+            return mask;
+        }
+
+        private static Replacement Pool(string items, string selector = "")
+        {
+            return new Replacement() { Selector = selector, ReplacementList = items };
+        }
+
+        private static Replacement Mapped(string selector, params (string from, string to)[] maps)
+        {
+            var replacement = new Replacement() { Selector = selector };
+            foreach (var (from, to) in maps)
+            {
+                replacement.Mappings.Add(new ReplacementMap() { From = from, To = to });
+            }
+            return replacement;
+        }
+
+        private (List<string[]> rows, DataMasking masker) MaskCsv(string csvContent, params FieldMask[] masks)
+        {
+            string csvFilename = utility.CreateFileInTestInstanceDir(csvContent, "csv");
+            var config = new MaskConfig()
+            {
+                InputFile = csvFilename,
+                OutputFile = csvFilename.Replace(".csv", "_out.csv")
+            };
+            config.SetConnection(utility.TestDbConnection);
+            config.FieldMasks.AddRange(masks);
+
+            var masker = DataMasking.Create(config);
+            masker.Mask();
+
+            Assert.True(File.Exists(config.OutputFile));
+            var rows = File.ReadLines(config.OutputFile).Skip(1).Select(x => x.Split(';')).ToList();
+            return (rows, masker);
+        }
+
+        [Fact]
+        public void T01_ReplacementList_Pool_IsConsistentAndUnique()
+        {
+            // === Arrange ===
+            string csv = "id;city\r\n1;Athens\r\n2;London\r\n3;athens \r\n4;Paris\r\n5;LONDON";
+            string[] pool = ["CityA", "CityB", "CityC"];
+
+            // === Act ===
+            var (rows, masker) = MaskCsv(csv,
+                new FieldMask() { FieldName = "id", MaskType = MaskType.None },
+                ListMask("city", Pool(string.Join(",", pool))));
+
+            // === Assert ===
+            var cities = rows.Select(r => r[1]).ToList();
+            Assert.Equal(5, cities.Count);
+            Assert.All(cities, c => Assert.Contains(c, pool));
+            // same value (ignoring case and spaces) gets the same replacement
+            Assert.Equal(cities[0], cities[2]);
+            Assert.Equal(cities[1], cities[4]);
+            // different values get different replacements
+            Assert.Equal(3, cities.Distinct().Count());
+            Assert.Equal(0, masker.ValuesWithoutReplacement);
+        }
+
+        [Fact]
+        public void T02_ReplacementList_Mapping_UsesGivenPairs()
+        {
+            // === Arrange ===
+            string csv = "id;city\r\n1;Athens\r\n2;London\r\n3; LONDON \r\n4;Athens";
+
+            // === Act ===
+            var (rows, masker) = MaskCsv(csv,
+                new FieldMask() { FieldName = "id", MaskType = MaskType.None },
+                ListMask("city", Mapped("", ("Athens", "CityA"), ("london", "CityB"))));
+
+            // === Assert ===
+            Assert.Equal(["CityA", "CityB", "CityB", "CityA"], rows.Select(r => r[1]));
+            Assert.Equal(0, masker.ValuesWithoutReplacement);
+        }
+
+        [Fact]
+        public void T03_ReplacementList_MappingAndPool_WithSelectors()
+        {
+            // === Arrange ===
+            string csv = "id;city;country\r\n1;Athens;GR\r\n2;Patra;GR\r\n3;London;UK\r\n4;Athens;UK\r\n5;Athens;GR";
+            var cityMask = ListMask("city",
+                new Replacement() { Selector = "country=GR", ReplacementList = "P1,P2", Mappings = { new ReplacementMap() { From = "Athens", To = "Capital" } } },
+                Pool("T1,T2"));
+
+            // === Act ===
+            var (rows, _) = MaskCsv(csv,
+                new FieldMask() { FieldName = "id", MaskType = MaskType.None },
+                cityMask,
+                new FieldMask() { FieldName = "country", MaskType = MaskType.None });
+
+            // === Assert ===
+            var cities = rows.Select(r => r[1]).ToList();
+            Assert.Equal("Capital", cities[0]);
+            Assert.Equal("Capital", cities[4]);
+            Assert.Contains(cities[1], new[] { "P1", "P2" });
+            // other country: separate list, so Athens is not "Capital" there
+            Assert.Contains(cities[2], new[] { "T1", "T2" });
+            Assert.Contains(cities[3], new[] { "T1", "T2" });
+            Assert.NotEqual(cities[2], cities[3]);
+        }
+
+        [Fact]
+        public void T04_ReplacementList_RegEx_ReplacesOnlyTheGroupAndEveryMatch()
+        {
+            // === Arrange ===
+            string csv = "id;phone\r\n1;+41 785412798\r\n2;+41 785412798\r\n3;+49 17612345\r\n4;+49 17699999";
+
+            // === Act ===
+            var (rows, _) = MaskCsv(csv,
+                new FieldMask() { FieldName = "id", MaskType = MaskType.None },
+                new FieldMask()
+                {
+                    FieldName = "phone",
+                    MaskType = MaskType.ReplacementList,
+                    RegExMatch = @"^(\+\d\d) (.*)$",
+                    RegExGroupToReplace = 2,
+                    ListOfPossibleReplacements = { Pool("111,222,333,444") }
+                });
+
+            // === Assert ===
+            var phones = rows.Select(r => r[1]).ToList();
+            Assert.StartsWith("+41 ", phones[0]);
+            Assert.StartsWith("+41 ", phones[1]);
+            Assert.StartsWith("+49 ", phones[2]);
+            Assert.Equal(phones[0], phones[1]);
+            // two different numbers, plus the repeated one
+            Assert.Equal(3, phones.Distinct().Count());
+        }
+
+        [Fact]
+        public void T05_ReplacementList_Exhausted_Asterisk_IsDefault()
+        {
+            // === Arrange ===
+            string csv = "id;city\r\n1;Athens\r\n2;Madrid\r\n3;Athens\r\n4;Madrid";
+
+            // === Act ===
+            var (rows, masker) = MaskCsv(csv,
+                new FieldMask() { FieldName = "id", MaskType = MaskType.None },
+                ListMask("city", Pool("X")));
+
+            // === Assert ===
+            var cities = rows.Select(r => r[1]).ToList();
+            Assert.Equal(["X", "******"], cities.Distinct().OrderByDescending(c => c, StringComparer.Ordinal));
+            Assert.Equal(cities[0], cities[2]);
+            Assert.Equal(cities[1], cities[3]);
+            Assert.Equal(1, masker.ValuesWithoutReplacement);
+        }
+
+        [Fact]
+        public void T06_ReplacementList_Exhausted_Asterisk_CustomCharacter()
+        {
+            // === Arrange ===
+            string csv = "id;city\r\n1;Athens\r\n2;Madrid";
+            var cityMask = ListMask("city", Mapped("", ("Athens", "CityA")));
+            cityMask.Asterisk = "#";
+
+            // === Act ===
+            var (rows, masker) = MaskCsv(csv, new FieldMask() { FieldName = "id", MaskType = MaskType.None }, cityMask);
+
+            // === Assert ===
+            Assert.Equal(["CityA", "######"], rows.Select(r => r[1]));
+            Assert.Equal(1, masker.ValuesWithoutReplacement);
+        }
+
+        [Fact]
+        public void T07_ReplacementList_Exhausted_Error()
+        {
+            // === Arrange ===
+            string csv = "id;city\r\n1;Athens\r\n2;Madrid";
+            var cityMask = ListMask("city", Pool("X"));
+            cityMask.OnListExhausted = ListExhaustedAction.Error;
+
+            string csvFilename = utility.CreateFileInTestInstanceDir(csv, "csv");
+            var config = new MaskConfig() { InputFile = csvFilename, OutputFile = csvFilename.Replace(".csv", "_out.csv") };
+            config.FieldMasks.Add(cityMask);
+
+            // === Act & Assert ===
+            Assert.Throws<ReplacementExhaustedException>(() => DataMasking.Create(config).Mask());
+        }
+
+        [Fact]
+        public void T08_ReplacementList_Exhausted_Reuse()
+        {
+            // === Arrange ===
+            string csv = "id;city\r\n1;Athens\r\n2;Madrid\r\n3;Athens";
+            var cityMask = ListMask("city", Pool("X"));
+            cityMask.OnListExhausted = ListExhaustedAction.Reuse;
+
+            // === Act ===
+            var (rows, masker) = MaskCsv(csv, new FieldMask() { FieldName = "id", MaskType = MaskType.None }, cityMask);
+
+            // === Assert ===
+            Assert.All(rows.Select(r => r[1]), c => Assert.Equal("X", c));
+            Assert.Equal(0, masker.ValuesWithoutReplacement);
+        }
+
+        [Fact]
+        public void T09_ReplacementList_DuplicateMapping_Throws()
+        {
+            // === Arrange ===
+            string csvFilename = utility.CreateFileInTestInstanceDir("id;city\r\n1;Athens", "csv");
+            var config = new MaskConfig() { InputFile = csvFilename, OutputFile = csvFilename.Replace(".csv", "_out.csv") };
+            config.FieldMasks.Add(ListMask("city", Mapped("", ("Athens", "CityA"), (" ATHENS ", "CityB"))));
+
+            // === Act & Assert ===
+            Assert.Throws<InvalidDataException>(() => DataMasking.Create(config).Mask());
+        }
+
+        [Fact]
+        public void T10_ReplacementList_JSON()
+        {
+            // === Arrange ===
+            string json = "[{\"name\":\"Nick\"},{\"name\":\"Eva\"},{\"name\":\"nick\"}]";
+            string jsonFilename = utility.CreateFileInTestInstanceDir(json, "json");
+            var config = new MaskConfig()
+            {
+                DataSource = DataSource.JsonFile,
+                DataDestination = DataDestination.JsonFile,
+                InputFile = jsonFilename,
+                OutputFile = jsonFilename.Replace(".json", "_out.json")
+            };
+            config.FieldMasks.Add(ListMask("name", Mapped("", ("Nick", "John"), ("Eva", "Jane"))));
+
+            // === Act ===
+            DataMasking.Create(config).Mask();
+
+            // === Assert ===
+            var result = JArray.Parse(File.ReadAllText(config.OutputFile));
+            Assert.Equal(["John", "Jane", "John"], result.Select(x => (string)x["name"]));
+        }
+
+        [Fact]
+        public void T11_ReplacementQuery_Pool_PerGroup()
+        {
+            // === Arrange ===
+            string csv = "ID;City;Country\r\n1;Athens;GR\r\n2;Chania;GR\r\n3;Athens;GR\r\n4;Basel;CH";
+            var cmd = utility.TestDbConnection.CreateCommand();
+            cmd.CommandText = @"CREATE TABLE cities AS 
+                SELECT 'Rethimno' AS city, 'GR' AS country UNION ALL 
+                SELECT 'Trikala'  AS city, 'GR' AS country UNION ALL 
+                SELECT 'Geneva'   AS city, 'CH' AS country UNION ALL 
+                SELECT 'Bern'     AS city, 'CH' AS country";
+            cmd.ExecuteNonQuery();
+            utility.TestTablesToDrop = "cities";
+
+            // === Act ===
+            var (rows, masker) = MaskCsv(csv,
+                new FieldMask() { FieldName = "ID", MaskType = MaskType.None },
+                new FieldMask()
+                {
+                    FieldName = "City",
+                    MaskType = MaskType.ReplacementQuery,
+                    QueryReplacement = new QueryReplacement()
+                    {
+                        Query = "SELECT city, country FROM cities",
+                        ValueDbField = "city",
+                        GroupDbField = "country",
+                        SelectorField = "Country"
+                    }
+                },
+                new FieldMask() { FieldName = "Country", MaskType = MaskType.None });
+
+            // === Assert ===
+            var cities = rows.Select(r => r[1]).ToList();
+            Assert.Contains(cities[0], new[] { "Rethimno", "Trikala" });
+            Assert.Contains(cities[1], new[] { "Rethimno", "Trikala" });
+            Assert.NotEqual(cities[0], cities[1]);
+            Assert.Equal(cities[0], cities[2]);
+            Assert.Contains(cities[3], new[] { "Geneva", "Bern" });
+            Assert.Equal(0, masker.ValuesWithoutReplacement);
+        }
+
+        [Fact]
+        public void T12_ReplacementQuery_MappingTable_PerGroup()
+        {
+            // === Arrange ===
+            string csv = "ID;Name;Country\r\n1;Nick;GR\r\n2;Nick;CH\r\n3;eva;GR\r\n4;Zed;GR";
+            var cmd = utility.TestDbConnection.CreateCommand();
+            cmd.CommandText = @"CREATE TABLE name_mapping AS 
+                SELECT 'Nick' AS originalName, 'John'    AS pseudonym, 'GR' AS country UNION ALL 
+                SELECT 'Nick' AS originalName, 'Giorgos' AS pseudonym, 'CH' AS country UNION ALL 
+                SELECT 'Eva'  AS originalName, 'Maria'   AS pseudonym, 'GR' AS country";
+            cmd.ExecuteNonQuery();
+            utility.TestTablesToDrop = "name_mapping";
+
+            // === Act ===
+            var (rows, masker) = MaskCsv(csv,
+                new FieldMask() { FieldName = "ID", MaskType = MaskType.None },
+                new FieldMask()
+                {
+                    FieldName = "Name",
+                    MaskType = MaskType.ReplacementQuery,
+                    QueryReplacement = new QueryReplacement()
+                    {
+                        Query = "SELECT originalName, pseudonym, country FROM name_mapping",
+                        KeyDbField = "originalName",
+                        ValueDbField = "pseudonym",
+                        GroupDbField = "country",
+                        SelectorField = "Country"
+                    }
+                },
+                new FieldMask() { FieldName = "Country", MaskType = MaskType.None });
+
+            // === Assert ===
+            Assert.Equal(["John", "Giorgos", "Maria", "***"], rows.Select(r => r[1]));
+            Assert.Equal(1, masker.ValuesWithoutReplacement);
+        }
+
+        [Fact]
+        public void T13_ReplacementList_Docx_Mapping()
+        {
+            // === Arrange ===
+            string testName = System.Reflection.MethodBase.GetCurrentMethod().Name;
+            var config = new MaskConfig()
+            {
+                DataSource = DataSource.DocXFile,
+                DataDestination = DataDestination.DocXFile,
+                InputFile = Path.Combine(utility.TestInstanceDir, "SecretCombination.docx"),
+                OutputFile = Path.Combine(utility.TestInstanceDir, $"{testName}.docx")
+            };
+            config.FieldMasks.Add(ListMask("heart", Mapped("", ("heart", "soul"))));
+
+            // === Act ===
+            DataMasking.Create(config).Mask();
+
+            // === Assert ===
+            var texts = ReadDocxTexts(config.OutputFile);
+            Assert.Equal(6, texts.Count(t => t == "In the center of my soul"));
+            Assert.DoesNotContain(texts, t => t.Contains("heart"));
+        }
+
+        [Fact]
+        public void T14_ReplacementList_Docx_RegEx_Pool()
+        {
+            // === Arrange ===
+            string testName = System.Reflection.MethodBase.GetCurrentMethod().Name;
+            var config = new MaskConfig()
+            {
+                DataSource = DataSource.DocXFile,
+                DataDestination = DataDestination.DocXFile,
+                InputFile = Path.Combine(utility.TestInstanceDir, "SecretCombination.docx"),
+                OutputFile = Path.Combine(utility.TestInstanceDir, $"{testName}.docx")
+            };
+            config.FieldMasks.Add(new FieldMask()
+            {
+                FieldName = "words",
+                MaskType = MaskType.ReplacementList,
+                RegExMatch = @"\b(secret|mystery)\b",
+                RegExGroupToReplace = 1,
+                ListOfPossibleReplacements = { Pool("alpha,beta") }
+            });
+
+            // === Act ===
+            DataMasking.Create(config).Mask();
+
+            // === Assert ===
+            var texts = ReadDocxTexts(config.OutputFile);
+            var secretWords = texts.Select(t => Regex.Match(t, @"^My (\w+) combination$")).Where(m => m.Success).Select(m => m.Groups[1].Value).ToList();
+            var mysteryWords = texts.Select(t => Regex.Match(t, @"^It's a (\w+) for you$")).Where(m => m.Success).Select(m => m.Groups[1].Value).ToList();
+
+            Assert.Equal(10, secretWords.Count);
+            Assert.Equal(5, mysteryWords.Count);
+            Assert.Single(secretWords.Distinct());
+            Assert.Single(mysteryWords.Distinct());
+            Assert.NotEqual(secretWords[0], mysteryWords[0]);
+            Assert.Contains(secretWords[0], new[] { "alpha", "beta" });
+            Assert.Contains(mysteryWords[0], new[] { "alpha", "beta" });
+        }
+
+        [Fact]
+        public void T15_ReplacementList_Xlsx_Exhausted()
+        {
+            // === Arrange ===
+            string testName = System.Reflection.MethodBase.GetCurrentMethod().Name;
+            var config = new MaskConfig()
+            {
+                DataSource = DataSource.XlsXFile,
+                DataDestination = DataDestination.XlsXFile,
+                InputFile = Path.Combine(utility.TestInstanceDir, "ibans.xlsx"),
+                OutputFile = Path.Combine(utility.TestInstanceDir, $"{testName}.xlsx")
+            };
+            // the file has 8 different IBANs, but only 3 replacements
+            config.FieldMasks.Add(new FieldMask()
+            {
+                FieldName = "IBAN",
+                MaskType = MaskType.ReplacementList,
+                RegExMatch = @"\b([A-Z]{2}\d{2}\w{10,30})\b",
+                RegExGroupToReplace = 1,
+                ListOfPossibleReplacements = { Pool("IBAN-1,IBAN-2,IBAN-3") }
+            });
+
+            // === Act ===
+            var masker = DataMasking.Create(config);
+            masker.Mask();
+
+            // === Assert ===
+            var texts = new List<string>();
+            using (var doc = SpreadsheetDocument.Open(config.OutputFile, false))
+            {
+                foreach (var item in doc.WorkbookPart.SharedStringTablePart.SharedStringTable.Elements<DocumentFormat.OpenXml.Spreadsheet.SharedStringItem>())
+                {
+                    texts.Add(item.Text?.Text);
+                }
+            }
+
+            Assert.Equal(3, texts.Count(t => t != null && t.StartsWith("IBAN-")));
+            Assert.Equal(5, texts.Count(t => !string.IsNullOrEmpty(t) && t.All(c => c == '*')));
+            Assert.Equal(5, masker.ValuesWithoutReplacement);
+        }
+
+        [Fact]
+        public void T16_Config_XmlRoundTrip()
+        {
+            // === Arrange ===
+            var config = new MaskConfig();
+            var cityMask = ListMask("city", new Replacement() { Selector = "country=GR", ReplacementList = "P1,P2", Mappings = { new ReplacementMap() { From = "Athens", To = "Capital" } } }, Pool("T1,T2"));
+            cityMask.OnListExhausted = ListExhaustedAction.Error;
+            var nameMask = new FieldMask()
+            {
+                FieldName = "name",
+                MaskType = MaskType.ReplacementQuery,
+                QueryReplacement = new QueryReplacement() { Query = "SELECT a, b FROM t", KeyDbField = "a", ValueDbField = "b" }
+            };
+            config.FieldMasks.Add(cityMask);
+            config.FieldMasks.Add(nameMask);
+            string file = Path.Combine(utility.TestInstanceDir, $"config_{Guid.NewGuid()}.xml");
+
+            // === Act ===
+            MaskConfig.SaveConfig(file, config);
+            var config2 = MaskConfig.ReadConfig(file);
+
+            // === Assert ===
+            string xml = File.ReadAllText(file);
+            Assert.Contains("<Map From=\"Athens\" To=\"Capital\" />", xml);
+            // the default is not written
+            Assert.Equal(1, Regex.Matches(xml, "<OnListExhausted>").Count);
+
+            var city2 = config2.FieldMasks[0];
+            Assert.Equal(MaskType.ReplacementList, city2.MaskType);
+            Assert.Equal(ListExhaustedAction.Error, city2.OnListExhausted);
+            Assert.Equal("Capital", city2.ListOfPossibleReplacements[0].Mappings[0].To);
+            Assert.Empty(city2.ListOfPossibleReplacements[1].Mappings);
+
+            var name2 = config2.FieldMasks[1];
+            Assert.Equal(MaskType.ReplacementQuery, name2.MaskType);
+            Assert.Equal(ListExhaustedAction.Asterisk, name2.OnListExhausted);
+            Assert.Equal("a", name2.QueryReplacement.KeyDbField);
+        }
+
+        private static List<string> ReadDocxTexts(string file)
+        {
+            using var doc = WordprocessingDocument.Open(file, false);
+            return doc.MainDocumentPart.Document.Body
+                .Descendants<DocumentFormat.OpenXml.Wordprocessing.Text>()
+                .Select(t => t.Text)
+                .ToList();
+        }
+    }
+}

@@ -54,6 +54,15 @@ namespace Dandraka.Zoro.Processor
         public string ValueDbField { get; set; }        
 
         /// <summary>
+        /// Only for <c>MaskType.ReplacementQuery</c>. If filled, the query is a mapping table: this is the field
+        /// of the db data that holds the original value, and <c>ValueField</c> holds its replacement.
+        /// If empty, the query returns a pool of replacements in <c>ValueField</c>.
+        /// E.g. "originalName"
+        /// </summary>
+        [XmlAttribute(AttributeName = "KeyField")]
+        public string KeyDbField { get; set; }
+
+        /// <summary>
         /// E.g. "SELECT city, country FROM cities"
         /// </summary>
         [XmlAttribute(AttributeName = "Query")]

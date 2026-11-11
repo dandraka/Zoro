@@ -17,6 +17,8 @@ public enum MaskType
 | Expression | `3` | The field contents are substituted with a combination of a constant string and values from other fields. The FieldMask.Expression field is mandatory and must be filled with a constant string and field names enclosed in double curly brackets. For example "Customer-{{CustomerID}}" (without the quotes). When the data source is Json, a JsonPath is expected in the place of field name. The JsonPath will be applied on the root of the Json. For example "Customer-{{$.CustomerID}}" (without the quotes). Note: for Office input types (docx, xlsx, pptx), this masking type is not supported. |
 | List | `4` | The field contents are substituted with a randomly picked item of a given list. |
 | Query | `5` | The field contents are substituted with a randomly picked item from the result of q query. The query must return only one field. |
+| ReplacementList | `6` | Like `List`, but the masking is consistent (pseudonymisation): the same original value always gets the same replacement, and different values get different replacements. Replacements are either given explicitly (`Replacement.Mappings`) or taken randomly from the items of the list that are not used yet. Matching ignores case and surrounding spaces. When there are no replacements left, `FieldMask.OnListExhausted` decides what happens. |
+| ReplacementQuery | `7` | Like `Query`, but the masking is consistent (pseudonymisation), see `ReplacementList`. If `QueryReplacement.KeyField` is filled, the query is a mapping table of original value to replacement; otherwise the query returns the pool of replacements to pick from. |
 
 ## See Also
 

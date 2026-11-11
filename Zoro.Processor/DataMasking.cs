@@ -2,6 +2,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 
@@ -18,6 +19,9 @@ namespace Dandraka.Zoro.Processor
         private readonly Random rnd = new Random(DateTime.Now.Millisecond);
 
         private static readonly Regex fieldsRegEx = new Regex("({{.*?}})");
+
+        // Remembers the replacements given to each value; keyed by the Replacement (list) they came from.
+        private readonly Dictionary<Replacement, ReplacementPool> replacementPools = new Dictionary<Replacement, ReplacementPool>();
 
         // Internal constructor: implementations are only created through Create().
         internal DataMasking(MaskConfig config)
@@ -52,12 +56,23 @@ namespace Dandraka.Zoro.Processor
         /// </summary>
         public abstract void Mask();
 
+        /// <summary>
+        /// The number of distinct values that were masked with asterisks because a <c>ReplacementList</c> 
+        /// or <c>ReplacementQuery</c> mask had no replacement left. Zero means all values got a replacement.
+        /// </summary>
+        public int ValuesWithoutReplacement => replacementPools.Values.Sum(p => p.FallbackCount);
+
         private protected string GetMaskedString(string data, FieldMask fieldMask, DataRow row, JProperty jsonNode = null)
         {
             if (string.IsNullOrEmpty(data))
                 return data;
             if (!string.IsNullOrEmpty(fieldMask.RegExMatch))
             {
+                if (fieldMask.MaskType == MaskType.ReplacementList || fieldMask.MaskType == MaskType.ReplacementQuery)
+                {
+                    return GetConsistentRegexString(data, fieldMask, row);
+                }
+
                 Regex rgx = new Regex(fieldMask.RegExMatch);
 
                 var match = rgx.Match(data);
@@ -97,6 +112,8 @@ namespace Dandraka.Zoro.Processor
                     MaskType.List => GetStringFromList(row, fieldMask.ListOfPossibleReplacements),
                     MaskType.Query => GetStringFromQuery(row, fieldMask.QueryReplacement),
                     MaskType.Expression => GetExpressionString(row, fieldMask.Expression, jsonNode),
+                    MaskType.ReplacementList => GetConsistentString(data, fieldMask, row, fieldMask.ListOfPossibleReplacements),
+                    MaskType.ReplacementQuery => GetConsistentString(data, fieldMask, row, GetReplacementQueryLists(fieldMask.QueryReplacement)),
                     MaskType.None => data,
                     _ => throw new NotImplementedException($"Mask type {fieldMask.MaskType} is not yet implemented"),
                 };
@@ -161,15 +178,28 @@ namespace Dandraka.Zoro.Processor
 
         private string GetStringFromList(DataRow row, List<Replacement> listOfReplacements)
         {
-            // get the right list
-            string replacementStr = null;
+            string replacementStr = SelectReplacement(row, listOfReplacements)?.ReplacementList;
+            if (replacementStr == null)
+            {
+                // warning, nothing found
+                throw new DataNotFoundException(row);
+            }
+            var list = replacementStr.Split(',').Select(x => x.Trim()).ToList();
+            string str = list[rnd.Next(list.Count)];
+            return str;
+        }
+
+        /// <summary>
+        /// Picks the replacement whose selector matches the row; one with an empty selector matches always.
+        /// </summary>
+        private Replacement SelectReplacement(DataRow row, List<Replacement> listOfReplacements)
+        {
             foreach (var r in listOfReplacements)
             {
                 // to have as a default
                 if (string.IsNullOrEmpty(r.Selector))
                 {
-                    replacementStr = r.ReplacementList;
-                    break;
+                    return r;
                 }
 
                 string selectorField = r.Selector.Split('=')[0].Trim();
@@ -183,43 +213,23 @@ namespace Dandraka.Zoro.Processor
                 string dataValue = Convert.ToString(row[selectorField]).Trim().ToLower();
                 if (dataValue == selectorValue)
                 {
-                    replacementStr = r.ReplacementList;
-                    break;
+                    return r;
                 }
             }
-            if (replacementStr == null)
+
+            if (row == null)
             {
-                // warning, nothing found
-                throw new DataNotFoundException(row);
+                throw new InvalidDataException("No replacement was found. Add a Replacement with an empty Selector.");
             }
-            var list = replacementStr.Split(',').Select(x => x.Trim()).ToList();
-            string str = list[rnd.Next(list.Count)];
-            return str;
+            return null;
         }
 
         private string GetStringFromQuery(DataRow row, QueryReplacement queryReplacement)
         {
             if (queryReplacement.ListOfPossibleReplacements == null)
             {
-                bool wasOpen = DbConnectionHelper.EnsureOpen(config);
+                var dt = ReadReplacementTable(queryReplacement);
                 queryReplacement.ListOfPossibleReplacements = new List<Replacement>();
-
-                var dbCmd = config.GetConnection().CreateCommand();
-                dbCmd.CommandType = CommandType.Text;
-                dbCmd.CommandText = queryReplacement.Query;
-
-                var dt = new DataTable(queryReplacement.ValueDbField);
-                var behaviour = wasOpen ? CommandBehavior.Default : CommandBehavior.CloseConnection;
-                using (var dbReader = dbCmd.ExecuteReader(behaviour))
-                {
-                    dt.Load(dbReader);
-                    dbReader.Close();
-                }
-
-                foreach (DataColumn dataColumn in dt.Columns)
-                {
-                    dataColumn.ReadOnly = false;
-                }
 
                 // generate lists
                 if (string.IsNullOrWhiteSpace(queryReplacement.GroupDbField))
@@ -255,6 +265,145 @@ namespace Dandraka.Zoro.Processor
             }
 
             return GetStringFromList(row, queryReplacement.ListOfPossibleReplacements);
+        }
+
+        private DataTable ReadReplacementTable(QueryReplacement queryReplacement)
+        {
+            bool wasOpen = DbConnectionHelper.EnsureOpen(config);
+
+            var dbCmd = config.GetConnection().CreateCommand();
+            dbCmd.CommandType = CommandType.Text;
+            dbCmd.CommandText = queryReplacement.Query;
+
+            var dt = new DataTable(queryReplacement.ValueDbField);
+            var behaviour = wasOpen ? CommandBehavior.Default : CommandBehavior.CloseConnection;
+            using (var dbReader = dbCmd.ExecuteReader(behaviour))
+            {
+                dt.Load(dbReader);
+                dbReader.Close();
+            }
+
+            foreach (DataColumn dataColumn in dt.Columns)
+            {
+                dataColumn.ReadOnly = false;
+            }
+
+            return dt;
+        }
+
+        private List<Replacement> GetReplacementQueryLists(QueryReplacement queryReplacement)
+        {
+            if (queryReplacement == null)
+            {
+                throw new InvalidDataException("QueryReplacement must be filled when the mask type is ReplacementQuery.");
+            }
+
+            if (queryReplacement.ListOfPossibleReplacements == null)
+            {
+                var dt = ReadReplacementTable(queryReplacement);
+                var rows = dt.Rows.OfType<DataRow>();
+                var replacements = new List<Replacement>();
+
+                if (string.IsNullOrWhiteSpace(queryReplacement.GroupDbField))
+                {
+                    replacements.Add(CreateReplacement(string.Empty, rows, queryReplacement));
+                }
+                else
+                {
+                    foreach (var group in rows.GroupBy(r => Convert.ToString(r[queryReplacement.GroupDbField])))
+                    {
+                        replacements.Add(CreateReplacement($"{queryReplacement.SelectorField}={group.Key}", group, queryReplacement));
+                    }
+                }
+
+                queryReplacement.ListOfPossibleReplacements = replacements;
+            }
+
+            return queryReplacement.ListOfPossibleReplacements;
+        }
+
+        private static Replacement CreateReplacement(string selector, IEnumerable<DataRow> rows, QueryReplacement queryReplacement)
+        {
+            var replacement = new Replacement() { Selector = selector };
+
+            if (string.IsNullOrWhiteSpace(queryReplacement.KeyDbField))
+            {
+                replacement.Items = rows.Select(r => Convert.ToString(r[queryReplacement.ValueDbField])).ToList();
+                return replacement;
+            }
+
+            foreach (var row in rows)
+            {
+                string key = Convert.ToString(row[queryReplacement.KeyDbField]);
+                if (string.IsNullOrWhiteSpace(key))
+                {
+                    continue;
+                }
+                replacement.Mappings.Add(new ReplacementMap()
+                {
+                    From = key,
+                    To = Convert.ToString(row[queryReplacement.ValueDbField])
+                });
+            }
+            return replacement;
+        }
+
+        /// <summary>
+        /// Replaces the regex group of every match on its own, so each match is masked consistently.
+        /// Only the group is replaced; the rest of the match is kept. Group 0 means the whole match.
+        /// </summary>
+        private string GetConsistentRegexString(string data, FieldMask fieldMask, DataRow row)
+        {
+            var lists = fieldMask.MaskType == MaskType.ReplacementQuery
+                ? GetReplacementQueryLists(fieldMask.QueryReplacement)
+                : fieldMask.ListOfPossibleReplacements;
+
+            return new Regex(fieldMask.RegExMatch).Replace(data, match =>
+            {
+                Group group = fieldMask.RegExGroupToReplace == 0 ? match : match.Groups[fieldMask.RegExGroupToReplace];
+                if (!group.Success)
+                {
+                    return match.Value;
+                }
+
+                string replacement = GetConsistentString(group.Value, fieldMask, row, lists);
+                int offset = group.Index - match.Index;
+                return match.Value.Substring(0, offset) + replacement + match.Value.Substring(offset + group.Length);
+            });
+        }
+
+        private string GetConsistentString(string value, FieldMask fieldMask, DataRow row, List<Replacement> listOfReplacements)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return value;
+            }
+
+            var replacement = SelectReplacement(row, listOfReplacements);
+            if (replacement == null)
+            {
+                throw new DataNotFoundException(row);
+            }
+
+            if (!replacementPools.TryGetValue(replacement, out var pool))
+            {
+                pool = new ReplacementPool(replacement, rnd);
+                replacementPools.Add(replacement, pool);
+            }
+
+            if (pool.TryAssign(value, fieldMask.OnListExhausted == ListExhaustedAction.Reuse, out string assigned))
+            {
+                return assigned;
+            }
+
+            if (fieldMask.OnListExhausted == ListExhaustedAction.Error)
+            {
+                throw new ReplacementExhaustedException();
+            }
+
+            pool.RegisterFallback(value);
+            char asterisk = string.IsNullOrEmpty(fieldMask.Asterisk) ? '*' : fieldMask.Asterisk[0];
+            return GetAsteriskString(value, asterisk);
         }
 
         private string GetReplacedString(string data, Func<char, char> method)

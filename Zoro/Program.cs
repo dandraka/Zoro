@@ -115,6 +115,10 @@ namespace Dandraka.Zoro
 
                 var masker = DataMasking.Create(config);
                 masker.Mask();
+                if (masker.ValuesWithoutReplacement > 0)
+                {
+                    Console.WriteLine($"WARNING: {masker.ValuesWithoutReplacement} distinct value(s) had no replacement left and were masked with asterisks. Add more items or mappings to the config, or set OnListExhausted to Error or Reuse.");
+                }
             }
             catch (Exception ex)
             {

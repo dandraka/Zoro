@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 
 namespace Dandraka.Zoro.Processor
 {
@@ -66,5 +67,12 @@ namespace Dandraka.Zoro.Processor
         /// For example "Customer-{{$.CustomerID}}" (without the quotes).
         /// </summary>
         public string Expression { get; set; }
+
+        /// <summary>
+        /// In case of <c>MaskType.ReplacementList</c> or <c>MaskType.ReplacementQuery</c>, 
+        /// what happens when a value finds no replacement left. The default is Asterisk.
+        /// </summary>
+        [DefaultValue(ListExhaustedAction.Asterisk)]
+        public ListExhaustedAction OnListExhausted { get; set; }
     }
 }

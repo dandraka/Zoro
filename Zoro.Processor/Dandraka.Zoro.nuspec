@@ -18,7 +18,7 @@
     [2.4.0] Updated to dotnet 10, replaced obsolete System.Data.SqlClient with Microsoft.Data.SqlClient and updated to latest package versions.
     [3.0.0] Added Office documents (.docx) support.
     [3.1.0] Added Office spreadsheets (.xlsx) support. Renamed mask type Similar to Random (more intuitive) but kept Similar for backwards compatibility.
-    [4.0.0] BREAKING: DataMasking is now abstract, create instances with DataMasking.Create(config) instead of new DataMasking(config). Fixed List masks never picking the last item, Random masks never generating the digit 9, and rich-text cells in .xlsx files not being masked.
+    [4.0.0] BREAKING: DataMasking is now abstract, create instances with DataMasking.Create(config) instead of new DataMasking(config). Added new masking types ReplacementList and ReplacementQuery for consistent masking (pseudonymisation), where the same original value always gets the same replacement. Fixed List masks never picking the last item, Random masks never generating the digit 9, and rich-text cells in .xlsx files not being masked.
 	</releaseNotes>
     <copyright>Copyright (c) 2017 Jim (Dimitrios) Andrakakis</copyright>
     <tags>data anonymization masking gdpr sql csv json</tags>

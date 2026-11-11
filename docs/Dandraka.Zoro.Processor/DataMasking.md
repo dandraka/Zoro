@@ -11,6 +11,7 @@ public abstract class DataMasking
 | name | description |
 | --- | --- |
 | static [Create](DataMasking/Create.md)(…) | Creates the masking implementation that matches `MaskConfig.DataSource`. |
+| [ValuesWithoutReplacement](DataMasking/ValuesWithoutReplacement.md) { get; } | The number of distinct values that were masked with asterisks because a `ReplacementList` or `ReplacementQuery` mask had no replacement left. Zero means all values got a replacement. |
 | abstract [Mask](DataMasking/Mask.md)() | Performs masking. |
 
 ## See Also

@@ -20,7 +20,7 @@ This is how Zoro supports these techniques:
 
 | Technique                     | Supported by Zoro (current version / roadmap)    | Notes                             |
 |-------------------------------|--------------------------------------------------|-----------------------------------|
-| Pseudonymisation              | Partially, current version & roadmap             | Keeping reference tables is out of scope but fake data can be consistently generated, e.g. Customer Rick Bears with CustomerID=5 can become Customer-5 |
+| Pseudonymisation              | Fully, current version                           | Use the ReplacementList and ReplacementQuery masking types: within a run, the same original value always gets the same replacement. Explicit mappings (in the config or in a db table) also make this repeatable across runs. Zoro does not keep reference tables itself. Fake data can also be generated consistently with Expression, e.g. Customer Rick Bears with CustomerID=5 can become Customer-5 |
 | Shuffling                     | Fully, current version                           | The usage of a db query is needed |
 | Noise Addition                | Partially, current version & fully on roadmap    | String-based noise fully supported, arithmetic noise currently not supported but is on the roadmap |
 | Generalization                | Partially, current version & roadmap             | String-based generalization fully supported, arithmetic generalization is out of scope but most scenarios can be achieved using a db query |
@@ -35,7 +35,7 @@ For this reason, the FieldName in all masking types is used somewhat differently
 - In a CSV, it's used to choose which column the program will modify.
 - But in a document, it's either used to choose the text block to process or, if paired with a regular expression, ignored.
 
-Two concrete examples (here using MaskType=Asterisk for simplicity, but Random, List and Query can be used as well, though not Expression):
+Two concrete examples (here using MaskType=Asterisk for simplicity, but Random, List, Query, ReplacementList and ReplacementQuery can be used as well, though not Expression):
 
 - FieldName = "coffee" will go block by block (which usually means line by line) and, using the regular expression ```(.*)(coffee)(.*)```, will replace the 2nd match. 
 
@@ -395,3 +395,192 @@ _Cities reference table_
 | CH              | MegaCorp Switzerland | Zürich                  | Wollerau              |
 | DE              | InnoChem Germany     | Köln                    | Stuttgard             |
 | GR              | Fage S.A.            | Athens                  | Asomatos              |
+
+### MaskType=ReplacementList
+
+Like List, but the masking is _consistent_: the same original value always gets the same replacement, and different original values get different replacements. This is what is needed for pseudonymisation, e.g. Athens is always replaced by CityA and London by CityB.
+
+Original values are matched ignoring case and leading/trailing spaces, i.e. Athens, athens and ` ATHENS ` are the same value.
+
+The replacement of a value comes from one of the following:
+
+* **A mapping** you define, using ```<Map From="Athens" To="CityA" />``` items inside a ```<Replacement>```.
+* **A pool** of items, which is the ```List``` attribute of the ```<Replacement>``` (comma-separated, as in the List mask type). Each new value gets a randomly picked item that has not been used yet, neither by another value nor by a ```<Map>```.
+* **Both.** Mappings are applied first; all other values get items from the pool.
+
+Consistency is kept for the duration of a run, separately for every field mask and for every ```<Replacement>``` (i.e. for every selector). Pool items are picked randomly, so they differ from run to run; if the same pseudonyms are needed in every run, use mappings.
+
+If there are no replacements left for a value (more distinct values than pool items, or a value without a mapping and no pool), the ```OnListExhausted``` field decides what happens:
+
+* ```Asterisk``` (default): The value is masked with the Asterisk character (see Asterisk, default *), so it is visible in the output that the configuration needs more items or mappings. The console program prints a warning, and the library offers ```DataMasking.ValuesWithoutReplacement```, which is the number of distinct values this happened to.
+* ```Error```: A [ReplacementExhaustedException](https://github.com/dandraka/Zoro/blob/master/docs/Dandraka.Zoro.Processor/ReplacementExhaustedException.md) is thrown.
+* ```Reuse```: An already used replacement is picked randomly. This keeps the masking consistent, but two different values may then share a replacement.
+
+When a regular expression is used, the matched text of the regex group is the original value, and every match is replaced on its own. Only the group is replaced; the rest of the match is kept.
+
+Please note that for Office input types (docx, xlsx, pptx) and Json the selector is ignored or not supported, as with the List mask type: use one ```<Replacement>``` with an empty selector.
+
+#### Mandatory, optional and ignored fields
+
+* MaskType = ReplacementList
+* Asterisk: Optional. The character used when ```OnListExhausted``` is Asterisk. Defaults to an asterisk (*).
+* Expression: Ignored
+* FieldName: Mandatory. The name of the field being sought. Note that field names are case-insensitive for CSV files & DB queries, but case-sensitive for JSON files.
+* ListOfPossibleReplacements: A list of ```<Replacement>``` items. Each item can contain:
+  * a Selector attribute, as in the List mask type.
+  * a List attribute, which is the pool, a comma-separated list of strings.
+  * ```<Map>``` items, each having a From attribute (the original value) and a To attribute (the replacement). The same From value (ignoring case and spaces) cannot be used twice in the same ```<Replacement>```.
+* OnListExhausted: Optional. Asterisk (default), Error or Reuse.
+* QueryReplacement: Ignored
+* RegExGroupToReplace: Optional. A number that specifies which regex group will be replaced. The number is 1-based, not 0-based, i.e. the first group is 1. 0 means the whole match.
+* RegExMatch: Optional. A regular expression with one or more groups e.g. (.*). If this omitted, the whole field is replaced.
+
+#### Example: random items from a pool
+```
+  <FieldMasks>
+    <FieldMask>
+      <FieldName>City</FieldName>
+      <MaskType>ReplacementList</MaskType>
+      <ListOfPossibleReplacements>
+        <Replacement Selector="" List="CityA,CityB,CityC,CityD" />
+      </ListOfPossibleReplacements>
+    </FieldMask> 
+  </FieldMasks>   
+```
+
+Sample input and output
+
+| City (original) | City (masked) |
+|-----------------|---------------|
+| Athens          | CityC         |
+| London          | CityA         |
+| athens          | CityC         |
+| Paris           | CityD         |
+| Rome            | CityB         |
+| Berlin          | ******        |
+
+_Berlin is the 5th different city but there are only 4 items, so the default OnListExhausted=Asterisk applies._
+
+#### Example: your own mappings, with a pool for the rest and a different list per country
+```
+  <FieldMasks>
+    <FieldMask>
+      <FieldName>City</FieldName>
+      <MaskType>ReplacementList</MaskType>
+      <OnListExhausted>Error</OnListExhausted>
+      <ListOfPossibleReplacements>
+        <Replacement Selector="Country=GR" List="Polis1,Polis2,Polis3">
+          <Map From="Athens" To="Capital" />
+        </Replacement>
+        <!--- fallback when nothing matches; MUST be the last one --->
+        <Replacement Selector="" List="Town1,Town2,Town3" />
+      </ListOfPossibleReplacements>
+    </FieldMask> 
+  </FieldMasks>   
+```
+
+Sample input and output
+
+| Country | City (original) | City (masked) |
+|---------|-----------------|---------------|
+| GR      | Athens          | Capital       |
+| GR      | Patra           | Polis2        |
+| UK      | London          | Town3         |
+| UK      | Athens          | Town1         |
+| GR      | Athens          | Capital       |
+
+#### Example: names in an Office document
+```
+  <FieldMasks>
+    <FieldMask>
+      <FieldName>people</FieldName>
+      <MaskType>ReplacementList</MaskType>
+      <RegExMatch>\b(Nick Peterson|Eva Richards)\b</RegExMatch>
+      <RegExGroupToReplace>1</RegExGroupToReplace>
+      <ListOfPossibleReplacements>
+        <Replacement Selector="">
+          <Map From="Nick Peterson" To="John Miller" />
+          <Map From="Eva Richards" To="Jane Brady" />
+        </Replacement>
+      </ListOfPossibleReplacements>
+    </FieldMask> 
+  </FieldMasks>   
+```
+
+Every occurrence of Nick Peterson in the document becomes John Miller and every occurrence of Eva Richards becomes Jane Brady, even if they are in the same sentence.
+
+### MaskType=ReplacementQuery
+
+Like ReplacementList, but the pool or the mappings are fetched using a database query, as the Query mask type does. Everything said about ReplacementList (consistency, matching ignoring case and spaces, ```OnListExhausted```, regular expressions) applies. The order of the rows returned by the query does not matter.
+
+There are two ways to use it:
+
+* **A pool.** The query returns the replacements in ValueField. Each new value gets a randomly picked item that has not been used yet. This is the ReplacementList pool, fetched from a database.
+* **A mapping table.** If KeyField is filled, each row of the query is a pair: the original value is in KeyField and its replacement is in ValueField. Rows with an empty key are ignored, and the same key (ignoring case and spaces) cannot appear twice in the same group. Values that are not in the table follow ```OnListExhausted```.
+
+In both cases, GroupField and SelectorField can be used to have different lists or mappings per group, e.g. per country, exactly as in the Query mask type. For Office input types the selector and group are ignored.
+
+#### Mandatory, optional and ignored fields
+
+* MaskType = ReplacementQuery
+* Asterisk: Optional. The character used when ```OnListExhausted``` is Asterisk. Defaults to an asterisk (*).
+* Expression: Ignored
+* FieldName: Mandatory. The name of the field being sought. Note that field names are case-insensitive for CSV files & DB queries, but case-sensitive for JSON files.
+* ListOfPossibleReplacements: Ignored
+* OnListExhausted: Optional. Asterisk (default), Error or Reuse.
+* QueryReplacement: Mandatory. Must contain the following attributes:
+  * SelectorField: As in the Query mask type. Ignored for Office input types.
+  * GroupField: As in the Query mask type. Ignored for Office input types.
+  * KeyField: Optional. If filled, the query is a mapping table and this is the field of the query that holds the original value. If empty, the query is a pool.
+  * ValueField: The name of the field from the query that holds the replacements.
+  * Query: The SQL query which will be executed to fetch the reference records.
+* RegExGroupToReplace: Optional. A number that specifies which regex group will be replaced. The number is 1-based, not 0-based, i.e. the first group is 1. 0 means the whole match.
+* RegExMatch: Optional. A regular expression with one or more groups e.g. (.*). If this omitted, the whole field is replaced.
+
+#### Example: a pool per country
+```
+    <FieldMask>
+      <FieldName>CustomerCity</FieldName>
+      <MaskType>ReplacementQuery</MaskType>
+      <QueryReplacement 
+        SelectorField="CustomerCountry" 
+        GroupField="cityCountryName" 
+        ValueField="cityName" 
+        Query="SELECT cityName, cityCountryName FROM cities" />
+    </FieldMask>  
+```
+
+With the cities reference table of the Query mask type, every customer city gets a city of its country, and the same city is always replaced by the same one.
+
+#### Example: a mapping table with a different mapping per country
+```
+    <FieldMask>
+      <FieldName>CustomerFullname</FieldName>
+      <MaskType>ReplacementQuery</MaskType>
+      <OnListExhausted>Asterisk</OnListExhausted>
+      <Asterisk>#</Asterisk>
+      <QueryReplacement 
+        SelectorField="CustomerCountry" 
+        GroupField="country" 
+        KeyField="originalName" 
+        ValueField="pseudonym" 
+        Query="SELECT originalName, pseudonym, country FROM name_mapping" />
+    </FieldMask>  
+```
+
+| originalName | pseudonym | country |
+|--------------|-----------|---------|
+| Nick         | John      | GR      |
+| Nick         | Giorgos   | CH      |
+| Eva          | Maria     | GR      |
+
+_name_mapping table_
+
+Sample input and output
+
+| CustomerCountry | CustomerFullname (original) | CustomerFullname (masked) |
+|-----------------|-----------------------------|---------------------------|
+| GR              | Nick                        | John                      |
+| CH              | Nick                        | Giorgos                   |
+| GR              | eva                         | Maria                     |
+| GR              | Zed                         | ###                       |
