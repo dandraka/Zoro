@@ -297,5 +297,65 @@ namespace Dandraka.Zoro.Tests
                 Assert.True(found);
             }            
         }
+
+        [Theory]
+        [InlineData("AT", "AT611904300234573201", "AT******************")]
+        [InlineData("CH", "CH9300762011623852957", "CH*******************")]
+        public void T06_Xlsx_RichText_Asterisk(string countryCode, string originalIban, string expectedContent)
+        {
+            // === Arrange ===
+            string testName = System.Reflection.MethodBase.GetCurrentMethod().Name;
+            Console.WriteLine($"Starting {testName}");
+
+            using (var utility = new Utility())
+            {
+                utility.PrepareTestInstanceDir();
+
+                var config = new MaskConfig()
+                {
+                    DataSource = DataSource.XlsXFile,
+                    DataDestination = DataDestination.XlsXFile,
+                    InputFile = Path.Combine(utility.TestInstanceDir, "ibans_richtext.xlsx"),
+                    OutputFile = Path.Combine(utility.TestInstanceDir, $"{testName}.xlsx")
+                };
+                config.FieldMasks.Add(new FieldMask()
+                {
+                    FieldName = "IBAN",
+                    MaskType = MaskType.Asterisk,
+                    RegExMatch = @$"\b({countryCode})(\w{{12,30}})\b",
+                    RegExGroupToReplace = 2
+                });
+
+                // === Act ===
+                var masker = DataMasking.Create(config);
+                masker.Mask();
+
+                // === Assert ===
+
+                // Manually examine                
+                // Utility.OpenDocument(config.OutputFile);
+                // does the file exist?
+                Assert.True(File.Exists(config.OutputFile));
+
+                // Examine the document: rich-text cells have runs instead of a direct Text
+                var runTexts = new List<string>();
+                using (var doc = SpreadsheetDocument.Open(config.OutputFile, false))
+                {
+                    var sstPart = doc.WorkbookPart.SharedStringTablePart;
+                    foreach (var item in sstPart.SharedStringTable.Elements<DocumentFormat.OpenXml.Spreadsheet.SharedStringItem>())
+                    {
+                        foreach (var run in item.Elements<DocumentFormat.OpenXml.Spreadsheet.Run>())
+                        {
+                            runTexts.Add(run.Text?.Text);
+                        }
+                    }
+                }
+
+                // the test file must really contain rich text, otherwise this test proves nothing
+                Assert.NotEmpty(runTexts);
+                Assert.Contains(expectedContent, runTexts);
+                Assert.DoesNotContain(originalIban, runTexts);
+            }
+        }
     }
 }
