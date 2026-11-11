@@ -53,9 +53,13 @@ config.FieldMasks[3].ListOfPossibleReplacements.Add(new Replacement()
     { Selector = "", ReplacementList="Main Street 9,Fifth Avenue 104,Ranch rd. 1" });         
 
 // === with your config, call the masking method ===
-var masker = new Zoro.Processor.DataMasking(config);
+var masker = Zoro.Processor.DataMasking.Create(config);
 masker.Mask();
 ```
+
+**Migrating from 3.x to 4.x**
+
+```DataMasking``` is now an abstract class, so ```new DataMasking(config)``` no longer compiles. Replace it with ```DataMasking.Create(config)```, which picks the right implementation for ```config.DataSource```. Config files and the command line are not affected.
 
 ## Documentation:
 

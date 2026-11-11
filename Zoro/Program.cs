@@ -113,7 +113,7 @@ namespace Dandraka.Zoro
                     config.OutputFile = outFile;
                 }
 
-                var masker = new DataMasking(config);
+                var masker = DataMasking.Create(config);
                 masker.Mask();
             }
             catch (Exception ex)

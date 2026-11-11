@@ -6,7 +6,7 @@
 | --- | --- |
 | static class [CharExtension](./Dandraka.Zoro.Processor/CharExtension.md) | Utility class that enables random character generation. |
 | enum [DataDestination](./Dandraka.Zoro.Processor/DataDestination.md) | Specifies where the data should be sent to. |
-| class [DataMasking](./Dandraka.Zoro.Processor/DataMasking.md) | Main masking class, this is where the job is done. |
+| abstract class [DataMasking](./Dandraka.Zoro.Processor/DataMasking.md) | Main masking class, this is where the job is done. Use [`Create`](./Dandraka.Zoro.Processor/DataMasking/Create.md) to get the implementation that matches the data source. |
 | class [DataNotFoundException](./Dandraka.Zoro.Processor/DataNotFoundException.md) | Exception raised when a field is not found. |
 | enum [DataSource](./Dandraka.Zoro.Processor/DataSource.md) | Specifies where the data is coming from. |
 | class [FieldMask](./Dandraka.Zoro.Processor/FieldMask.md) | Information about the masking of a single field. |

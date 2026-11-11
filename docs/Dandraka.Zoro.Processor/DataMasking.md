@@ -1,17 +1,17 @@
 # DataMasking class
 
-Main masking class, this is where the job is done.
+Main masking class, this is where the job is done. Use [`Create`](./DataMasking/Create.md) to get the implementation that matches the data source.
 
 ```csharp
-public class DataMasking
+public abstract class DataMasking
 ```
 
 ## Public Members
 
 | name | description |
 | --- | --- |
-| [DataMasking](DataMasking/DataMasking.md)(…) | Creates an instance of DataMasking class. |
-| [Mask](DataMasking/Mask.md)() | Performs masking. |
+| static [Create](DataMasking/Create.md)(…) | Creates the masking implementation that matches `MaskConfig.DataSource`. |
+| abstract [Mask](DataMasking/Mask.md)() | Performs masking. |
 
 ## See Also
 

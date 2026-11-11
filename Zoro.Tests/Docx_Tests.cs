@@ -44,7 +44,7 @@ namespace Dandraka.Zoro.Tests
 
                 // === Act ===
                 Exception ex = null;
-                var masker = new DataMasking(config);
+                var masker = DataMasking.Create(config);
                 try
                 {
                     masker.Mask();
@@ -84,7 +84,7 @@ namespace Dandraka.Zoro.Tests
 
                 // === Act ===
                 Exception ex = null;
-                var masker = new DataMasking(config);
+                var masker = DataMasking.Create(config);
                 try
                 {
                     masker.Mask();
@@ -125,7 +125,7 @@ namespace Dandraka.Zoro.Tests
                 config.FieldMasks.Add(new FieldMask() { FieldName = wordToReplace, MaskType = MaskType.Asterisk });
 
                 // === Act ===
-                var masker = new DataMasking(config);
+                var masker = DataMasking.Create(config);
                 masker.Mask();
 
                 // === Assert ===
@@ -175,7 +175,7 @@ namespace Dandraka.Zoro.Tests
                 config.FieldMasks.Add(new FieldMask() { FieldName = wordToReplace, MaskType = MaskType.Random });
 
                 // === Act ===
-                var masker = new DataMasking(config);
+                var masker = DataMasking.Create(config);
                 masker.Mask();
 
                 // === Assert ===
@@ -233,7 +233,7 @@ namespace Dandraka.Zoro.Tests
                 });
 
                 // === Act ===
-                var masker = new DataMasking(config);
+                var masker = DataMasking.Create(config);
                 masker.Mask();
 
                 // === Assert ===
@@ -302,7 +302,7 @@ namespace Dandraka.Zoro.Tests
                 });
 
                 // === Act ===
-                var masker = new DataMasking(config);
+                var masker = DataMasking.Create(config);
                 masker.Mask();
 
                 // === Assert ===
@@ -373,7 +373,7 @@ namespace Dandraka.Zoro.Tests
                 });
 
                 // === Act ===
-                var masker = new DataMasking(config);
+                var masker = DataMasking.Create(config);
                 masker.Mask();
 
                 // === Assert ===

@@ -3,7 +3,7 @@
 Performs masking.
 
 ```csharp
-public void Mask()
+public abstract void Mask()
 ```
 
 ## See Also
