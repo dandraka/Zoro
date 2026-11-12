@@ -470,7 +470,7 @@ namespace Dandraka.Zoro.Tests
             string xml = File.ReadAllText(file);
             Assert.Contains("<Map From=\"Athens\" To=\"Capital\" />", xml);
             // the default is not written
-            Assert.Equal(1, Regex.Matches(xml, "<OnListExhausted>").Count);
+            Assert.Single(Regex.Matches(xml, "<OnListExhausted>"));
 
             var city2 = config2.FieldMasks[0];
             Assert.Equal(MaskType.ReplacementList, city2.MaskType);

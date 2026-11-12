@@ -105,19 +105,30 @@ namespace Dandraka.Zoro.Processor
             }
             else
             {
-                return fieldMask.MaskType switch
-                {
-                    MaskType.Asterisk => GetAsteriskString(data, fieldMask.Asterisk[0]),
-                    MaskType.Random => GetRandomString(data),
-                    MaskType.List => GetStringFromList(row, fieldMask.ListOfPossibleReplacements),
-                    MaskType.Query => GetStringFromQuery(row, fieldMask.QueryReplacement),
-                    MaskType.Expression => GetExpressionString(row, fieldMask.Expression, jsonNode),
-                    MaskType.ReplacementList => GetConsistentString(data, fieldMask, row, fieldMask.ListOfPossibleReplacements),
-                    MaskType.ReplacementQuery => GetConsistentString(data, fieldMask, row, GetReplacementQueryLists(fieldMask.QueryReplacement)),
-                    MaskType.None => data,
-                    _ => throw new NotImplementedException($"Mask type {fieldMask.MaskType} is not yet implemented"),
-                };
+                return GetMaskedValue(data, fieldMask, row, jsonNode);
             }
+        }
+
+        /// <summary>
+        /// Masks the whole of the given value, ignoring the regular expression of the field mask.
+        /// </summary>
+        private protected string GetMaskedValue(string data, FieldMask fieldMask, DataRow row, JProperty jsonNode = null)
+        {
+            if (string.IsNullOrEmpty(data))
+                return data;
+
+            return fieldMask.MaskType switch
+            {
+                MaskType.Asterisk => GetAsteriskString(data, fieldMask.Asterisk[0]),
+                MaskType.Random => GetRandomString(data),
+                MaskType.List => GetStringFromList(row, fieldMask.ListOfPossibleReplacements),
+                MaskType.Query => GetStringFromQuery(row, fieldMask.QueryReplacement),
+                MaskType.Expression => GetExpressionString(row, fieldMask.Expression, jsonNode),
+                MaskType.ReplacementList => GetConsistentString(data, fieldMask, row, fieldMask.ListOfPossibleReplacements),
+                MaskType.ReplacementQuery => GetConsistentString(data, fieldMask, row, GetReplacementQueryLists(fieldMask.QueryReplacement)),
+                MaskType.None => data,
+                _ => throw new NotImplementedException($"Mask type {fieldMask.MaskType} is not yet implemented"),
+            };
         }
 
         /// <summary>

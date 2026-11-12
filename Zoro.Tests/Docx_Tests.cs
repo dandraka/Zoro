@@ -5,6 +5,8 @@ using Dandraka.Zoro.Processor;
 using System.IO;
 using DocumentFormat.OpenXml.Packaging;
 using System.Text.RegularExpressions;
+using System.Linq;
+using W = DocumentFormat.OpenXml.Wordprocessing;
 
 namespace Dandraka.Zoro.Tests
 {
@@ -382,6 +384,66 @@ namespace Dandraka.Zoro.Tests
                 // Utility.OpenDocument(config.OutputFile);
                 // does the file exist?
                 Assert.True(File.Exists(config.OutputFile));
+            }
+        }
+
+        [Fact]
+        public void T08_Docx_ReplacementList_TextSplitAcrossRuns()
+        {
+            // === Arrange ===
+            string testName = System.Reflection.MethodBase.GetCurrentMethod().Name;
+            Console.WriteLine($"Starting {testName}");
+            using (var utility = new Utility())
+            {
+                string inputFile = Path.Combine(utility.TestInstanceDir, "split.docx");
+                using (var doc = WordprocessingDocument.Create(inputFile, DocumentFormat.OpenXml.WordprocessingDocumentType.Document))
+                {
+                    var mainPart = doc.AddMainDocumentPart();
+                    mainPart.Document = new W.Document(new W.Body(
+                        // one name in 3 runs, the 2nd one bold
+                        new W.Paragraph(
+                            new W.Run(new W.Text("My friend Ni") { Space = DocumentFormat.OpenXml.SpaceProcessingModeValues.Preserve }),
+                            new W.Run(new W.RunProperties(new W.Bold()), new W.Text("ck Pe")),
+                            new W.Run(new W.Text("terson")),
+                            new W.Run(new W.Text(" is here") { Space = DocumentFormat.OpenXml.SpaceProcessingModeValues.Preserve })),
+                        // a tab between 2 names: they are 2 values, not 1 glued together
+                        new W.Paragraph(new W.Run(new W.Text("Alice"), new W.TabChar(), new W.Text("Bob"))),
+                        new W.Paragraph(new W.Run(new W.Text("Ali")), new W.Run(new W.Text("ce")))));
+                    mainPart.Document.Save();
+                }
+
+                var config = new MaskConfig()
+                {
+                    DataSource = DataSource.DocXFile,
+                    DataDestination = DataDestination.DocXFile,
+                    InputFile = inputFile,
+                    OutputFile = Path.Combine(utility.TestInstanceDir, $"{testName}.docx")
+                };
+                var mask = new FieldMask() { FieldName = "names", MaskType = MaskType.ReplacementList };
+                var replacement = new Replacement() { Selector = "" };
+                replacement.Mappings.Add(new ReplacementMap() { From = "Nick Peterson", To = "John Miller" });
+                replacement.Mappings.Add(new ReplacementMap() { From = "Alice", To = "A" });
+                replacement.Mappings.Add(new ReplacementMap() { From = "Bob", To = "B" });
+                mask.ListOfPossibleReplacements.Add(replacement);
+                config.FieldMasks.Add(mask);
+
+                // === Act ===
+                var masker = DataMasking.Create(config);
+                masker.Mask();
+
+                // === Assert ===
+                using (var doc = WordprocessingDocument.Open(config.OutputFile, false))
+                {
+                    var paragraphs = doc.MainDocumentPart.Document.Body.Descendants<W.Paragraph>().ToList();
+                    Assert.Equal(3, paragraphs.Count);
+
+                    // the replacement takes the run where the name starts; the others lose their part of the name
+                    var texts = paragraphs[0].Descendants<W.Text>().Select(t => t.Text).ToList();
+                    Assert.Equal(["My friend John Miller", "", "", " is here"], texts);
+
+                    Assert.Equal(["A", "B"], paragraphs[1].Descendants<W.Text>().Select(t => t.Text));
+                    Assert.Equal(["A", ""], paragraphs[2].Descendants<W.Text>().Select(t => t.Text));
+                }
             }
         }
     }

@@ -48,6 +48,10 @@ Two concrete examples (here using MaskType=Asterisk for simplicity, but Random, 
 
   That replaces all words that start with coffee with ****** (as many asterisks as the word being replaced).
 
+A few more points about Office documents:
+- Text is matched per paragraph (Word) or per cell (Excel), so it is found even if formatting splits it in several parts, e.g. a name that is partly bold. The replacement gets the formatting of the part where the match starts. A tab, a line break or a field ends the text being matched, so words on its two sides are never glued together.
+- Only the text of the regex group (RegExGroupToReplace) is replaced, and every match is masked on its own; the rest of the match is kept.
+
 ## Masking types reference
 
 For every instance of a [Field Mask](https://github.com/dandraka/Zoro/blob/master/docs/Dandraka.Zoro.Processor/FieldMask.md) the following [masking types](https://github.com/dandraka/Zoro/blob/master/docs/Dandraka.Zoro.Processor/MaskType.md) are available:
@@ -420,7 +424,7 @@ When a regular expression is used, the matched text of the regex group is the or
 
 Please note that for Office input types (docx, xlsx, pptx) and Json the selector is ignored or not supported, as with the List mask type: use one ```<Replacement>``` with an empty selector.
 
-In Office input types, if no RegExMatch is given and there are ```<Map>``` items, Zoro looks for all the mapped values in the document (whole words or phrases, ignoring case, longest first) and FieldName is just a label. This way one field mask can pseudonymise any number of names. Without maps, FieldName is the text that is looked for, as in the other masking types. Note that a value that is split in different parts of the document by formatting, e.g. a name that is partly bold, is not found.
+In Office input types, if no RegExMatch is given and there are ```<Map>``` items, Zoro looks for all the mapped values in the document (whole words or phrases, ignoring case, longest first) and FieldName is just a label. This way one field mask can pseudonymise any number of names. Without maps, FieldName is the text that is looked for, as in the other masking types.
 
 #### Mandatory, optional and ignored fields
 
