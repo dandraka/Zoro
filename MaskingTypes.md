@@ -20,7 +20,7 @@ This is how Zoro supports these techniques:
 
 | Technique                     | Supported by Zoro (current version / roadmap)    | Notes                             |
 |-------------------------------|--------------------------------------------------|-----------------------------------|
-| Pseudonymisation              | Fully, current version                           | Use the ReplacementList and ReplacementQuery masking types: within a run, the same original value always gets the same replacement. Explicit mappings (in the config or in a db table) also make this repeatable across runs. Zoro does not keep reference tables itself. Fake data can also be generated consistently with Expression, e.g. Customer Rick Bears with CustomerID=5 can become Customer-5 |
+| Pseudonymisation              | Fully, current version                           | Use the ReplacementList and ReplacementQuery masking types: within a run, the same original value always gets the same replacement. Explicit mappings (in the config or in a db table) also make this repeatable across runs. Fake data can also be generated consistently with Expression, e.g. Customer Rick Bears with CustomerID=5 can become Customer-5 |
 | Shuffling                     | Fully, current version                           | The usage of a db query is needed |
 | Noise Addition                | Partially, current version & fully on roadmap    | String-based noise fully supported, arithmetic noise currently not supported but is on the roadmap |
 | Generalization                | Partially, current version & roadmap             | String-based generalization fully supported, arithmetic generalization is out of scope but most scenarios can be achieved using a db query |
