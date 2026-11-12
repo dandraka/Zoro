@@ -11,7 +11,8 @@ namespace Dandraka.Zoro.Processor
     /// </summary>
     internal abstract class DataMaskingOfficeData<T> : DataMasking<T>
     {
-        private readonly Dictionary<FieldMask, Regex> regexes = new Dictionary<FieldMask, Regex>();
+        // The regex and group used for each mask; the masks of the configuration are left as they are.
+        private readonly Dictionary<FieldMask, (Regex regex, int group)> textMasks = new Dictionary<FieldMask, (Regex regex, int group)>();
 
         protected DataMaskingOfficeData(MaskConfig config) : base(config)
         {
@@ -23,16 +24,18 @@ namespace Dandraka.Zoro.Processor
         /// </summary>
         protected void PrepareTextMasks()
         {
+            textMasks.Clear();
             foreach (var textMask in config.FieldMasks)
             {
                 if (!string.IsNullOrWhiteSpace(textMask.RegExMatch))
                 {
+                    textMasks.Add(textMask, (new Regex(textMask.RegExMatch), textMask.RegExGroupToReplace));
                     continue;
                 }
 
                 var mappedValues = GetMappedValues(textMask);
-                textMask.RegExMatch = mappedValues.Count > 0 ? BuildMappedValuesRegex(mappedValues) : $"({textMask.FieldName})";
-                textMask.RegExGroupToReplace = 1;
+                string pattern = mappedValues.Count > 0 ? BuildMappedValuesRegex(mappedValues) : $"({textMask.FieldName})";
+                textMasks.Add(textMask, (new Regex(pattern), 1));
             }
         }
 
@@ -41,7 +44,7 @@ namespace Dandraka.Zoro.Processor
             IEnumerable<Replacement> replacements = Enumerable.Empty<Replacement>();
             if (textMask.MaskType == MaskType.ReplacementList)
             {
-                replacements = textMask.ListOfPossibleReplacements;
+                replacements = GetReplacementLists(textMask);
             }
             else if (textMask.MaskType == MaskType.ReplacementQuery && !string.IsNullOrWhiteSpace(textMask.QueryReplacement?.KeyDbField))
             {
@@ -75,16 +78,12 @@ namespace Dandraka.Zoro.Processor
 
             foreach (var textMask in config.FieldMasks)
             {
-                if (!regexes.TryGetValue(textMask, out var regex))
-                {
-                    regex = new Regex(textMask.RegExMatch);
-                    regexes.Add(textMask, regex);
-                }
+                var (regex, regexGroup) = textMasks[textMask];
 
                 var edits = new List<(int start, int length, string replacement)>();
                 foreach (Match match in regex.Matches(string.Concat(texts)))
                 {
-                    Group group = textMask.RegExGroupToReplace == 0 ? match : match.Groups[textMask.RegExGroupToReplace];
+                    Group group = regexGroup == 0 ? match : match.Groups[regexGroup];
                     if (!group.Success || group.Length == 0)
                     {
                         continue;

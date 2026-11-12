@@ -19,6 +19,7 @@ namespace Dandraka.Zoro.Processor
         public override void Mask()
         {
             Validator.PerformSanityChecks(this.config);
+            LoadReplacementCsvFiles();
 
             // created first so that an unsupported source/destination pair fails before any data is read
             var writer = CreateWriter();

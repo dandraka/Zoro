@@ -580,6 +580,246 @@ namespace Dandraka.Zoro.Tests
             Assert.Contains("Austria (AT)", texts);
         }
 
+        private static ReplacementCSV Csv(string file, string from, string to, string delimiter = null)
+        {
+            var csv = new ReplacementCSV() { CSVFileName = file, FromFieldName = from, ToFieldName = to };
+            if (delimiter != null)
+            {
+                csv.Delimiter = delimiter;
+            }
+            return csv;
+        }
+
+        private static FieldMask CsvMask(string fieldName, ReplacementCSV csv)
+        {
+            var mask = new FieldMask() { FieldName = fieldName, MaskType = MaskType.ReplacementList };
+            mask.ListOfPossibleReplacements.Add(csv);
+            return mask;
+        }
+
+        private Exception MaskAndCatch(FieldMask mask)
+        {
+            string csvFilename = utility.CreateFileInTestInstanceDir("id;city\r\n1;Athens", "csv");
+            var config = new MaskConfig() { InputFile = csvFilename, OutputFile = csvFilename.Replace(".csv", "_out.csv") };
+            config.FieldMasks.Add(mask);
+            return Record.Exception(() => DataMasking.Create(config).Mask());
+        }
+
+        [Fact]
+        public void T20_ReplacementCSV_Flat_DefaultDelimiter_NoRegEx()
+        {
+            // === Arrange ===
+            string mapFile = utility.CreateFileInTestInstanceDir("original,pseudonym\r\nAthens,CityA\r\nlondon,CityB\r\n", "csv");
+            string csv = "id;city\r\n1;Athens\r\n2;London\r\n3;Berlin\r\n4;athens";
+
+            // === Act ===
+            var (rows, masker) = MaskCsv(csv,
+                new FieldMask() { FieldName = "id", MaskType = MaskType.None },
+                CsvMask("city", Csv(mapFile, "original", "pseudonym")));
+
+            // === Assert ===
+            Assert.Equal(["CityA", "CityB", "******", "CityA"], rows.Select(r => r[1]));
+            Assert.Equal(1, masker.ValuesWithoutReplacement);
+        }
+
+        [Fact]
+        public void T21_ReplacementCSV_Flat_CustomDelimiter_WithRegEx()
+        {
+            // === Arrange ===
+            string mapFile = utility.CreateFileInTestInstanceDir("original;pseudonym\r\n785412798;111\r\n17612345;222\r\n", "csv");
+            string csv = "id;phone\r\n1;+41 785412798\r\n2;+49 17612345";
+            var phoneMask = CsvMask("phone", Csv(mapFile, "original", "pseudonym", ";"));
+            phoneMask.RegExMatch = @"^(\+\d\d) (.*)$";
+            phoneMask.RegExGroupToReplace = 2;
+
+            // === Act ===
+            var (rows, _) = MaskCsv(csv, new FieldMask() { FieldName = "id", MaskType = MaskType.None }, phoneMask);
+
+            // === Assert ===
+            Assert.Equal(["+41 111", "+49 222"], rows.Select(r => r[1]));
+        }
+
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void T22_ReplacementCSV_Docx(bool withRegEx)
+        {
+            // === Arrange ===
+            string testName = System.Reflection.MethodBase.GetCurrentMethod().Name;
+            string mapFile = utility.CreateFileInTestInstanceDir("from,to\r\nheart,soul\r\nBOOK,tablet\r\n", "csv");
+            var config = new MaskConfig()
+            {
+                DataSource = DataSource.DocXFile,
+                DataDestination = DataDestination.DocXFile,
+                InputFile = Path.Combine(utility.TestInstanceDir, "SecretCombination.docx"),
+                OutputFile = Path.Combine(utility.TestInstanceDir, $"{testName}_{withRegEx}.docx")
+            };
+            var mask = CsvMask("all", Csv(mapFile, "from", "to"));
+            if (withRegEx)
+            {
+                mask.RegExMatch = @"\b(heart|book)\b";
+                mask.RegExGroupToReplace = 1;
+            }
+            config.FieldMasks.Add(mask);
+
+            // === Act ===
+            DataMasking.Create(config).Mask();
+
+            // === Assert ===
+            var texts = ReadDocxTexts(config.OutputFile);
+            Assert.Equal(6, texts.Count(t => t == "In the center of my soul"));
+            Assert.Equal(2, texts.Count(t => t == "An open tablet"));
+            Assert.DoesNotContain(texts, t => t.Contains("heart") || t.Contains("book"));
+            // the configuration is not changed by the masking
+            Assert.True(string.IsNullOrEmpty(config.FieldMasks[0].RegExMatch) == !withRegEx);
+        }
+
+        [Fact]
+        public void T23_ReplacementCSV_Xlsx_NoRegEx()
+        {
+            // === Arrange ===
+            string testName = System.Reflection.MethodBase.GetCurrentMethod().Name;
+            string mapFile = utility.CreateFileInTestInstanceDir("from,to\r\n\"Austria (AT)\",Land A\r\nAT483200000012345864,IBAN-A\r\n", "csv");
+            var config = new MaskConfig()
+            {
+                DataSource = DataSource.XlsXFile,
+                DataDestination = DataDestination.XlsXFile,
+                InputFile = Path.Combine(utility.TestInstanceDir, "ibans.xlsx"),
+                OutputFile = Path.Combine(utility.TestInstanceDir, $"{testName}.xlsx")
+            };
+            config.FieldMasks.Add(CsvMask("all", Csv(mapFile, "from", "to")));
+
+            // === Act ===
+            DataMasking.Create(config).Mask();
+
+            // === Assert ===
+            var texts = ReadXlsxTexts(config.OutputFile);
+            Assert.Contains("Land A", texts);
+            Assert.Contains("IBAN-A", texts);
+            Assert.DoesNotContain("Austria (AT)", texts);
+            Assert.Contains("Germany (DE)", texts);
+        }
+
+        [Fact]
+        public void T24_ReplacementCSV_And_Replacement_Throws()
+        {
+            // === Arrange ===
+            string mapFile = utility.CreateFileInTestInstanceDir("from,to\r\nAthens,CityA\r\n", "csv");
+            var mask = CsvMask("city", Csv(mapFile, "from", "to"));
+            mask.ListOfPossibleReplacements.Add(Pool("X"));
+
+            // === Act ===
+            var ex = MaskAndCatch(mask);
+
+            // === Assert ===
+            Assert.IsType<InvalidDataException>(ex);
+            Assert.Contains("together", ex.Message);
+        }
+
+        [Theory]
+        [InlineData("CSVFileName")]
+        [InlineData("FromFieldName")]
+        [InlineData("ToFieldName")]
+        public void T25_ReplacementCSV_MissingAttribute_Throws(string missing)
+        {
+            // === Arrange ===
+            string mapFile = utility.CreateFileInTestInstanceDir("from,to\r\nAthens,CityA\r\n", "csv");
+            var csv = Csv(mapFile, "from", "to");
+            switch (missing)
+            {
+                case "CSVFileName": csv.CSVFileName = null; break;
+                case "FromFieldName": csv.FromFieldName = ""; break;
+                case "ToFieldName": csv.ToFieldName = null; break;
+            }
+
+            // === Act ===
+            var ex = MaskAndCatch(CsvMask("city", csv));
+
+            // === Assert ===
+            Assert.IsType<InvalidDataException>(ex);
+            Assert.Contains(missing, ex.Message);
+        }
+
+        [Fact]
+        public void T26_ReplacementCSV_FileNotFound_Throws()
+        {
+            // === Act ===
+            var ex = MaskAndCatch(CsvMask("city", Csv(Path.Combine(utility.TestInstanceDir, "nothing.csv"), "from", "to")));
+
+            // === Assert ===
+            Assert.IsType<FileNotFoundException>(ex);
+        }
+
+        [Theory]
+        [InlineData("original,pseudonym\r\nAthens,CityA\r\n", "nope", "pseudonym", "FromFieldName")]
+        [InlineData("original,pseudonym\r\nAthens,CityA\r\n", "original", "nope", "ToFieldName")]
+        [InlineData("original,pseudonym\r\nAthens,CityA\r\nathens ,CityB\r\n", "original", "pseudonym", "more than once")]
+        [InlineData("original,pseudonym\r\n", "original", "pseudonym", "no data")]
+        public void T27_ReplacementCSV_InvalidFile_Throws(string content, string from, string to, string expectedInMessage)
+        {
+            // === Arrange ===
+            string mapFile = utility.CreateFileInTestInstanceDir(content, "csv");
+
+            // === Act ===
+            var ex = MaskAndCatch(CsvMask("city", Csv(mapFile, from, to)));
+
+            // === Assert ===
+            Assert.IsType<InvalidDataException>(ex);
+            Assert.Contains(expectedInMessage, ex.Message);
+            // data from the file is not part of the message
+            Assert.DoesNotContain("Athens", ex.Message);
+        }
+
+        [Fact]
+        public void T28_ReplacementCSV_WithOtherMaskType_Throws()
+        {
+            // === Arrange ===
+            string mapFile = utility.CreateFileInTestInstanceDir("from,to\r\nAthens,CityA\r\n", "csv");
+            var mask = CsvMask("city", Csv(mapFile, "from", "to"));
+            mask.MaskType = MaskType.List;
+
+            // === Act ===
+            var ex = MaskAndCatch(mask);
+
+            // === Assert ===
+            Assert.IsType<InvalidDataException>(ex);
+            Assert.Contains("ReplacementList", ex.Message);
+        }
+
+        [Fact]
+        public void T29_ReplacementCSV_XmlRoundTrip()
+        {
+            // === Arrange ===
+            var config = new MaskConfig();
+            config.FieldMasks.Add(CsvMask("city", Csv("map.csv", "a", "b")));
+            config.FieldMasks.Add(CsvMask("name", Csv("names.csv", "x", "y", ";")));
+            config.FieldMasks.Add(ListMask("other", Pool("X,Y")));
+            string file = Path.Combine(utility.TestInstanceDir, $"config_{Guid.NewGuid()}.xml");
+
+            // === Act ===
+            MaskConfig.SaveConfig(file, config);
+            var config2 = MaskConfig.ReadConfig(file);
+
+            // === Assert ===
+            string xml = File.ReadAllText(file);
+            Assert.Contains("<ReplacementCSV CSVFileName=\"map.csv\" FromFieldName=\"a\" ToFieldName=\"b\" />", xml);
+            Assert.Contains("Delimiter=\";\"", xml);
+            Assert.Single(Regex.Matches(xml, "Delimiter="));
+
+            var csv1 = Assert.IsType<ReplacementCSV>(Assert.Single(config2.FieldMasks[0].ListOfPossibleReplacements));
+            Assert.Equal("map.csv", csv1.CSVFileName);
+            Assert.Equal("a", csv1.FromFieldName);
+            Assert.Equal("b", csv1.ToFieldName);
+            Assert.Equal(",", csv1.Delimiter);
+
+            var csv2 = Assert.IsType<ReplacementCSV>(Assert.Single(config2.FieldMasks[1].ListOfPossibleReplacements));
+            Assert.Equal(";", csv2.Delimiter);
+
+            var plain = Assert.Single(config2.FieldMasks[2].ListOfPossibleReplacements);
+            Assert.IsNotType<ReplacementCSV>(plain);
+            Assert.Equal("X,Y", plain.ReplacementList);
+        }
+
         private static List<string> ReadXlsxTexts(string file)
         {
             using var doc = SpreadsheetDocument.Open(file, false);

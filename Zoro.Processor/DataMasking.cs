@@ -23,6 +23,9 @@ namespace Dandraka.Zoro.Processor
         // Remembers the replacements given to each value; keyed by the Replacement (list) they came from.
         private readonly Dictionary<Replacement, ReplacementPool> replacementPools = new Dictionary<Replacement, ReplacementPool>();
 
+        // What was read from the csv file of each ReplacementCSV; it is used in its place.
+        private readonly Dictionary<ReplacementCSV, Replacement> loadedCsvReplacements = new Dictionary<ReplacementCSV, Replacement>();
+
         // Internal constructor: implementations are only created through Create().
         internal DataMasking(MaskConfig config)
         {
@@ -124,7 +127,7 @@ namespace Dandraka.Zoro.Processor
                 MaskType.List => GetStringFromList(row, fieldMask.ListOfPossibleReplacements),
                 MaskType.Query => GetStringFromQuery(row, fieldMask.QueryReplacement),
                 MaskType.Expression => GetExpressionString(row, fieldMask.Expression, jsonNode),
-                MaskType.ReplacementList => GetConsistentString(data, fieldMask, row, fieldMask.ListOfPossibleReplacements),
+                MaskType.ReplacementList => GetConsistentString(data, fieldMask, row, GetReplacementLists(fieldMask)),
                 MaskType.ReplacementQuery => GetConsistentString(data, fieldMask, row, GetReplacementQueryLists(fieldMask.QueryReplacement)),
                 MaskType.None => data,
                 _ => throw new NotImplementedException($"Mask type {fieldMask.MaskType} is not yet implemented"),
@@ -367,7 +370,7 @@ namespace Dandraka.Zoro.Processor
         {
             var lists = fieldMask.MaskType == MaskType.ReplacementQuery
                 ? GetReplacementQueryLists(fieldMask.QueryReplacement)
-                : fieldMask.ListOfPossibleReplacements;
+                : GetReplacementLists(fieldMask);
 
             return new Regex(fieldMask.RegExMatch).Replace(data, match =>
             {
@@ -381,6 +384,35 @@ namespace Dandraka.Zoro.Processor
                 int offset = group.Index - match.Index;
                 return match.Value.Substring(0, offset) + replacement + match.Value.Substring(offset + group.Length);
             });
+        }
+
+        private protected void LoadReplacementCsvFiles()
+        {
+            foreach (var fieldMask in config.FieldMasks)
+            {
+                foreach (var csv in (fieldMask.ListOfPossibleReplacements ?? new List<Replacement>()).OfType<ReplacementCSV>())
+                {
+                    if (!loadedCsvReplacements.ContainsKey(csv))
+                    {
+                        loadedCsvReplacements.Add(csv, ReplacementCsvLoader.Load(csv, fieldMask.FieldName));
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// The replacements of a ReplacementList mask, where a ReplacementCSV is replaced by the content of its file.
+        /// </summary>
+        private protected List<Replacement> GetReplacementLists(FieldMask fieldMask)
+        {
+            if (loadedCsvReplacements.Count == 0)
+            {
+                return fieldMask.ListOfPossibleReplacements;
+            }
+
+            return fieldMask.ListOfPossibleReplacements
+                .Select(r => r is ReplacementCSV csv ? loadedCsvReplacements[csv] : r)
+                .ToList();
         }
 
         private string GetConsistentString(string value, FieldMask fieldMask, DataRow row, List<Replacement> listOfReplacements)

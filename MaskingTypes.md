@@ -412,6 +412,8 @@ The replacement of a value comes from one of the following:
 * **A pool** of items, which is the ```List``` attribute of the ```<Replacement>``` (comma-separated, as in the List mask type). Each new value gets a randomly picked item that has not been used yet, neither by another value nor by a ```<Map>```.
 * **Both.** Mappings are applied first; all other values get items from the pool.
 
+A long list of ```<Map>``` items is not practical in a configuration file, and it often changes independently of the rest of the configuration. For this reason the mappings can be read from a csv file, using a single ```<ReplacementCSV>``` item instead of the ```<Replacement>``` items (see below). Its file is read when the masking starts.
+
 Consistency is kept for the duration of a run, separately for every field mask and for every ```<Replacement>``` (i.e. for every selector). Pool items are picked randomly, so they differ from run to run; if the same pseudonyms are needed in every run, use mappings.
 
 If there are no replacements left for a value (more distinct values than pool items, or a value without a mapping and no pool), the ```OnListExhausted``` field decides what happens:
@@ -436,6 +438,13 @@ In Office input types, if no RegExMatch is given and there are ```<Map>``` items
   * a Selector attribute, as in the List mask type.
   * a List attribute, which is the pool, a comma-separated list of strings.
   * ```<Map>``` items, each having a From attribute (the original value) and a To attribute (the replacement). The same From value (ignoring case and spaces) cannot be used twice in the same ```<Replacement>```.
+  * Instead of all of the above, one ```<ReplacementCSV>``` item, which takes the mappings from a csv file. It must be the only item of the list (using it together with ```<Replacement>``` items is an error) and has the following attributes:
+    * CSVFileName: Mandatory. The csv file, which must exist. A relative path is relative to the current directory, like InputFile.
+    * FromFieldName: Mandatory. The name of the column (in the first row of the csv file) that holds the original values.
+    * ToFieldName: Mandatory. The name of the column that holds the replacements.
+    * Delimiter: Optional. The delimiter of the csv file. Defaults to a comma. A tab can be written as ```&#9;```.
+
+    Values in the csv file can be enclosed in double quotes, e.g. when they contain the delimiter. Rows with an empty original value are ignored. The same original value (ignoring case and spaces) cannot appear twice. Column names are matched ignoring case. A missing column or an empty file is an error.
 * OnListExhausted: Optional. Asterisk (default), Error or Reuse.
 * QueryReplacement: Ignored
 * RegExGroupToReplace: Optional. A number that specifies which regex group will be replaced. The number is 1-based, not 0-based, i.e. the first group is 1. 0 means the whole match.
@@ -514,6 +523,28 @@ Sample input and output
 ```
 
 Every occurrence of Nick Peterson in the document becomes John Miller and every occurrence of Eva Richards becomes Jane Brady, even if they are in the same sentence.
+
+#### Example: mappings from a csv file
+```
+  <FieldMasks>
+    <FieldMask>
+      <FieldName>all</FieldName>
+      <MaskType>ReplacementList</MaskType>
+      <ListOfPossibleReplacements>
+        <ReplacementCSV CSVFileName="names.csv" FromFieldName="original" ToFieldName="pseudonym" />
+      </ListOfPossibleReplacements>
+    </FieldMask> 
+  </FieldMasks>   
+```
+
+_names.csv_
+```
+original,pseudonym
+Nick Peterson,John Miller
+Eva Richards,Jane Brady
+```
+
+This gives the same result as the ```<Map>``` items of the previous example. As there, a RegExMatch can be used or omitted; if it is omitted and the source is an Office file, all the values of the csv file are looked for in the document.
 
 ### MaskType=ReplacementQuery
 
