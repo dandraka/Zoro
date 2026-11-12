@@ -8,6 +8,11 @@
     <GenerateRuntimeConfigurationFiles>True</GenerateRuntimeConfigurationFiles>
   </PropertyGroup>
 
+  <!-- xmldocmd (see generate_docs.txt) needs the dependencies next to the dll -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+
   <Target Name="CopyCustomContent" BeforeTargets="Build">
     <Copy SourceFiles="../README.md" DestinationFolder="$(OutDir)" />
     <Copy SourceFiles="../README.md" DestinationFolder="$(ProjectDir)" />

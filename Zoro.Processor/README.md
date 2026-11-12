@@ -1,7 +1,10 @@
 # Zoro - The masked avenger
 
-## IMPORTANT UPDATE
-From version 3.x onwards, support for Office files (.docx, .xlsx, .pptx) is gradually added. See Scope below and Release notes for list of currently supported file types.
+## BIG NEWS FOR VERSION 4.x !!!
+
+Versions 4.x not only support anonymization of Office files (.docx and .xlsx; .pptx coming soon) but also now properly support Pseudonymisation: you can have a list of replacements that are applied consistenly. This way, for example, "Jim" is always replaced with "Genius", "George" is always replaced with "Hardworker", "Maria N" is always replaced with "Dancer", "Maria V" is always replaced with "Master of Pastries" and so on.
+
+The list of replacements can be in the config itself, in a CSV or in a database. Read on for details.
 
 ## Purpose and scope
 
@@ -59,7 +62,11 @@ masker.Mask();
 
 **Migrating from 3.x to 4.x**
 
-```DataMasking``` is now an abstract class, so ```new DataMasking(config)``` no longer compiles. Replace it with ```DataMasking.Create(config)```, which picks the right implementation for ```config.DataSource```. Config files and the command line are not affected.
+A small change is needed if you use Zoro as a library:
+
+```DataMasking``` is now an abstract class, so ```new DataMasking(config)``` no longer compiles. Replace it with ```DataMasking.Create(config)```, which picks the right implementation for ```config.DataSource```. 
+
+Nothing else is affected.
 
 ## Documentation:
 
