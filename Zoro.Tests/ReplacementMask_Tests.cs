@@ -484,6 +484,111 @@ namespace Dandraka.Zoro.Tests
             Assert.Equal("a", name2.QueryReplacement.KeyDbField);
         }
 
+        [Fact]
+        public void T17_ReplacementList_Docx_MappedValuesAreFoundWithoutRegEx()
+        {
+            // === Arrange ===
+            string testName = System.Reflection.MethodBase.GetCurrentMethod().Name;
+            var config = new MaskConfig()
+            {
+                DataSource = DataSource.DocXFile,
+                DataDestination = DataDestination.DocXFile,
+                InputFile = Path.Combine(utility.TestInstanceDir, "SecretCombination.docx"),
+                OutputFile = Path.Combine(utility.TestInstanceDir, $"{testName}.docx")
+            };
+            // the field name is just a label here; the mapped values are searched, ignoring case
+            config.FieldMasks.Add(ListMask("all", Mapped("", ("HEART", "soul"), ("book", "tablet"))));
+
+            // === Act ===
+            DataMasking.Create(config).Mask();
+
+            // === Assert ===
+            var texts = ReadDocxTexts(config.OutputFile);
+            Assert.Equal(6, texts.Count(t => t == "In the center of my soul"));
+            Assert.Equal(2, texts.Count(t => t == "An open tablet"));
+            Assert.DoesNotContain(texts, t => t.Contains("heart") || t.Contains("book"));
+            Assert.Contains("Use your imagination", texts);
+        }
+
+        [Fact]
+        public void T18_ReplacementList_Xlsx_MappedValuesAreFoundWithoutRegEx()
+        {
+            // === Arrange ===
+            string testName = System.Reflection.MethodBase.GetCurrentMethod().Name;
+            var config = new MaskConfig()
+            {
+                DataSource = DataSource.XlsXFile,
+                DataDestination = DataDestination.XlsXFile,
+                InputFile = Path.Combine(utility.TestInstanceDir, "ibans.xlsx"),
+                OutputFile = Path.Combine(utility.TestInstanceDir, $"{testName}.xlsx")
+            };
+            // values with spaces and brackets are matched as they are
+            config.FieldMasks.Add(ListMask("all", Mapped("", ("Austria (AT)", "Land A"), ("AT483200000012345864", "IBAN-A"))));
+
+            // === Act ===
+            DataMasking.Create(config).Mask();
+
+            // === Assert ===
+            var texts = ReadXlsxTexts(config.OutputFile);
+            Assert.Contains("Land A", texts);
+            Assert.Contains("IBAN-A", texts);
+            Assert.DoesNotContain("Austria (AT)", texts);
+            Assert.DoesNotContain("AT483200000012345864", texts);
+            Assert.Contains("Germany (DE)", texts);
+        }
+
+        [Fact]
+        public void T19_ReplacementQuery_Xlsx_MappingTableValuesAreFoundWithoutRegEx()
+        {
+            // === Arrange ===
+            string testName = System.Reflection.MethodBase.GetCurrentMethod().Name;
+            var cmd = utility.TestDbConnection.CreateCommand();
+            cmd.CommandText = @"CREATE TABLE code_mapping AS 
+                SELECT 'Germany (DE)' AS originalValue, 'Land D' AS replacement UNION ALL 
+                SELECT 'NL18ABNA0484869868' AS originalValue, 'IBAN-NL' AS replacement";
+            cmd.ExecuteNonQuery();
+            utility.TestTablesToDrop = "code_mapping";
+
+            var config = new MaskConfig()
+            {
+                DataSource = DataSource.XlsXFile,
+                DataDestination = DataDestination.XlsXFile,
+                InputFile = Path.Combine(utility.TestInstanceDir, "ibans.xlsx"),
+                OutputFile = Path.Combine(utility.TestInstanceDir, $"{testName}.xlsx")
+            };
+            config.SetConnection(utility.TestDbConnection);
+            config.FieldMasks.Add(new FieldMask()
+            {
+                FieldName = "all",
+                MaskType = MaskType.ReplacementQuery,
+                QueryReplacement = new QueryReplacement()
+                {
+                    Query = "SELECT originalValue, replacement FROM code_mapping",
+                    KeyDbField = "originalValue",
+                    ValueDbField = "replacement"
+                }
+            });
+
+            // === Act ===
+            DataMasking.Create(config).Mask();
+
+            // === Assert ===
+            var texts = ReadXlsxTexts(config.OutputFile);
+            Assert.Contains("Land D", texts);
+            Assert.Contains("IBAN-NL", texts);
+            Assert.DoesNotContain("Germany (DE)", texts);
+            Assert.Contains("Austria (AT)", texts);
+        }
+
+        private static List<string> ReadXlsxTexts(string file)
+        {
+            using var doc = SpreadsheetDocument.Open(file, false);
+            return doc.WorkbookPart.SharedStringTablePart.SharedStringTable
+                .Elements<DocumentFormat.OpenXml.Spreadsheet.SharedStringItem>()
+                .Select(i => i.Text?.Text)
+                .ToList();
+        }
+
         private static List<string> ReadDocxTexts(string file)
         {
             using var doc = WordprocessingDocument.Open(file, false);

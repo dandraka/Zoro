@@ -420,6 +420,8 @@ When a regular expression is used, the matched text of the regex group is the or
 
 Please note that for Office input types (docx, xlsx, pptx) and Json the selector is ignored or not supported, as with the List mask type: use one ```<Replacement>``` with an empty selector.
 
+In Office input types, if no RegExMatch is given and there are ```<Map>``` items, Zoro looks for all the mapped values in the document (whole words or phrases, ignoring case, longest first) and FieldName is just a label. This way one field mask can pseudonymise any number of names. Without maps, FieldName is the text that is looked for, as in the other masking types. Note that a value that is split in different parts of the document by formatting, e.g. a name that is partly bold, is not found.
+
 #### Mandatory, optional and ignored fields
 
 * MaskType = ReplacementList
@@ -519,6 +521,8 @@ There are two ways to use it:
 * **A mapping table.** If KeyField is filled, each row of the query is a pair: the original value is in KeyField and its replacement is in ValueField. Rows with an empty key are ignored, and the same key (ignoring case and spaces) cannot appear twice in the same group. Values that are not in the table follow ```OnListExhausted```.
 
 In both cases, GroupField and SelectorField can be used to have different lists or mappings per group, e.g. per country, exactly as in the Query mask type. For Office input types the selector and group are ignored.
+
+For Office input types, a mapping table (KeyField filled) used without a RegExMatch makes Zoro look for all the keys of the table in the document, as described in ReplacementList.
 
 #### Mandatory, optional and ignored fields
 

@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+<!-- Manual test for Excel files. From this folder run: Zoro.exe testconfigxlsx.xml
+     The output file must not exist yet, delete it before running again. -->
+<MaskConfig xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <FieldMasks>
+    <FieldMask>
+      <FieldName>all</FieldName>
+      <MaskType>ReplacementList</MaskType>
+      <ListOfPossibleReplacements>
+        <Replacement Selector="">
+          <Map From="Dimitrios" To="Alice" />
+          <Map From="Vassileios" To="Bob" />
+          <Map From="Neofytos" To="Charlie" />       
+          <Map From="Senior Manager" To="Sergeant" />
+          <Map From="Director" To="Neopas" />
+          <Map From="Partner" To="Bodybuilder" />               
+        </Replacement>
+      </ListOfPossibleReplacements>
+    </FieldMask>    
+    <!-- For Office files FieldName is ignored when a RegExMatch is given -->
+     <!--
+    <FieldMask>
+      <FieldName>names</FieldName>
+      <MaskType>ReplacementList</MaskType>
+      <RegExMatch>\b(Dimitrios|Vassileios|Neofytos)\b</RegExMatch>
+      <RegExGroupToReplace>1</RegExGroupToReplace>
+      <ListOfPossibleReplacements>
+        <Replacement Selector="">
+          <Map From="Dimitrios" To="Alice" />
+          <Map From="Vassileios" To="Bob" />
+          <Map From="Neofytos" To="Charlie" />       
+        </Replacement>
+      </ListOfPossibleReplacements>
+    </FieldMask>
+    <FieldMask>
+      <FieldName>grades</FieldName>
+      <MaskType>ReplacementList</MaskType>
+      <RegExMatch>\b(Senior Manager|Director|Partner)\b</RegExMatch>
+      <RegExGroupToReplace>1</RegExGroupToReplace>
+      <ListOfPossibleReplacements>
+        <Replacement Selector="">
+          <Map From="Senior Manager" To="Sergeant" />
+          <Map From="Director" To="Psaraklas" />
+          <Map From="Partner" To="Bodybuilder" />          
+        </Replacement>
+      </ListOfPossibleReplacements>
+    </FieldMask>    
+    -->
+  </FieldMasks>
+  <InputFile>HR_data.xlsx</InputFile>
+  <OutputFile>HR_data_masked.xlsx</OutputFile>
+  <DataSource>XlsXFile</DataSource>
+  <DataDestination>XlsXFile</DataDestination>
+</MaskConfig>

@@ -291,7 +291,7 @@ namespace Dandraka.Zoro.Processor
             return dt;
         }
 
-        private List<Replacement> GetReplacementQueryLists(QueryReplacement queryReplacement)
+        private protected List<Replacement> GetReplacementQueryLists(QueryReplacement queryReplacement)
         {
             if (queryReplacement == null)
             {
