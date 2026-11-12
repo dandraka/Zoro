@@ -12,6 +12,7 @@ public class QueryReplacement
 | --- | --- |
 | [QueryReplacement](QueryReplacement/QueryReplacement.md)() | The default constructor. |
 | [GroupDbField](QueryReplacement/GroupDbField.md) { get; set; } | The field from the db data (retrieved form the query) that will be used to create individual lists. E.g. "country" If empty, all data in the `ValueDbField` retrieved from the `Query` will be used as a single group; the `SelectorField` will be ignored. |
+| [KeyDbField](QueryReplacement/KeyDbField.md) { get; set; } | Only for `MaskType.ReplacementQuery`. If filled, the query is a mapping table: this is the field of the db data that holds the original value, and `ValueField` holds its replacement. If empty, the query returns a pool of replacements in `ValueField`. E.g. "originalName" |
 | [Query](QueryReplacement/Query.md) { get; set; } | E.g. "SELECT city, country FROM cities" |
 | [SelectorField](QueryReplacement/SelectorField.md) { get; set; } | The field from the input data that will be used to select which list to take a random item from. E.g. "country" |
 | [ValueDbField](QueryReplacement/ValueDbField.md) { get; set; } | The field from the db data (retrieved form the query) that will be used to get the values. E.g. "city" |

@@ -1,14 +1,18 @@
-# DataMasking constructor
+# DataMasking.Create method
 
-Creates an instance of DataMasking class.
+Creates the masking implementation that matches `MaskConfig.DataSource`.
 
 ```csharp
-public DataMasking(MaskConfig config)
+public static DataMasking Create(MaskConfig config)
 ```
 
 | parameter | description |
 | --- | --- |
-| config |  |
+| config | The masking configuration. |
+
+## Return Value
+
+A `DataMasking` instance, ready to call `Mask()`.
 
 ## See Also
 

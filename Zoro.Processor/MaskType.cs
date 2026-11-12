@@ -52,6 +52,22 @@ namespace Dandraka.Zoro.Processor
         /// The field contents are substituted with a randomly picked item from the result of q query.
         /// The query must return only one field.
         /// </summary>
-        Query = 5
+        Query = 5,
+
+        /// <summary>
+        /// Like <c>List</c>, but the masking is consistent (pseudonymisation): the same original value
+        /// always gets the same replacement, and different values get different replacements.
+        /// Replacements are either given explicitly (<c>Replacement.Mappings</c>) or taken randomly
+        /// from the items of the list that are not used yet. Matching ignores case and surrounding spaces.
+        /// When there are no replacements left, <c>FieldMask.OnListExhausted</c> decides what happens.
+        /// </summary>
+        ReplacementList = 6,
+
+        /// <summary>
+        /// Like <c>Query</c>, but the masking is consistent (pseudonymisation), see <c>ReplacementList</c>.
+        /// If <c>QueryReplacement.KeyField</c> is filled, the query is a mapping table of original value to
+        /// replacement; otherwise the query returns the pool of replacements to pick from.
+        /// </summary>
+        ReplacementQuery = 7
     }
 }

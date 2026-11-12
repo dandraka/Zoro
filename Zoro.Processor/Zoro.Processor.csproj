@@ -3,9 +3,14 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <Authors>Jim (Dimitrios) Andrakakis</Authors>
-    <Version>3.1.0</Version>
+    <Version>4.0.0</Version>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <GenerateRuntimeConfigurationFiles>True</GenerateRuntimeConfigurationFiles>
+  </PropertyGroup>
+
+  <!-- xmldocmd (see generate_docs.txt) needs the dependencies next to the dll -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
   <Target Name="CopyCustomContent" BeforeTargets="Build">
@@ -17,9 +22,10 @@
     <PackageReference Include="DocumentFormat.OpenXml" Version="3.5.1" />
     <PackageReference Include="GenericParsing" Version="1.6.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
-    <PackageReference Include="System.Data.OleDb" Version="10.0.9" />
-    <PackageReference Include="Microsoft.Data.SqlClient" Version="7.0.2" />
-    <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Azure" Version="7.0.2" />
+    <PackageReference Include="System.Data.OleDb" Version="11.0.0" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="11.0.0" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="7.1.1" />
+    <PackageReference Include="Microsoft.Data.SqlClient.Extensions.Azure" Version="7.1.1" />
   </ItemGroup>
 
   <ItemGroup>

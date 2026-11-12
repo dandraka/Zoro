@@ -59,7 +59,7 @@ namespace Dandraka.Zoro.Tests
                 config.FieldMasks.Add(new FieldMask() { FieldName = "Address", MaskType = MaskType.None });
 
                 // === Act ===
-                var masker = new DataMasking(config);
+                var masker = DataMasking.Create(config);
                 try
                 {
                     masker.Mask();
@@ -110,7 +110,7 @@ namespace Dandraka.Zoro.Tests
                 cmdTbl.ExecuteNonQuery();
 
                 // === Act ===
-                var masker = new DataMasking(config);
+                var masker = DataMasking.Create(config);
                 try
                 {
                     masker.Mask();
@@ -178,7 +178,7 @@ namespace Dandraka.Zoro.Tests
                 { Selector = "", ReplacementList = "Main Street 9,Fifth Avenue 104,Ranch rd. 1" });
 
                 // === Act ===
-                var masker = new DataMasking(config);
+                var masker = DataMasking.Create(config);
                 try
                 {
                     masker.Mask();
@@ -236,7 +236,7 @@ namespace Dandraka.Zoro.Tests
                     config.FieldMasks.Add(new FieldMask() { FieldName = "Address", MaskType = MaskType.None });
 
                     // === Act ===
-                    var masker = new DataMasking(config);
+                    var masker = DataMasking.Create(config);
                     masker.Mask();
 
                     // === Assert ===
@@ -294,7 +294,7 @@ namespace Dandraka.Zoro.Tests
                     utility.TestTablesToDrop = tblName2;
 
                     // === Act ===
-                    var masker = new DataMasking(config);
+                    var masker = DataMasking.Create(config);
                     masker.Mask();
                 }
                 catch (Microsoft.Data.SqlClient.SqlException ex)
@@ -368,7 +368,7 @@ namespace Dandraka.Zoro.Tests
                     { Selector = "", ReplacementList = "Main Street 9,Fifth Avenue 104,Ranch rd. 1" });
 
                     // === Act ===
-                    var masker = new DataMasking(config);
+                    var masker = DataMasking.Create(config);
                     masker.Mask();
                 }
                 catch (Microsoft.Data.SqlClient.SqlException ex)

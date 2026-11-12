@@ -1,4 +1,6 @@
 using System;
+using System.IO;
+using System.Linq;
 
 namespace Dandraka.Zoro.Processor
 {
@@ -6,6 +8,8 @@ namespace Dandraka.Zoro.Processor
     {
         internal static void PerformSanityChecks(MaskConfig config)
         {
+            CheckReplacementCsv(config);
+
             switch (config.DataSource)
             {
                 case DataSource.DocXFile:
@@ -34,5 +38,41 @@ namespace Dandraka.Zoro.Processor
                     break;
             }
         }        
+
+        private static void CheckReplacementCsv(MaskConfig config)
+        {
+            foreach (var mask in config.FieldMasks)
+            {
+                var csvItems = (mask.ListOfPossibleReplacements ?? new System.Collections.Generic.List<Replacement>())
+                    .OfType<ReplacementCSV>().ToList();
+                if (csvItems.Count == 0)
+                {
+                    continue;
+                }
+
+                string name = $"The ReplacementCSV of field '{mask.FieldName}'";
+                if (mask.MaskType != MaskType.ReplacementList)
+                {
+                    throw new InvalidDataException($"{name} is only supported with the ReplacementList mask type.");
+                }
+                if (mask.ListOfPossibleReplacements.Count != csvItems.Count)
+                {
+                    throw new InvalidDataException($"{name} cannot be used together with Replacement items.");
+                }
+                if (csvItems.Count > 1)
+                {
+                    throw new InvalidDataException($"{name} can only be used once.");
+                }
+
+                var csv = csvItems[0];
+                if (string.IsNullOrWhiteSpace(csv.CSVFileName)) { throw new InvalidDataException($"{name} must have a CSVFileName."); }
+                if (string.IsNullOrWhiteSpace(csv.FromFieldName)) { throw new InvalidDataException($"{name} must have a FromFieldName."); }
+                if (string.IsNullOrWhiteSpace(csv.ToFieldName)) { throw new InvalidDataException($"{name} must have a ToFieldName."); }
+                if (!string.IsNullOrEmpty(csv.Selector) || !string.IsNullOrEmpty(csv.ReplacementList) || csv.Mappings.Count > 0)
+                {
+                    throw new InvalidDataException($"{name} cannot have a Selector, a List or Map items.");
+                }
+            }
+        }
     }
 }

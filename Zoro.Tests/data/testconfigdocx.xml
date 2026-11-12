@@ -1,0 +1,58 @@
+<?xml version="1.0"?>
+<!-- Manual test for Word documents. From this folder run: Zoro.exe testconfigdocx.xml
+     The output file must not exist yet, delete it before running again. -->
+<MaskConfig xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <FieldMasks>
+    <!-- Consistent: every "heart" becomes "soul" -->
+    <FieldMask>
+      <FieldName>heart</FieldName>
+      <MaskType>ReplacementList</MaskType>
+      <ListOfPossibleReplacements>
+        <Replacement Selector="">
+          <Map From="heart" To="soul" />
+          <Map From="see" To="sehen" />
+        </Replacement>
+      </ListOfPossibleReplacements>
+    </FieldMask>
+    <!-- Consistent, random items from a pool: all "secret" get one of the words, all "mystery" get the other -->
+    <FieldMask>
+      <FieldName>words</FieldName>
+      <MaskType>ReplacementList</MaskType>
+      <RegExMatch>\b(secret|mystery)\b</RegExMatch>
+      <RegExGroupToReplace>1</RegExGroupToReplace>
+      <ListOfPossibleReplacements>
+        <Replacement Selector="" List="alpha,beta" />
+      </ListOfPossibleReplacements>
+    </FieldMask>
+    <!-- Only one item for two different words, so the second one is masked with # and a warning is printed -->
+    <FieldMask>
+      <FieldName>Kalomira</FieldName>
+      <MaskType>ReplacementList</MaskType>
+      <Asterisk>#</Asterisk>
+      <RegExMatch>\b(Kalomira|Combination)\b</RegExMatch>
+      <RegExGroupToReplace>1</RegExGroupToReplace>
+      <ListOfPossibleReplacements>
+        <Replacement Selector="" List="Artist" />
+      </ListOfPossibleReplacements>
+    </FieldMask>
+    <FieldMask>
+      <FieldName>imagination</FieldName>
+      <MaskType>Asterisk</MaskType>
+    </FieldMask>
+    <FieldMask>
+      <FieldName>destination</FieldName>
+      <MaskType>Random</MaskType>
+    </FieldMask>
+    <FieldMask>
+      <FieldName>book</FieldName>
+      <MaskType>List</MaskType>
+      <ListOfPossibleReplacements>
+        <Replacement Selector="" List="tablet,newspaper,cellphone" />
+      </ListOfPossibleReplacements>
+    </FieldMask>
+  </FieldMasks>
+  <InputFile>SecretCombination.docx</InputFile>
+  <OutputFile>SecretCombination_masked.docx</OutputFile>
+  <DataSource>DocXFile</DataSource>
+  <DataDestination>DocXFile</DataDestination>
+</MaskConfig>

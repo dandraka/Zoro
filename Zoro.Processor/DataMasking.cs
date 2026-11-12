@@ -1,323 +1,81 @@
-﻿using DocumentFormat.OpenXml.Packaging;
-using GenericParsing;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.Common;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 
 namespace Dandraka.Zoro.Processor
 {
     /// <summary>
     /// Main masking class, this is where the job is done.
+    /// Use <see cref="Create(MaskConfig)"/> to get the implementation that matches the data source.
     /// </summary>
-    public class DataMasking
+    public abstract class DataMasking
     {
-        private readonly MaskConfig config;
+        private protected readonly MaskConfig config;
 
-        private Random rnd = new Random(DateTime.Now.Millisecond);
+        private readonly Random rnd = new Random(DateTime.Now.Millisecond);
 
-        private readonly Regex fieldsRegEx = new Regex("({{.*?}})");
+        private static readonly Regex fieldsRegEx = new Regex("({{.*?}})");
 
-        private char DbParamChar => this.config.GetConnection().GetType().ToString() == typeof(Microsoft.Data.SqlClient.SqlConnection).FullName ? '@' : '$';
+        // Remembers the replacements given to each value; keyed by the Replacement (list) they came from.
+        private readonly Dictionary<Replacement, ReplacementPool> replacementPools = new Dictionary<Replacement, ReplacementPool>();
 
-        /// <summary>
-        /// Creates an instance of DataMasking class.
-        /// </summary>
-        /// <param name="config"></param>
-        public DataMasking(MaskConfig config)
+        // What was read from the csv file of each ReplacementCSV; it is used in its place.
+        private readonly Dictionary<ReplacementCSV, Replacement> loadedCsvReplacements = new Dictionary<ReplacementCSV, Replacement>();
+
+        // Internal constructor: implementations are only created through Create().
+        internal DataMasking(MaskConfig config)
         {
             this.config = config;
         }
 
         /// <summary>
-        /// Performs masking.
+        /// Creates the masking implementation that matches <c>MaskConfig.DataSource</c>.
         /// </summary>
-        public void Mask()
-        {
-            Validator.PerformSanityChecks(this.config);
-
-            object dt = GetData();
-
-            switch (config.DataSource)
-            {
-                // flat types
-                case DataSource.CsvFile:
-                case DataSource.Database:
-                    AnonymizeFlatData((DataTable)dt);
-                    break;
-                // nested types
-                case DataSource.JsonFile:
-                    AnonymizeJSONData((JContainer)dt);
-                    break;
-                // Documents
-                case DataSource.DocXFile:
-                    AnonymizeDocxData((WordprocessingDocument)dt);
-                    break;
-                // Spreadsheets
-                case DataSource.XlsXFile:
-                    AnonymizeXlsxData((SpreadsheetDocument)dt);
-                    break;                    
-                default:
-                    throw new NotImplementedException($"{Enum.GetName(typeof(DataSource), config.DataSource)} is not implemented");
-            }
-
-            SaveData(dt);
-        }
-
-        private object GetData()
+        /// <param name="config">The masking configuration.</param>
+        /// <returns>A <c>DataMasking</c> instance, ready to call <c>Mask()</c>.</returns>
+        public static DataMasking Create(MaskConfig config)
         {
             return config.DataSource switch
             {
-                DataSource.CsvFile => ReadDataFromCSVFile(),
-                DataSource.JsonFile => ReadDataFromJSONFile(),
-                DataSource.Database => ReadDataFromDb(),
-                DataSource.DocXFile => ReadDataFromDocxFile(),
-                DataSource.XlsXFile => ReadDataFromXlsxFile(),
-                _ => throw new NotSupportedException(),
+                // flat types
+                DataSource.CsvFile => (DataMasking)new DataMaskingFlatData(config),
+                DataSource.Database => new DataMaskingFlatData(config),
+                // nested types
+                DataSource.JsonFile => new DataMaskingJSONData(config),
+                // Documents
+                DataSource.DocXFile => new DataMaskingDocxData(config),
+                // Spreadsheets
+                DataSource.XlsXFile => new DataMaskingXlsxData(config),
+                _ => throw new NotImplementedException($"{Enum.GetName(typeof(DataSource), config.DataSource)} is not implemented"),
             };
         }
 
-        private void SaveData(object dt)
-        {
-            switch (config.DataDestination)
-            {
-                case DataDestination.CsvFile:
-                    SaveDataToCSVFile((DataTable)dt);
-                    break;
-                case DataDestination.JsonFile:
-                    SaveDataToJSONFile((JContainer)dt);
-                    break;
-                case DataDestination.Database:
-                    SaveDataToDb((DataTable)dt);
-                    break;
-                case DataDestination.DocXFile:
-                    SaveDataToDocxFile((WordprocessingDocument)dt);
-                    break;
-                case DataDestination.XlsXFile:
-                    SaveDataToXlsxFile((SpreadsheetDocument)dt);
-                    break;                    
-                default:
-                    throw new NotSupportedException();
-            }
-        }
+        /// <summary>
+        /// Performs masking.
+        /// </summary>
+        public abstract void Mask();
 
-        private void AnonymizeFlatData(DataTable dt)
-        {
-            for (int r = 0; r < dt.Rows.Count; r++)
-            {
-                for (int c = 0; c < config.FieldMasks.Count; c++)
-                {
-                    string colName = config.FieldMasks[c].FieldName;
-                    if (r == 0)
-                    {
-                        if (!dt.Columns.Contains(colName))
-                        {
-                            throw new InvalidDataException(string.Format("File '{0}' does not contain field '{1}'",
-                                config.InputFile, colName));
-                        }
-                    }
+        /// <summary>
+        /// The number of distinct values that were masked with asterisks because a <c>ReplacementList</c> 
+        /// or <c>ReplacementQuery</c> mask had no replacement left. Zero means all values got a replacement.
+        /// </summary>
+        public int ValuesWithoutReplacement => replacementPools.Values.Sum(p => p.FallbackCount);
 
-                    dt.Rows[r][colName] = GetMaskedString(Convert.ToString(dt.Rows[r][colName]), config.FieldMasks[c], dt.Rows[r]);
-                }
-            }
-        }
-
-        private void AnonymizeJSONData(JContainer jsonContainer)
-        {
-            switch (jsonContainer.GetType().Name)
-            {
-                case "JArray":
-                    foreach (var jsonItem in (JArray)jsonContainer)
-                    {
-                        foreach (JProperty c in (JToken)jsonItem)
-                        {
-                            AnonymizeJSONProperty(c);
-                        }
-                    }
-                    break;
-                case "JObject":
-                    foreach (JProperty c in (JToken)jsonContainer)
-                    {
-                        AnonymizeJSONProperty(c);
-                    }
-                    break;
-                default:
-                    throw new NotImplementedException(jsonContainer.GetType().FullName);
-            }
-        }
-
-        private void AnonymizeDocxData(WordprocessingDocument doc)
-        {
-            // Prepare masks for docx
-            // By default: RegExMatch = "(.*)(secret)(.*)", RegExGroupToReplace = 2
-            foreach (var textMask in config.FieldMasks)
-            {
-                if (string.IsNullOrWhiteSpace(textMask.RegExMatch))
-                {
-                    textMask.RegExMatch = $"({textMask.FieldName})";
-                    textMask.RegExGroupToReplace = 1;
-                }
-            }
-
-            var body = doc.MainDocumentPart.Document.Body;
-
-            // Iterate through all "Text" elements in the document
-            foreach (var textNode in body.Descendants<DocumentFormat.OpenXml.Wordprocessing.Text>())
-            {
-                foreach (var textMask in config.FieldMasks)
-                {
-                    if (!Regex.IsMatch(textNode.Text, textMask.RegExMatch))
-                    {
-                        continue;
-                    }
-                    string s = GetMaskedString(textNode.Text, textMask, null, null);
-                    if (textNode.Text != s)
-                    {
-                        textNode.Text = s;
-                    }
-                }
-            }
-        }
-
-        private void AnonymizeXlsxData(SpreadsheetDocument doc)
-        {
-            // Prepare masks for docx
-            // By default: RegExMatch = "(.*)(secret)(.*)", RegExGroupToReplace = 2
-            foreach (var textMask in config.FieldMasks)
-            {
-                if (string.IsNullOrWhiteSpace(textMask.RegExMatch))
-                {
-                    textMask.RegExMatch = $"({textMask.FieldName})";
-                    textMask.RegExGroupToReplace = 1;
-                }
-            }
-
-            var body = doc.WorkbookPart.SharedStringTablePart;
-
-            // Iterate through all "Text" elements in the document
-            foreach (var textNode in body.SharedStringTable.Elements<DocumentFormat.OpenXml.Spreadsheet.SharedStringItem>())
-            {
-                foreach (var textMask in config.FieldMasks)
-                {
-                    if (!Regex.IsMatch(textNode.Text.Text, textMask.RegExMatch))
-                    {
-                        continue;
-                    }
-                    string s = GetMaskedString(textNode.Text.Text, textMask, null, null);
-                    if (textNode.Text.Text != s)
-                    {
-                        textNode.Text.Text = s;
-                    }
-                }
-            }
-        }        
-
-        private static DbProviderFactory GetDbFactory(string connType)
-        {
-            switch (connType)
-            {
-                case "Microsoft.Data.SqlClient":
-                    DbProviderFactories.RegisterFactory(connType, typeof(Microsoft.Data.SqlClient.SqlClientFactory));
-                    break;
-                case "System.Data.OleDb":
-                    DbProviderFactories.RegisterFactory(connType, typeof(System.Data.OleDb.OleDbFactory));
-                    break;
-                /*                    
-                case "System.Data.Odbc":
-                    DbProviderFactories.RegisterFactory(connType, typeof(System.Data.Odbc.OdbcFactory));
-                    break;
-                */
-                default:
-                    throw new NotSupportedException($"Connection type {connType} is not yet supported");
-            }
-            return DbProviderFactories.GetFactory(connType);
-        }
-
-        private void AnonymizeJSONProperty(JProperty c)
-        {
-            string colName = c.Name;
-            string value = Convert.ToString(c.Value);
-            var fieldMask = config.FieldMasks.FirstOrDefault(x => x.FieldName == colName);
-            if (fieldMask != null)
-            {
-                switch (c.Value.Type)
-                {
-                    case JTokenType.Integer:
-                        string i = GetMaskedString(value, fieldMask, null, c);
-                        c.Value = Convert.ToInt32(i);
-                        break;
-                    case JTokenType.Float:
-                        string f = GetMaskedString(value, fieldMask, null, c);
-                        c.Value = Convert.ToDecimal(f);
-                        break;
-                    default:
-                        // treat non-numbers as strings
-                        string s = GetMaskedString(value, fieldMask, null, c);
-                        c.Value = s;
-                        break;
-                }
-            }
-
-            if (c.HasValues)
-            {
-                foreach (var jsonChild in c.Children().OfType<JContainer>())
-                {
-                    AnonymizeJSONData((JContainer)jsonChild);
-                }
-            }
-        }
-
-        private DataTable ReadDataFromDb()
-        {
-            if (config.GetConnection() == null && (string.IsNullOrEmpty(config.ConnectionString) || string.IsNullOrEmpty(config.ConnectionType)))
-            {
-                throw new InvalidDataException("If no DbConnection is provided, ConnectionString and ConnectionType cannot be empty when using the database option");
-            }
-            if (string.IsNullOrEmpty(config.SqlSelect))
-            {
-                throw new InvalidDataException("SQL Select statement must be filled when using the database option");
-            }
-
-            DataTable dt = new DataTable("data");
-
-            Action doDbSelect = new Action(() =>
-            {
-                bool wasOpen = EnsureOpenDbConnection();
-
-                var dbCmd = config.GetConnection().CreateCommand();
-                dbCmd.CommandType = CommandType.Text;
-                dbCmd.CommandText = config.SqlSelect;
-
-                var behaviour = wasOpen ? CommandBehavior.Default : CommandBehavior.CloseConnection;
-                using (var dbReader = dbCmd.ExecuteReader(behaviour))
-                {
-                    dt.Load(dbReader);
-                    dbReader.Close();
-                }
-
-                foreach (DataColumn dataColumn in dt.Columns)
-                {
-                    dataColumn.ReadOnly = false;
-                }
-            });
-
-            doDbSelect();
-
-            return dt;
-        }
-
-        private string GetMaskedString(string data, FieldMask fieldMask, DataRow row, JProperty jsonNode = null)
+        private protected string GetMaskedString(string data, FieldMask fieldMask, DataRow row, JProperty jsonNode = null)
         {
             if (string.IsNullOrEmpty(data))
                 return data;
             if (!string.IsNullOrEmpty(fieldMask.RegExMatch))
             {
+                if (fieldMask.MaskType == MaskType.ReplacementList || fieldMask.MaskType == MaskType.ReplacementQuery)
+                {
+                    return GetConsistentRegexString(data, fieldMask, row);
+                }
+
                 Regex rgx = new Regex(fieldMask.RegExMatch);
 
                 var match = rgx.Match(data);
@@ -350,64 +108,47 @@ namespace Dandraka.Zoro.Processor
             }
             else
             {
-                return fieldMask.MaskType switch
-                {
-                    MaskType.Asterisk => GetAsteriskString(data, fieldMask.Asterisk[0]),
-                    MaskType.Random => GetRandomString(data),
-                    MaskType.List => GetStringFromList(row, fieldMask.ListOfPossibleReplacements),
-                    MaskType.Query => GetStringFromQuery(row, fieldMask.QueryReplacement),
-                    MaskType.Expression => GetExpressionString(row, fieldMask.Expression, jsonNode),
-                    MaskType.None => data,
-                    _ => throw new NotImplementedException($"Mask type {fieldMask.MaskType} is not yet implemented"),
-                };
+                return GetMaskedValue(data, fieldMask, row, jsonNode);
             }
+        }
+
+        /// <summary>
+        /// Masks the whole of the given value, ignoring the regular expression of the field mask.
+        /// </summary>
+        private protected string GetMaskedValue(string data, FieldMask fieldMask, DataRow row, JProperty jsonNode = null)
+        {
+            if (string.IsNullOrEmpty(data))
+                return data;
+
+            return fieldMask.MaskType switch
+            {
+                MaskType.Asterisk => GetAsteriskString(data, fieldMask.Asterisk[0]),
+                MaskType.Random => GetRandomString(data),
+                MaskType.List => GetStringFromList(row, fieldMask.ListOfPossibleReplacements),
+                MaskType.Query => GetStringFromQuery(row, fieldMask.QueryReplacement),
+                MaskType.Expression => GetExpressionString(row, fieldMask.Expression, jsonNode),
+                MaskType.ReplacementList => GetConsistentString(data, fieldMask, row, GetReplacementLists(fieldMask)),
+                MaskType.ReplacementQuery => GetConsistentString(data, fieldMask, row, GetReplacementQueryLists(fieldMask.QueryReplacement)),
+                MaskType.None => data,
+                _ => throw new NotImplementedException($"Mask type {fieldMask.MaskType} is not yet implemented"),
+            };
+        }
+
+        /// <summary>
+        /// Resolves a field reference used in an Expression mask ({{fieldName}}).
+        /// Only implemented by the data sources that support expressions.
+        /// </summary>
+        private protected virtual string GetFieldValue(string fieldName, DataRow row, JProperty jsonNode)
+        {
+            throw new NotSupportedException($"Data source {this.config.DataSource} is not supported.");
         }
 
         private string GetExpressionString(DataRow row, string expression, JProperty jsonNode)
         {
-            var matches = fieldsRegEx.Matches(expression);
-
-            // does it have any fields/jsonpaths?
-            if (matches.Count == 0)
-            {
-                return expression;
-            }
-
-            foreach (Match match in matches)
+            foreach (Match match in fieldsRegEx.Matches(expression))
             {
                 string fieldName = match.Value.Replace("{{", "").Replace("}}", "");
-                string fieldValue = null;
-
-                switch (this.config.DataSource)
-                {
-                    case DataSource.CsvFile:
-                    case DataSource.Database:
-                        if (!row.Table.Columns.Contains(fieldName))
-                        {
-                            throw new FieldNotFoundException(fieldName);
-                        }
-                        fieldValue = Convert.ToString(row[fieldName]);
-                        expression = expression.Replace(match.Value, fieldValue);
-                        break;
-                    case DataSource.JsonFile:
-                        // field name is supposed to be a JsonPath
-                        var jsonPathResult = jsonNode.Parent.SelectToken(fieldName); //jsonNode.Root.SelectToken(fieldName);
-                        if (jsonPathResult == null || jsonPathResult.Value<object>() == null)
-                        {
-                            jsonPathResult = jsonNode.Root.SelectToken(fieldName);
-                            if (jsonPathResult == null || jsonPathResult.Value<object>() == null)
-                            {
-                                throw new FieldNotFoundException(fieldName);
-                            }
-                        }
-
-                        fieldValue = (jsonPathResult as JValue).Value<string>();
-
-                        expression = expression.Replace(match.Value, fieldValue);
-                        break;
-                    default:
-                        throw new NotSupportedException($"Data source {this.config.DataSource} is not supported.");
-                }
+                expression = expression.Replace(match.Value, GetFieldValue(fieldName, row, jsonNode));
             }
 
             return expression;
@@ -419,7 +160,7 @@ namespace Dandraka.Zoro.Processor
             {
                 if (Char.IsDigit(c))
                 {
-                    return rnd.Next(0, 9).ToString()[0];
+                    return rnd.Next(0, 10).ToString()[0];
                 }
                 if (c.IsVowel())
                 {
@@ -451,15 +192,28 @@ namespace Dandraka.Zoro.Processor
 
         private string GetStringFromList(DataRow row, List<Replacement> listOfReplacements)
         {
-            // get the right list
-            string replacementStr = null;
+            string replacementStr = SelectReplacement(row, listOfReplacements)?.ReplacementList;
+            if (replacementStr == null)
+            {
+                // warning, nothing found
+                throw new DataNotFoundException(row);
+            }
+            var list = replacementStr.Split(',').Select(x => x.Trim()).ToList();
+            string str = list[rnd.Next(list.Count)];
+            return str;
+        }
+
+        /// <summary>
+        /// Picks the replacement whose selector matches the row; one with an empty selector matches always.
+        /// </summary>
+        private Replacement SelectReplacement(DataRow row, List<Replacement> listOfReplacements)
+        {
             foreach (var r in listOfReplacements)
             {
                 // to have as a default
                 if (string.IsNullOrEmpty(r.Selector))
                 {
-                    replacementStr = r.ReplacementList;
-                    break;
+                    return r;
                 }
 
                 string selectorField = r.Selector.Split('=')[0].Trim();
@@ -473,43 +227,23 @@ namespace Dandraka.Zoro.Processor
                 string dataValue = Convert.ToString(row[selectorField]).Trim().ToLower();
                 if (dataValue == selectorValue)
                 {
-                    replacementStr = r.ReplacementList;
-                    break;
+                    return r;
                 }
             }
-            if (replacementStr == null)
+
+            if (row == null)
             {
-                // warning, nothing found
-                throw new DataNotFoundException(row);
+                throw new InvalidDataException("No replacement was found. Add a Replacement with an empty Selector.");
             }
-            var list = replacementStr.Split(',').Select(x => x.Trim()).ToList();
-            string str = list[rnd.Next(0, list.Count - 1)];
-            return str;
+            return null;
         }
 
         private string GetStringFromQuery(DataRow row, QueryReplacement queryReplacement)
         {
             if (queryReplacement.ListOfPossibleReplacements == null)
             {
-                bool wasOpen = EnsureOpenDbConnection();
+                var dt = ReadReplacementTable(queryReplacement);
                 queryReplacement.ListOfPossibleReplacements = new List<Replacement>();
-
-                var dbCmd = config.GetConnection().CreateCommand();
-                dbCmd.CommandType = CommandType.Text;
-                dbCmd.CommandText = queryReplacement.Query;
-
-                var dt = new DataTable(queryReplacement.ValueDbField);
-                var behaviour = wasOpen ? CommandBehavior.Default : CommandBehavior.CloseConnection;
-                using (var dbReader = dbCmd.ExecuteReader(behaviour))
-                {
-                    dt.Load(dbReader);
-                    dbReader.Close();
-                }
-
-                foreach (DataColumn dataColumn in dt.Columns)
-                {
-                    dataColumn.ReadOnly = false;
-                }
 
                 // generate lists
                 if (string.IsNullOrWhiteSpace(queryReplacement.GroupDbField))
@@ -547,6 +281,174 @@ namespace Dandraka.Zoro.Processor
             return GetStringFromList(row, queryReplacement.ListOfPossibleReplacements);
         }
 
+        private DataTable ReadReplacementTable(QueryReplacement queryReplacement)
+        {
+            bool wasOpen = DbConnectionHelper.EnsureOpen(config);
+
+            var dbCmd = config.GetConnection().CreateCommand();
+            dbCmd.CommandType = CommandType.Text;
+            dbCmd.CommandText = queryReplacement.Query;
+
+            var dt = new DataTable(queryReplacement.ValueDbField);
+            var behaviour = wasOpen ? CommandBehavior.Default : CommandBehavior.CloseConnection;
+            using (var dbReader = dbCmd.ExecuteReader(behaviour))
+            {
+                dt.Load(dbReader);
+                dbReader.Close();
+            }
+
+            foreach (DataColumn dataColumn in dt.Columns)
+            {
+                dataColumn.ReadOnly = false;
+            }
+
+            return dt;
+        }
+
+        private protected List<Replacement> GetReplacementQueryLists(QueryReplacement queryReplacement)
+        {
+            if (queryReplacement == null)
+            {
+                throw new InvalidDataException("QueryReplacement must be filled when the mask type is ReplacementQuery.");
+            }
+
+            if (queryReplacement.ListOfPossibleReplacements == null)
+            {
+                var dt = ReadReplacementTable(queryReplacement);
+                var rows = dt.Rows.OfType<DataRow>();
+                var replacements = new List<Replacement>();
+
+                if (string.IsNullOrWhiteSpace(queryReplacement.GroupDbField))
+                {
+                    replacements.Add(CreateReplacement(string.Empty, rows, queryReplacement));
+                }
+                else
+                {
+                    foreach (var group in rows.GroupBy(r => Convert.ToString(r[queryReplacement.GroupDbField])))
+                    {
+                        replacements.Add(CreateReplacement($"{queryReplacement.SelectorField}={group.Key}", group, queryReplacement));
+                    }
+                }
+
+                queryReplacement.ListOfPossibleReplacements = replacements;
+            }
+
+            return queryReplacement.ListOfPossibleReplacements;
+        }
+
+        private static Replacement CreateReplacement(string selector, IEnumerable<DataRow> rows, QueryReplacement queryReplacement)
+        {
+            var replacement = new Replacement() { Selector = selector };
+
+            if (string.IsNullOrWhiteSpace(queryReplacement.KeyDbField))
+            {
+                replacement.Items = rows.Select(r => Convert.ToString(r[queryReplacement.ValueDbField])).ToList();
+                return replacement;
+            }
+
+            foreach (var row in rows)
+            {
+                string key = Convert.ToString(row[queryReplacement.KeyDbField]);
+                if (string.IsNullOrWhiteSpace(key))
+                {
+                    continue;
+                }
+                replacement.Mappings.Add(new ReplacementMap()
+                {
+                    From = key,
+                    To = Convert.ToString(row[queryReplacement.ValueDbField])
+                });
+            }
+            return replacement;
+        }
+
+        /// <summary>
+        /// Replaces the regex group of every match on its own, so each match is masked consistently.
+        /// Only the group is replaced; the rest of the match is kept. Group 0 means the whole match.
+        /// </summary>
+        private string GetConsistentRegexString(string data, FieldMask fieldMask, DataRow row)
+        {
+            var lists = fieldMask.MaskType == MaskType.ReplacementQuery
+                ? GetReplacementQueryLists(fieldMask.QueryReplacement)
+                : GetReplacementLists(fieldMask);
+
+            return new Regex(fieldMask.RegExMatch).Replace(data, match =>
+            {
+                Group group = fieldMask.RegExGroupToReplace == 0 ? match : match.Groups[fieldMask.RegExGroupToReplace];
+                if (!group.Success)
+                {
+                    return match.Value;
+                }
+
+                string replacement = GetConsistentString(group.Value, fieldMask, row, lists);
+                int offset = group.Index - match.Index;
+                return match.Value.Substring(0, offset) + replacement + match.Value.Substring(offset + group.Length);
+            });
+        }
+
+        private protected void LoadReplacementCsvFiles()
+        {
+            foreach (var fieldMask in config.FieldMasks)
+            {
+                foreach (var csv in (fieldMask.ListOfPossibleReplacements ?? new List<Replacement>()).OfType<ReplacementCSV>())
+                {
+                    if (!loadedCsvReplacements.ContainsKey(csv))
+                    {
+                        loadedCsvReplacements.Add(csv, ReplacementCsvLoader.Load(csv, fieldMask.FieldName));
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// The replacements of a ReplacementList mask, where a ReplacementCSV is replaced by the content of its file.
+        /// </summary>
+        private protected List<Replacement> GetReplacementLists(FieldMask fieldMask)
+        {
+            if (loadedCsvReplacements.Count == 0)
+            {
+                return fieldMask.ListOfPossibleReplacements;
+            }
+
+            return fieldMask.ListOfPossibleReplacements
+                .Select(r => r is ReplacementCSV csv ? loadedCsvReplacements[csv] : r)
+                .ToList();
+        }
+
+        private string GetConsistentString(string value, FieldMask fieldMask, DataRow row, List<Replacement> listOfReplacements)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return value;
+            }
+
+            var replacement = SelectReplacement(row, listOfReplacements);
+            if (replacement == null)
+            {
+                throw new DataNotFoundException(row);
+            }
+
+            if (!replacementPools.TryGetValue(replacement, out var pool))
+            {
+                pool = new ReplacementPool(replacement, rnd);
+                replacementPools.Add(replacement, pool);
+            }
+
+            if (pool.TryAssign(value, fieldMask.OnListExhausted == ListExhaustedAction.Reuse, out string assigned))
+            {
+                return assigned;
+            }
+
+            if (fieldMask.OnListExhausted == ListExhaustedAction.Error)
+            {
+                throw new ReplacementExhaustedException();
+            }
+
+            pool.RegisterFallback(value);
+            char asterisk = string.IsNullOrEmpty(fieldMask.Asterisk) ? '*' : fieldMask.Asterisk[0];
+            return GetAsteriskString(value, asterisk);
+        }
+
         private string GetReplacedString(string data, Func<char, char> method)
         {
             string anon = string.Empty;
@@ -564,239 +466,6 @@ namespace Dandraka.Zoro.Processor
             }
 
             return anon;
-        }
-
-        private DataTable ReadDataFromCSVFile()
-        {
-            if (!File.Exists(config.InputFile))
-            {
-                throw new FileNotFoundException(config.InputFile);
-            }
-
-            var tbl = new DataTable();
-
-            using (var parser = new GenericParser())
-            {
-                parser.TextFieldType = FieldType.Delimited;
-                parser.ColumnDelimiter = config.Delimiter[0];
-                parser.FirstRowHasHeader = true;
-                parser.FirstRowSetsExpectedColumnCount = true;
-                parser.TrimResults = false;
-                //parser.SkipStartingDataRows = 10;
-                parser.MaxBufferSize = 1048576;
-                //parser.MaxRows = 500;
-                parser.TextQualifier = '\"';
-                parser.EscapeCharacter = null;
-
-                parser.SetDataSource(config.InputFile, Encoding.UTF8);
-
-                bool doSetup = true;
-
-                while (parser.Read())
-                {
-
-                    if (doSetup)
-                    {
-                        for (int i = 0; i < parser.ColumnCount; i++)
-                        {
-                            string colName = parser.GetColumnName(i);
-                            tbl.Columns.Add(colName, typeof(string));
-                        }
-                        doSetup = false;
-                    }
-
-                    var row = tbl.NewRow();
-                    for (int i = 0; i < parser.ColumnCount; i++)
-                    {
-                        string colName = parser.GetColumnName(i);
-                        row[colName] = parser[colName];
-                    }
-                    tbl.Rows.Add(row);
-                }
-            }
-
-            return tbl;
-        }
-
-        private JContainer ReadDataFromJSONFile()
-        {
-            if (!File.Exists(config.InputFile))
-            {
-                throw new FileNotFoundException(config.InputFile);
-            }
-
-            string json = File.ReadAllText(config.InputFile);
-
-            JContainer jsonObj;
-            try
-            {
-                jsonObj = JObject.Parse(json);
-            }
-            catch (JsonReaderException e)
-            {
-                e.ToString();
-                jsonObj = JArray.Parse(json);
-            }
-
-            return jsonObj;
-        }
-
-        private WordprocessingDocument ReadDataFromDocxFile()
-        {
-            if (!File.Exists(config.InputFile))
-            {
-                throw new FileNotFoundException(config.InputFile);
-            }
-
-            // copy the original to make sure we don't change it
-            File.Copy(config.InputFile, config.OutputFile);
-            var doc = WordprocessingDocument.Open(config.OutputFile, true);
-            return doc;
-        }
-
-        private SpreadsheetDocument ReadDataFromXlsxFile()
-        {
-            if (!File.Exists(config.InputFile))
-            {
-                throw new FileNotFoundException(config.InputFile);
-            }
-
-            // copy the original to make sure we don't change it
-            File.Copy(config.InputFile, config.OutputFile);
-            var doc = SpreadsheetDocument.Open(config.OutputFile, true);
-            return doc;
-        }        
-
-        private void SaveDataToCSVFile(DataTable dt)
-        {
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < dt.Columns.Count; i++)
-            {
-                sb.AppendFormat("{0}{1}",
-                    dt.Columns[i].ColumnName,
-                    i < dt.Columns.Count - 1 ? config.Delimiter : string.Empty);
-            }
-            sb.Append("\r\n");
-
-            for (int r = 0; r < dt.Rows.Count; r++)
-            {
-                for (int i = 0; i < dt.Columns.Count; i++)
-                {
-                    string content = Convert.ToString(dt.Rows[r][dt.Columns[i].ColumnName]);
-                    if (content.Contains(config.Delimiter))
-                    {
-                        content = string.Format("\"{0}\"", content);
-                    }
-
-                    sb.AppendFormat("{0}{1}",
-                            content,
-                            i < dt.Columns.Count - 1 ? config.Delimiter : string.Empty);
-                }
-                sb.Append("\r\n");
-            }
-
-            File.WriteAllText(config.OutputFile, sb.ToString(), Encoding.UTF8);
-
-        }
-
-        private void SaveDataToJSONFile(JContainer dt)
-        {
-            File.WriteAllText(config.OutputFile, dt.ToString(), Encoding.UTF8);
-            config.OutputFile.ToString();
-        }
-
-        private void SaveDataToDocxFile(WordprocessingDocument doc)
-        {
-            try
-            {
-                doc.MainDocumentPart.Document.Save();
-            }
-            finally
-            {
-                doc.Dispose();
-                doc = null;
-            }
-        }
-
-        private void SaveDataToXlsxFile(SpreadsheetDocument doc)
-        {
-            try
-            {
-                doc.WorkbookPart.SharedStringTablePart.SharedStringTable.Save();
-            }
-            finally
-            {
-                doc.Dispose();
-                doc = null;
-            }
-        }        
-
-        private void SaveDataToDb(DataTable dt)
-        {
-            if (config.GetConnection() == null && (string.IsNullOrEmpty(config.ConnectionString) || string.IsNullOrEmpty(config.ConnectionType)))
-            {
-                throw new InvalidDataException("If no DbConnection is provided, ConnectionString and ConnectionType cannot be empty when using the database option");
-            }
-            if (string.IsNullOrWhiteSpace(config.SqlCommand))
-            {
-                throw new ArgumentException($"Sql Command statement must be filled when using the database option");
-            }
-            int numParams = config.SqlCommand.Count(c => c == this.DbParamChar);
-            if (numParams != config.FieldMasks.Count)
-            {
-                throw new ArgumentException($"Sql Command parameter mismatch: '{config.SqlCommand}' does not contain the same number of parameters {this.DbParamChar}field ({numParams}) as the number of FieldMasks ({config.FieldMasks.Count})");
-            }
-
-            bool wasOpen = EnsureOpenDbConnection();
-
-            var cmd = config.GetConnection().CreateCommand();
-            cmd.CommandText = config.SqlCommand;
-            foreach (var m in config.FieldMasks)
-            {
-                var p = cmd.CreateParameter();
-                p.ParameterName = m.FieldName;
-                cmd.Parameters.Add(p);
-            }
-
-            foreach (DataRow r in dt.Rows)
-            {
-                foreach (var m in config.FieldMasks)
-                {
-                    cmd.Parameters[m.FieldName].Value = r[m.FieldName];
-                }
-                cmd.ExecuteNonQuery();
-            }
-
-            if (!wasOpen)
-            {
-                config.GetConnection().Close();
-            }
-        }
-
-        /// <summary>Creates and opens a db connection, if needed.</summary>
-        /// <returns>True if the connection was already open, false otherwise.</returns>
-        private bool EnsureOpenDbConnection()
-        {
-            bool wasOpen = false;
-            if (config.GetConnection() == null)
-            {
-                var dbFactory = GetDbFactory(config.ConnectionType);
-                config.SetConnection(dbFactory.CreateConnection());
-                config.GetConnection().ConnectionString = config.ConnectionString;
-                config.GetConnection().Open();
-            }
-            else
-            {
-                if (config.GetConnection().State != ConnectionState.Open)
-                {
-                    config.GetConnection().Open();
-                }
-                else
-                {
-                    wasOpen = true;
-                }
-            }
-            return wasOpen;
         }
     }
 }

@@ -1,6 +1,6 @@
 # FieldMask.ListOfPossibleReplacements property
 
-In case of `MaskType.List`, the comma-separated list of items to choose from.
+In case of `MaskType.List`, the comma-separated list of items to choose from. In case of `MaskType.ReplacementList`, it can instead contain one `ReplacementCSV` item to take the explicit replacements from a csv file; it cannot be combined with `Replacement` items.
 
 ```csharp
 public List<Replacement> ListOfPossibleReplacements { get; set; }

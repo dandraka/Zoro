@@ -42,7 +42,7 @@ namespace Dandraka.Zoro.Tests
             //Console.WriteLine($"Config: OutputFile = {config.OutputFile}");
 
             // === Act ===
-            var masker = new DataMasking(config);
+            var masker = DataMasking.Create(config);
             masker.Mask();
 
             // === Assert ===
@@ -77,7 +77,7 @@ namespace Dandraka.Zoro.Tests
             { Selector = "", ReplacementList = "Main Street 9,Fifth Avenue 104,Ranch rd. 1" });
 
             // === Act ===
-            var masker = new DataMasking(config);
+            var masker = DataMasking.Create(config);
             try
             {
                 masker.Mask();
@@ -114,7 +114,7 @@ namespace Dandraka.Zoro.Tests
             config.FieldMasks.Add(new FieldMask() { FieldName = "name", MaskType = MaskType.None });
 
             // === Act ===
-            var masker = new DataMasking(config);
+            var masker = DataMasking.Create(config);
             masker.Mask();
 
             // === Assert ===
@@ -147,7 +147,7 @@ namespace Dandraka.Zoro.Tests
             config.FieldMasks.Add(new FieldMask() { FieldName = "name", MaskType = MaskType.Asterisk });
 
             // === Act ===
-            var masker = new DataMasking(config);
+            var masker = DataMasking.Create(config);
             masker.Mask();
 
             // === Assert ===
@@ -182,7 +182,7 @@ namespace Dandraka.Zoro.Tests
             config.FieldMasks[1].ListOfPossibleReplacements.Add(new Replacement() { Selector = "", ReplacementList = "Charles Xavier" });
 
             // === Act ===
-            var masker = new DataMasking(config);
+            var masker = DataMasking.Create(config);
             masker.Mask();
 
             // === Assert ===
@@ -214,7 +214,7 @@ namespace Dandraka.Zoro.Tests
             config.FieldMasks.Add(new FieldMask() { FieldName = "name", MaskType = MaskType.Random });
 
             // === Act ===
-            var masker = new DataMasking(config);
+            var masker = DataMasking.Create(config);
             masker.Mask();
 
             // === Assert ===
@@ -276,7 +276,7 @@ namespace Dandraka.Zoro.Tests
             utility.TestTablesToDrop = "cities";
 
             // === Act ===
-            var masker = new DataMasking(config);
+            var masker = DataMasking.Create(config);
             masker.Mask();
 
             // === Assert ===
@@ -325,7 +325,7 @@ namespace Dandraka.Zoro.Tests
             var config = MaskConfig.ReadConfig(utility.TestInstanceConfigJSONfile);
 
             // === Act ===
-            var masker = new DataMasking(config);
+            var masker = DataMasking.Create(config);
             masker.Mask();
 
             // === Assert ===
@@ -353,7 +353,7 @@ namespace Dandraka.Zoro.Tests
             config.OutputFile = config.OutputFile.Replace("data2.json", "data3.json");
 
             // === Act ===
-            var masker = new DataMasking(config);
+            var masker = DataMasking.Create(config);
             masker.Mask();
 
             // === Assert ===
@@ -381,7 +381,7 @@ namespace Dandraka.Zoro.Tests
             config.OutputFile = config.OutputFile.Replace("data2.json", "data4.json");
 
             // === Act ===
-            var masker = new DataMasking(config);
+            var masker = DataMasking.Create(config);
             masker.Mask();
 
             // === Assert ===
@@ -408,7 +408,7 @@ namespace Dandraka.Zoro.Tests
             config.OutputFile = config.OutputFile.Replace("data2.json", "nested2WithArray.json");
 
             // === Act ===
-            var masker = new DataMasking(config);
+            var masker = DataMasking.Create(config);
             masker.Mask();
 
             // === Assert ===
@@ -447,7 +447,7 @@ namespace Dandraka.Zoro.Tests
             });
 
             // === Act ===
-            var masker = new DataMasking(config);
+            var masker = DataMasking.Create(config);
             masker.Mask();
 
             // === Assert ===
@@ -487,7 +487,7 @@ namespace Dandraka.Zoro.Tests
             });
 
             // === Act ===
-            var masker = new DataMasking(config);
+            var masker = DataMasking.Create(config);
             masker.Mask();
 
             // === Assert ===
@@ -520,7 +520,7 @@ namespace Dandraka.Zoro.Tests
             config.OutputFile = config.OutputFile.Replace("data2.json", "data5.json");
 
             // === Act ===
-            var masker = new DataMasking(config);
+            var masker = DataMasking.Create(config);
             masker.Mask();
 
             // === Assert ===
@@ -555,7 +555,7 @@ namespace Dandraka.Zoro.Tests
 
             // === Act ===
             bool hasException = false;
-            var masker = new DataMasking(config);
+            var masker = DataMasking.Create(config);
             try
             {
                 masker.Mask();
@@ -601,7 +601,7 @@ namespace Dandraka.Zoro.Tests
             });
 
             // === Act ===
-            var masker = new DataMasking(config);
+            var masker = DataMasking.Create(config);
             masker.Mask();
 
             // === Assert ===
@@ -634,7 +634,7 @@ namespace Dandraka.Zoro.Tests
             config.OutputFile = config.OutputFile.Replace("data2.json", "sample.json");
 
             // === Act ===
-            var masker = new DataMasking(config);
+            var masker = DataMasking.Create(config);
             masker.Mask();
 
             // === Assert ===

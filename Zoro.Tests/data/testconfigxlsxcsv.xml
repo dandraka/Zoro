@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<!-- Manual test for Excel files with the mappings in a csv file. From this folder run: Zoro.exe testconfigxlsxcsv.xml
+     The output file must not exist yet, delete it before running again. -->
+<MaskConfig xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <FieldMasks>
+    <FieldMask>
+      <FieldName>all</FieldName>
+      <MaskType>ReplacementList</MaskType>
+      <ListOfPossibleReplacements>
+        <ReplacementCSV CSVFileName="HR_mapping.csv" FromFieldName="original" ToFieldName="pseudonym" />
+      </ListOfPossibleReplacements>
+    </FieldMask>
+  </FieldMasks>
+  <InputFile>HR_data.xlsx</InputFile>
+  <OutputFile>HR_data_masked_csv.xlsx</OutputFile>
+  <DataSource>XlsXFile</DataSource>
+  <DataDestination>XlsXFile</DataDestination>
+</MaskConfig>
