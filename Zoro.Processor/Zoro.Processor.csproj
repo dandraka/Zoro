@@ -29,6 +29,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="Zoro.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Include="LICENSE.txt" CopyToOutputDirectory="Always" Pack="true" PackagePath="/" />
     <None Include="icon.png" CopyToOutputDirectory="Always" Pack="true" PackagePath="/" />
     <None Include="README.md" CopyToOutputDirectory="Always" Pack="true" PackagePath="/" />

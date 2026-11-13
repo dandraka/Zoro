@@ -820,6 +820,273 @@ namespace Dandraka.Zoro.Tests
             Assert.Equal("X,Y", plain.ReplacementList);
         }
 
+        private void CreateTable(string name, string selectSql)
+        {
+            var cmd = utility.TestDbConnection.CreateCommand();
+            cmd.CommandText = $"CREATE TABLE {name} AS {selectSql}";
+            cmd.ExecuteNonQuery();
+        }
+
+        private static FieldMask QueryMask(string fieldName, string query, string valueField, string keyField = null)
+        {
+            return new FieldMask()
+            {
+                FieldName = fieldName,
+                MaskType = MaskType.ReplacementQuery,
+                QueryReplacement = new QueryReplacement() { Query = query, ValueDbField = valueField, KeyDbField = keyField }
+            };
+        }
+
+        private MaskConfig DocxConfig(string testName)
+        {
+            var config = new MaskConfig()
+            {
+                DataSource = DataSource.DocXFile,
+                DataDestination = DataDestination.DocXFile,
+                InputFile = Path.Combine(utility.TestInstanceDir, "SecretCombination.docx"),
+                OutputFile = Path.Combine(utility.TestInstanceDir, $"{testName}.docx")
+            };
+            config.SetConnection(utility.TestDbConnection);
+            return config;
+        }
+
+        private MaskConfig CsvConfig(string csvContent, params FieldMask[] masks)
+        {
+            string csvFilename = utility.CreateFileInTestInstanceDir(csvContent, "csv");
+            var config = new MaskConfig() { InputFile = csvFilename, OutputFile = csvFilename.Replace(".csv", "_out.csv") };
+            config.SetConnection(utility.TestDbConnection);
+            config.FieldMasks.AddRange(masks);
+            return config;
+        }
+
+        [Fact]
+        public void T30_ReplacementQuery_Docx_Pool()
+        {
+            // === Arrange ===
+            string testName = System.Reflection.MethodBase.GetCurrentMethod().Name;
+            CreateTable("word_pool", "SELECT 'soul' AS word UNION ALL SELECT 'spirit' AS word");
+            var config = DocxConfig(testName);
+            config.FieldMasks.Add(QueryMask("heart", "SELECT word FROM word_pool", "word"));
+
+            // === Act ===
+            DataMasking.Create(config).Mask();
+
+            // === Assert ===
+            var texts = ReadDocxTexts(config.OutputFile);
+            var replacements = texts.Select(t => Regex.Match(t, @"^In the center of my (\w+)$")).Where(m => m.Success).Select(m => m.Groups[1].Value).ToList();
+            Assert.Equal(6, replacements.Count);
+            Assert.Single(replacements.Distinct());
+            Assert.Contains(replacements[0], new[] { "soul", "spirit" });
+            Assert.DoesNotContain(texts, t => t.Contains("heart"));
+        }
+
+        [Fact]
+        public void T31_ReplacementQuery_Docx_MappingTable()
+        {
+            // === Arrange ===
+            string testName = System.Reflection.MethodBase.GetCurrentMethod().Name;
+            CreateTable("word_mapping", "SELECT 'HEART' AS originalWord, 'soul' AS replacement UNION ALL SELECT 'book' AS originalWord, 'tablet' AS replacement");
+            var config = DocxConfig(testName);
+            config.FieldMasks.Add(QueryMask("all", "SELECT originalWord, replacement FROM word_mapping", "replacement", "originalWord"));
+
+            // === Act ===
+            DataMasking.Create(config).Mask();
+
+            // === Assert ===
+            var texts = ReadDocxTexts(config.OutputFile);
+            Assert.Equal(6, texts.Count(t => t == "In the center of my soul"));
+            Assert.Equal(2, texts.Count(t => t == "An open tablet"));
+            Assert.DoesNotContain(texts, t => t.Contains("heart") || t.Contains("book"));
+            Assert.Contains("Use your imagination", texts);
+        }
+
+        [Fact]
+        public void T32_ReplacementQuery_Docx_RegEx_Pool()
+        {
+            // === Arrange ===
+            string testName = System.Reflection.MethodBase.GetCurrentMethod().Name;
+            CreateTable("word_pool", "SELECT 'alpha' AS word UNION ALL SELECT 'beta' AS word");
+            var config = DocxConfig(testName);
+            var mask = QueryMask("words", "SELECT word FROM word_pool", "word");
+            mask.RegExMatch = @"\b(secret|mystery)\b";
+            mask.RegExGroupToReplace = 1;
+            config.FieldMasks.Add(mask);
+
+            // === Act ===
+            DataMasking.Create(config).Mask();
+
+            // === Assert ===
+            var texts = ReadDocxTexts(config.OutputFile);
+            var secretWords = texts.Select(t => Regex.Match(t, @"^My (\w+) combination$")).Where(m => m.Success).Select(m => m.Groups[1].Value).ToList();
+            var mysteryWords = texts.Select(t => Regex.Match(t, @"^It's a (\w+) for you$")).Where(m => m.Success).Select(m => m.Groups[1].Value).ToList();
+
+            Assert.Equal(10, secretWords.Count);
+            Assert.Equal(5, mysteryWords.Count);
+            Assert.Single(secretWords.Distinct());
+            Assert.Single(mysteryWords.Distinct());
+            Assert.NotEqual(secretWords[0], mysteryWords[0]);
+            Assert.Contains(secretWords[0], new[] { "alpha", "beta" });
+            Assert.Contains(mysteryWords[0], new[] { "alpha", "beta" });
+        }
+
+        [Fact]
+        public void T33_ReplacementQuery_Xlsx_Pool_Exhausted()
+        {
+            // === Arrange ===
+            string testName = System.Reflection.MethodBase.GetCurrentMethod().Name;
+            CreateTable("iban_pool", "SELECT 'IBAN-1' AS code UNION ALL SELECT 'IBAN-2' AS code UNION ALL SELECT 'IBAN-3' AS code");
+            var config = new MaskConfig()
+            {
+                DataSource = DataSource.XlsXFile,
+                DataDestination = DataDestination.XlsXFile,
+                InputFile = Path.Combine(utility.TestInstanceDir, "ibans.xlsx"),
+                OutputFile = Path.Combine(utility.TestInstanceDir, $"{testName}.xlsx")
+            };
+            config.SetConnection(utility.TestDbConnection);
+            // the file has 8 different IBANs, but only 3 replacements
+            var mask = QueryMask("IBAN", "SELECT code FROM iban_pool", "code");
+            mask.RegExMatch = @"\b([A-Z]{2}\d{2}\w{10,30})\b";
+            mask.RegExGroupToReplace = 1;
+            config.FieldMasks.Add(mask);
+
+            // === Act ===
+            var masker = DataMasking.Create(config);
+            masker.Mask();
+
+            // === Assert ===
+            var texts = ReadXlsxTexts(config.OutputFile);
+            Assert.Equal(3, texts.Count(t => t != null && t.StartsWith("IBAN-")));
+            Assert.Equal(5, texts.Count(t => !string.IsNullOrEmpty(t) && t.All(c => c == '*')));
+            Assert.Equal(5, masker.ValuesWithoutReplacement);
+        }
+
+        [Fact]
+        public void T34_ReplacementQuery_RegEx_ReplacesOnlyTheGroupAndEveryMatch()
+        {
+            // === Arrange ===
+            string csv = "id;phone\r\n1;+41 785412798\r\n2;+41 785412798\r\n3;+49 17612345\r\n4;+49 17699999";
+            CreateTable("phone_pool", "SELECT '111' AS num UNION ALL SELECT '222' AS num UNION ALL SELECT '333' AS num UNION ALL SELECT '444' AS num");
+            var phoneMask = QueryMask("phone", "SELECT num FROM phone_pool", "num");
+            phoneMask.RegExMatch = @"^(\+\d\d) (.*)$";
+            phoneMask.RegExGroupToReplace = 2;
+
+            // === Act ===
+            var (rows, _) = MaskCsv(csv, new FieldMask() { FieldName = "id", MaskType = MaskType.None }, phoneMask);
+
+            // === Assert ===
+            var phones = rows.Select(r => r[1]).ToList();
+            Assert.StartsWith("+41 ", phones[0]);
+            Assert.StartsWith("+41 ", phones[1]);
+            Assert.StartsWith("+49 ", phones[2]);
+            Assert.Equal(phones[0], phones[1]);
+            // two different numbers, plus the repeated one
+            Assert.Equal(3, phones.Distinct().Count());
+        }
+
+        [Fact]
+        public void T35_ReplacementQuery_JSON_MappingTable()
+        {
+            // === Arrange ===
+            CreateTable("name_mapping", "SELECT 'Nick' AS originalName, 'John' AS pseudonym UNION ALL SELECT 'Eva' AS originalName, 'Jane' AS pseudonym");
+            string json = "[{\"name\":\"Nick\"},{\"name\":\"Eva\"},{\"name\":\"nick\"}]";
+            string jsonFilename = utility.CreateFileInTestInstanceDir(json, "json");
+            var config = new MaskConfig()
+            {
+                DataSource = DataSource.JsonFile,
+                DataDestination = DataDestination.JsonFile,
+                InputFile = jsonFilename,
+                OutputFile = jsonFilename.Replace(".json", "_out.json")
+            };
+            config.SetConnection(utility.TestDbConnection);
+            config.FieldMasks.Add(QueryMask("name", "SELECT originalName, pseudonym FROM name_mapping", "pseudonym", "originalName"));
+
+            // === Act ===
+            DataMasking.Create(config).Mask();
+
+            // === Assert ===
+            var result = JArray.Parse(File.ReadAllText(config.OutputFile));
+            Assert.Equal(["John", "Jane", "John"], result.Select(x => (string)x["name"]));
+        }
+
+        [Fact]
+        public void T36_ReplacementQuery_Pool_Exhausted_Asterisk_IsDefault()
+        {
+            // === Arrange ===
+            string csv = "id;city\r\n1;Athens\r\n2;Madrid\r\n3;Athens\r\n4;Madrid";
+            CreateTable("city_pool", "SELECT 'X' AS city");
+
+            // === Act ===
+            var (rows, masker) = MaskCsv(csv,
+                new FieldMask() { FieldName = "id", MaskType = MaskType.None },
+                QueryMask("city", "SELECT city FROM city_pool", "city"));
+
+            // === Assert ===
+            var cities = rows.Select(r => r[1]).ToList();
+            Assert.Equal(["X", "******"], cities.Distinct().OrderByDescending(c => c, StringComparer.Ordinal));
+            Assert.Equal(cities[0], cities[2]);
+            Assert.Equal(cities[1], cities[3]);
+            Assert.Equal(1, masker.ValuesWithoutReplacement);
+        }
+
+        [Fact]
+        public void T37_ReplacementQuery_MappingTable_Exhausted_Asterisk_CustomCharacter()
+        {
+            // === Arrange ===
+            string csv = "id;city\r\n1;Athens\r\n2;Madrid";
+            CreateTable("city_mapping", "SELECT 'Athens' AS originalCity, 'CityA' AS replacement");
+            var cityMask = QueryMask("city", "SELECT originalCity, replacement FROM city_mapping", "replacement", "originalCity");
+            cityMask.Asterisk = "#";
+
+            // === Act ===
+            var (rows, masker) = MaskCsv(csv, new FieldMask() { FieldName = "id", MaskType = MaskType.None }, cityMask);
+
+            // === Assert ===
+            Assert.Equal(["CityA", "######"], rows.Select(r => r[1]));
+            Assert.Equal(1, masker.ValuesWithoutReplacement);
+        }
+
+        [Fact]
+        public void T38_ReplacementQuery_Exhausted_Error()
+        {
+            // === Arrange ===
+            CreateTable("city_pool", "SELECT 'X' AS city");
+            var cityMask = QueryMask("city", "SELECT city FROM city_pool", "city");
+            cityMask.OnListExhausted = ListExhaustedAction.Error;
+            var config = CsvConfig("id;city\r\n1;Athens\r\n2;Madrid", cityMask);
+
+            // === Act & Assert ===
+            Assert.Throws<ReplacementExhaustedException>(() => DataMasking.Create(config).Mask());
+        }
+
+        [Fact]
+        public void T39_ReplacementQuery_Exhausted_Reuse()
+        {
+            // === Arrange ===
+            string csv = "id;city\r\n1;Athens\r\n2;Madrid\r\n3;Athens";
+            CreateTable("city_pool", "SELECT 'X' AS city");
+            var cityMask = QueryMask("city", "SELECT city FROM city_pool", "city");
+            cityMask.OnListExhausted = ListExhaustedAction.Reuse;
+
+            // === Act ===
+            var (rows, masker) = MaskCsv(csv, new FieldMask() { FieldName = "id", MaskType = MaskType.None }, cityMask);
+
+            // === Assert ===
+            Assert.All(rows.Select(r => r[1]), c => Assert.Equal("X", c));
+            Assert.Equal(0, masker.ValuesWithoutReplacement);
+        }
+
+        [Fact]
+        public void T40_ReplacementQuery_MissingQueryReplacement_Throws()
+        {
+            // === Arrange ===
+            var config = CsvConfig("id;city\r\n1;Athens",
+                new FieldMask() { FieldName = "city", MaskType = MaskType.ReplacementQuery });
+
+            // === Act & Assert ===
+            var ex = Assert.Throws<InvalidDataException>(() => DataMasking.Create(config).Mask());
+            Assert.Contains("QueryReplacement", ex.Message);
+        }
+
         private static List<string> ReadXlsxTexts(string file)
         {
             using var doc = SpreadsheetDocument.Open(file, false);

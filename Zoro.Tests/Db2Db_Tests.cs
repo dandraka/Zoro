@@ -22,18 +22,8 @@ namespace Dandraka.Zoro.Tests
             //
         }
 
-        [SkippableFact]
-        public void T01_TestSecret()
-        {
-            // test github secrets
-            // on local, use  $env:TESTSECRET = 'LALALA' in the terminal
-            var secret = Environment.GetEnvironmentVariable("TESTSECRET");
-            Skip.If(string.IsNullOrWhiteSpace(secret), "No secret info found, is the environment variable 'TESTSECRET' set?");
-            Assert.Equal("LALALA", secret);
-        }
-
         [Fact]
-        public void T02_Db2Csv_Sqlite()
+        public void T01_Db2Csv_Sqlite()
         {
             // === Arrange ===
             string testName = System.Reflection.MethodBase.GetCurrentMethod().Name;
@@ -60,15 +50,7 @@ namespace Dandraka.Zoro.Tests
 
                 // === Act ===
                 var masker = DataMasking.Create(config);
-                try
-                {
-                    masker.Mask();
-                }
-                catch (Microsoft.Data.SqlClient.SqlException ex)
-                {
-                    // error 40 - could not open connection to sql server
-                    Skip.If(ex.Message.Contains("40"), $"Database seems not to respond, check if your SQL Server is running. {ex.Message}");
-                }
+                masker.Mask();
 
                 // === Assert ===
                 Assert.True(File.Exists(config.OutputFile));
@@ -80,7 +62,7 @@ namespace Dandraka.Zoro.Tests
         }
 
         [Fact]
-        public void T03_Csv2Db_Sqlite()
+        public void T02_Csv2Db_Sqlite()
         {
             // === Arrange ===
             string testName = System.Reflection.MethodBase.GetCurrentMethod().Name;
@@ -111,15 +93,7 @@ namespace Dandraka.Zoro.Tests
 
                 // === Act ===
                 var masker = DataMasking.Create(config);
-                try
-                {
-                    masker.Mask();
-                }
-                catch (Microsoft.Data.SqlClient.SqlException ex)
-                {
-                    // error 40 - could not open connection to sql server
-                    Skip.If(ex.Message.Contains("40"), $"Database seems not to respond, check if your SQL Server is running. {ex.Message}");
-                }
+                masker.Mask();
 
                 // === Assert ===
                 var cmdSel = utility.TestDbConnection.CreateCommand();
@@ -132,7 +106,7 @@ namespace Dandraka.Zoro.Tests
         }
 
         [Fact]
-        public void T04_Db2Db_Sqlite()
+        public void T03_Db2Db_Sqlite()
         {
             // === Arrange ===
             string testName = System.Reflection.MethodBase.GetCurrentMethod().Name;
@@ -179,206 +153,10 @@ namespace Dandraka.Zoro.Tests
 
                 // === Act ===
                 var masker = DataMasking.Create(config);
-                try
-                {
-                    masker.Mask();
-                }
-                catch (Microsoft.Data.SqlClient.SqlException ex)
-                {
-                    // error 40 - could not open connection to sql server
-                    Skip.If(ex.Message.Contains("40"), $"Database seems not to respond, check if your SQL Server is running. {ex.Message}");
-                }
+                masker.Mask();
 
                 // === Assert ===
                 // if no error, test passes                
-            }
-        }
-
-        [SkippableFact]
-        public void T05_Db2Csv_SqlServer()
-        {
-            // === Arrange ===
-            string testName = System.Reflection.MethodBase.GetCurrentMethod().Name;
-            Console.WriteLine($"Starting {testName}");
-
-            string tblName = $"{testName}_{Guid.NewGuid().ToString().Substring(0, 8)}";
-
-            // Use either a github secret or
-            // on local, use  $env:SQLCONNSTRING = 'my conn string' in the terminal
-            // Examples:
-            // On prem SQL Server: 
-            // Server=DbServer;Integrated Security=true;Initial Catalog=DbName;
-            // Azure SQL Server: 
-            // Server=tcp:DbServer,1433;Initial Catalog=DbName;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;
-            var connstr = Environment.GetEnvironmentVariable("SQLCONNSTRING");
-
-            // skip if no db config found
-            Skip.If(string.IsNullOrWhiteSpace(connstr), "No database connection info found, is the environment variable 'SQLCONNSTRING' set?");
-
-            using (var utility = new Utility())
-            {
-                try
-                {
-                    utility.PrepareTestInstanceDir();
-                    utility.PrepareSqlServerDb(tblName, connstr);
-
-                    var config = new MaskConfig()
-                    {
-                        DataSource = DataSource.Database,
-                        DataDestination = DataDestination.CsvFile,
-                        SqlSelect = $"SELECT * FROM {utility.TestTableName}",
-                        OutputFile = Path.Combine(utility.TestInstanceDir, "T01_Db2Csv.csv")
-                    };
-                    config.SetConnection(utility.TestDbConnection);
-                    config.FieldMasks.Add(new FieldMask() { FieldName = "Name", MaskType = MaskType.None });
-                    config.FieldMasks.Add(new FieldMask() { FieldName = "BankAccount", MaskType = MaskType.Asterisk });
-                    config.FieldMasks.Add(new FieldMask() { FieldName = "Country", MaskType = MaskType.None });
-                    config.FieldMasks.Add(new FieldMask() { FieldName = "Address", MaskType = MaskType.None });
-
-                    // === Act ===
-                    var masker = DataMasking.Create(config);
-                    masker.Mask();
-
-                    // === Assert ===
-                    Assert.True(File.Exists(config.OutputFile));
-                    var contents = new List<string>(File.ReadLines(config.OutputFile));
-                    Console.WriteLine($"Contents of {config.OutputFile}");
-                    contents.ForEach(x => Console.WriteLine(x));
-                    Assert.Equal(5, contents.Count);
-                }
-                catch (Microsoft.Data.SqlClient.SqlException ex)
-                {
-                    // error 40 - could not open connection to sql server
-                    Skip.If(ex.Message.Contains("40"), $"Database seems not to respond, check if your SQL Server is running. {ex.Message}");
-                }
-            }
-        }
-
-        [SkippableFact]
-        public void T06_Csv2Db_SqlServer()
-        {
-            // === Arrange ===
-            string testName = System.Reflection.MethodBase.GetCurrentMethod().Name;
-            Console.WriteLine($"Starting {testName}");
-
-            string tblName = $"{testName}_{Guid.NewGuid().ToString().Substring(0, 8)}";
-            string tblName2 = $"{testName}_{Guid.NewGuid().ToString().Substring(0, 8)}";
-
-            var connstr = Environment.GetEnvironmentVariable("SQLCONNSTRING");
-
-            // skip if no db config found
-            Skip.If(string.IsNullOrWhiteSpace(connstr), "No database connection info found, is the environment variable 'SQLCONNSTRING' set?");
-
-            using (var utility = new Utility())
-            {
-                try
-                {
-                    utility.PrepareTestInstanceDir();
-                    utility.PrepareSqlServerDb(tblName, connstr);
-
-                    var config = new MaskConfig()
-                    {
-                        DataSource = DataSource.CsvFile,
-                        DataDestination = DataDestination.Database,
-                        SqlCommand = $"INSERT INTO {tblName2} (ID, Name, Bankaccount) VALUES (@ID, '@Name', '@BankAccount')",
-                        InputFile = Path.Combine(utility.TestInstanceDir, "data1.csv")
-                    };
-                    config.SetConnection(utility.TestDbConnection);
-                    config.FieldMasks.Add(new FieldMask() { FieldName = "ID", MaskType = MaskType.None });
-                    config.FieldMasks.Add(new FieldMask() { FieldName = "Name", MaskType = MaskType.None });
-                    config.FieldMasks.Add(new FieldMask() { FieldName = "BankAccount", MaskType = MaskType.Asterisk });
-
-                    var cmdTbl = utility.TestDbConnection.CreateCommand();
-                    cmdTbl.CommandText = $"CREATE TABLE {tblName2} (ID int, Name nvarchar(100), BankAccount varchar(50))";
-                    cmdTbl.ExecuteNonQuery();
-                    utility.TestTablesToDrop = tblName2;
-
-                    // === Act ===
-                    var masker = DataMasking.Create(config);
-                    masker.Mask();
-                }
-                catch (Microsoft.Data.SqlClient.SqlException ex)
-                {
-                    // error 40 - could not open connection to sql server
-                    Skip.If(ex.Message.Contains("40"), $"Database seems not to respond, check if your SQL Server is running. {ex.Message}");
-                }
-
-                // === Assert ===
-                var cmdSel = utility.TestDbConnection.CreateCommand();
-                cmdSel.CommandText = $"SELECT * FROM {tblName2}";
-                var dt = new DataTable();
-                dt.Load(cmdSel.ExecuteReader());
-
-                Assert.Equal(4, dt.Rows.Count);
-            }
-        }
-
-        [SkippableFact]
-        public void T07_Db2Db_SqlServer()
-        {
-            // === Arrange ===
-            string testName = System.Reflection.MethodBase.GetCurrentMethod().Name;
-            Console.WriteLine($"Starting {testName}");
-
-            string tblName = $"{testName}_{Guid.NewGuid().ToString().Substring(0, 8)}";
-
-            var connstr = Environment.GetEnvironmentVariable("SQLCONNSTRING");
-
-            // skip if no db config found
-            Skip.If(string.IsNullOrWhiteSpace(connstr), "No database connection info found, is the environment variable 'SQLCONNSTRING' set?");
-
-            using (var utility = new Utility())
-            {
-                try
-                {
-                    utility.PrepareTestInstanceDir();
-                    utility.PrepareSqlServerDb(tblName, connstr);
-
-                    // debug: get list of tables
-                    /*
-                    var testCmd = utility.TestDbConnection.CreateCommand();
-                    testCmd.CommandText = "SELECT name FROM sqlite_schema WHERE type ='table' AND name NOT LIKE 'sqlite_%'";
-                    var tbl = new DataTable();
-                    using (var rd = testCmd.ExecuteReader())
-                    {
-                        tbl.Load(rd);
-                    }
-                    string tablesStr = Utility.DumpDataTable(tbl);
-                    Console.Write($"========== List of tables: {tablesStr} ==========");
-                    */
-
-                    var config = new MaskConfig()
-                    {
-                        DataSource = DataSource.Database,
-                        DataDestination = DataDestination.Database,
-                        SqlSelect = $"SELECT * FROM {utility.TestTableName}",
-                        SqlCommand = $"UPDATE {utility.TestTableName} SET Name=@Name, Bankaccount=@Bankaccount, Address=@Address WHERE ID = @ID",
-                        OutputFile = Path.Combine(utility.TestInstanceDir, "T01_Db2Csv.csv")
-                    };
-                    config.SetConnection(utility.TestDbConnection);
-                    config.FieldMasks.Add(new FieldMask() { FieldName = "ID", MaskType = MaskType.None });
-                    config.FieldMasks.Add(new FieldMask() { FieldName = "Name", MaskType = MaskType.None });
-                    config.FieldMasks.Add(new FieldMask() { FieldName = "BankAccount", MaskType = MaskType.Asterisk });
-                    config.FieldMasks.Add(new FieldMask() { FieldName = "Address", MaskType = MaskType.List });
-                    config.FieldMasks[3].ListOfPossibleReplacements.Add(new Replacement()
-                    { Selector = "country=CH", ReplacementList = "Bahnhofstrasse 41,Hauptstrasse 8,Berggasse 4" });
-                    config.FieldMasks[3].ListOfPossibleReplacements.Add(new Replacement()
-                    { Selector = "country=GR", ReplacementList = "Evangelistrias 22,Thessalias 47,Eparhiaki Odos Lefkogion 6" });
-                    config.FieldMasks[3].ListOfPossibleReplacements.Add(new Replacement()
-                    { Selector = "", ReplacementList = "Main Street 9,Fifth Avenue 104,Ranch rd. 1" });
-
-                    // === Act ===
-                    var masker = DataMasking.Create(config);
-                    masker.Mask();
-                }
-                catch (Microsoft.Data.SqlClient.SqlException ex)
-                {
-                    // error 40 - could not open connection to sql server
-                    Skip.If(ex.Message.Contains("40"), $"Database seems not to respond, check if your SQL Server is running. {ex.Message}");
-                }
-
-                // === Assert ===
-                // if no error, test passes       
             }
         }
     }

@@ -38,9 +38,6 @@ jobs:
 
     - name: Test
       run: dotnet test --no-build --verbosity normal --configuration Release
-      env:
-        TESTSECRET: ${{secrets.TESTSECRET}}        
-        SQLCONNSTRING: ${{secrets.SQLCONNSTRING}} 
 
     - name: Generate executable (win)
       run: dotnet publish Zoro/Zoro.csproj --configuration Release --runtime win-x64 /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true --self-contained true

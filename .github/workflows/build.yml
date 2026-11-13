@@ -47,6 +47,3 @@ jobs:
 
     - name: Test
       run: dotnet test --no-build --verbosity normal --configuration Release
-      env:
-        TESTSECRET: ${{secrets.TESTSECRET}}        
-        SQLCONNSTRING: ${{secrets.SQLCONNSTRING}} 

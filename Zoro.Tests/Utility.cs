@@ -5,7 +5,6 @@ using System.IO;
 using System.Reflection;
 using System.Text;
 using System.Data.SQLite;
-using Microsoft.Data.SqlClient;
 using System.Collections.Generic;
 using System.Linq;
 using System.Diagnostics;
@@ -23,7 +22,7 @@ namespace Dandraka.Zoro.Tests
 
         public DbConnection TestDbConnection;
 
-        public char DbParamChar => this.TestDbConnection is SqlConnection ? '@' : '$';
+        public char DbParamChar => '$';
 
         public string TestTableName { get; private set; }
 
@@ -46,12 +45,6 @@ namespace Dandraka.Zoro.Tests
             this.PrepareDb(tableName);
         }
 
-        public void PrepareSqlServerDb(string tableName, string connString)
-        {
-            this.TestDbConnection = new SqlConnection(connString);
-            this.PrepareDb(tableName);
-        }
-
         private void PrepareDb(string tableName = "testdata")
         {
             this.TestDbConnection.Open();
@@ -71,16 +64,7 @@ namespace Dandraka.Zoro.Tests
             cmdInsert.CommandText = insertSql;
             foreach (string csvField in csvFields)
             {
-                switch (this.TestDbConnection.GetType().ToString())
-                {
-                    case "Microsoft.Data.SqlClient.SqlConnection":
-                        var dbType = csvField == "ID" ? SqlDbType.Int : SqlDbType.NVarChar;
-                        cmdInsert.Parameters.Add(new SqlParameter($"{DbParamChar}{csvField}", dbType));
-                        break;
-                    default:
-                        cmdInsert.Parameters.Add(new SQLiteParameter($"{DbParamChar}{csvField}"));
-                        break;
-                }
+                cmdInsert.Parameters.Add(new SQLiteParameter($"{DbParamChar}{csvField}"));
             }
 
             for (int i = 1; i < csvContents.Count; i++)

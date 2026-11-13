@@ -51,7 +51,7 @@ namespace Dandraka.Zoro.Tests
             Assert.Equal(5, contents.Count);
         }
 
-        [SkippableFact]
+        [Fact]
         public void T02_Mask_DB_Test()
         {
             // === Arrange ===
@@ -78,15 +78,7 @@ namespace Dandraka.Zoro.Tests
 
             // === Act ===
             var masker = DataMasking.Create(config);
-            try
-            {
-                masker.Mask();
-            }
-            catch (Microsoft.Data.SqlClient.SqlException ex)
-            {
-                // error 40 - could not open connection to sql server
-                Skip.If(ex.Message.Contains("40"), $"Database seems not to respond, check if your SQL Server is running. {ex.Message}");
-            }
+            masker.Mask();
 
             // === Assert ===
             Assert.True(File.Exists(config.OutputFile));
