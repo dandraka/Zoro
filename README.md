@@ -2,13 +2,13 @@
 
 ## BIG NEWS FOR VERSION 4.x !!!
 
-Versions 4.x not only support anonymization of Office files (.docx and .xlsx; .pptx coming soon) but also now properly support Pseudonymisation: you can have a list of replacements that are applied consistenly. This way, for example, "Jim" is always replaced with "Genius", "George" is always replaced with "Hardworker", "Maria N" is always replaced with "Dancer", "Maria V" is always replaced with "Master of Pastries" and so on.
+Versions 4.x not only support anonymization of Office files (.docx, .xlsx and .pptx) but also now properly support Pseudonymisation: you can have a list of replacements that are applied consistenly. This way, for example, "Jim" is always replaced with "Genius", "George" is always replaced with "Hardworker", "Maria N" is always replaced with "Dancer", "Maria V" is always replaced with "Master of Pastries" and so on.
 
 The list of replacements can be in the config itself, in a CSV or in a database. Read on for details.
 
 ## Purpose and scope
 
-Zoro is a data masking and anonymization utility. It fetches data from a database, a JSON or a CSV file, and either creates a JSON file, a CSV file or runs SQL statements with the masked data. It can also be used with Office file types (currently .docx and .xlsx files are supported) to anonymize their content.
+Zoro is a data masking and anonymization utility. It fetches data from a database, a JSON or a CSV file, and either creates a JSON file, a CSV file or runs SQL statements with the masked data. It can also be used with Office file types (currently .docx, .xlsx and .pptx files are supported) to anonymize their content.
 
 The tool can be used both as a command line program and as a dotnet standard 2.1 library. To run the command line program, simply copy the ```tools``` dir from the [Nuget package](https://www.nuget.org/packages/Dandraka.Zoro). Windows and Linux versions, both 64-bit, are available.
 
@@ -90,202 +90,7 @@ Please see the [generated docs](https://github.com/dandraka/Zoro/blob/master/doc
 
 ## Examples:
 
-**Sample config file for CSV source and destination**
-
-```
-<?xml version="1.0"?>
-<MaskConfig xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-  <FieldMasks>
-    <FieldMask>
-      <FieldName>Name</FieldName>
-      <MaskType>Random</MaskType>
-    </FieldMask>
-    <FieldMask>
-      <FieldName>BankAccount</FieldName>
-      <MaskType>Asterisk</MaskType>
-    </FieldMask>
-  </FieldMasks>
-  <InputFile>C:\temp\Zorotests\data.csv</InputFile>
-  <OutputFile>C:\temp\Zorotests\maskeddata.csv</OutputFile>
-  <Delimiter>;</Delimiter>
-</MaskConfig>
-```
-
-The above config file can process for example the following CSV:
-
-```
-ID;Name;BankAccount
-1;KM-elektronik;CH9880808007645910141
-2;Cretaneshop;GR4701102050000020547061026
-3;VELOPLUSs.r.l;IT36K0890150920000000550061
-4;natuurhulpcentrum.be;BE79235040722733
-```
-
-and the result will be something like the following:
-
-```
-ID;Name;BankAccount
-1;RJ-egitrjitiz;*********************
-2;Lqebuhuzfic;***************************
-3;NKWNQWWBg.g.q;***************************
-4;botaahjazlvojknub.qi;****************
-```
-
-**Sample config file for DB source and destination using lists and queries**
-
-```
-<?xml version="1.0"?>
-<MaskConfig xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-  <FieldMasks>
-    <FieldMask>
-      <FieldName>ID</FieldName>
-      <MaskType>None</MaskType>
-    </FieldMask>   
-    <FieldMask>
-      <FieldName>CustomerFullname</FieldName>
-      <MaskType>None</MaskType>
-    </FieldMask>   
-    <FieldMask>
-      <FieldName>CustomerCountry</FieldName>
-      <MaskType>None</MaskType>
-    </FieldMask>      
-    <FieldMask>
-      <FieldName>MainPhone</FieldName>
-      <MaskType>Random</MaskType>
-      <RegExMatch>^(\+\d\d)?(.*)$</RegExMatch>
-      <RegExGroupToReplace>2</RegExGroupToReplace>
-    </FieldMask>   
-    <FieldMask>
-      <FieldName>Street</FieldName>
-      <MaskType>List</MaskType>
-        <ListOfPossibleReplacements>
-          <Replacement Selector="CustomerCountry=NL" List="Bergselaan,Schieweg,Nootdorpstraat,Nolensstraat" />
-          <Replacement Selector="CustomerCountry=CH" List="Bahnhofstrasse,Clarahofweg,Sperrstrasse,Erlenstrasse" />
-          <Replacement Selector="CustomerCountry=LI" List="Lettstrasse,Bangarten,Beckagässli,Haldenweg" />
-          <Replacement Selector="CustomerCountry=DE" List="Bahnhofstraße,Freigaße,Hauptstraße" />
-          <Replacement Selector="CustomerCountry=BE" List="Rue d'Argent,Rue d'Assaut,Rue de l'Ecuyer,Rue du Persil" />
-          <Replacement Selector="CustomerCountry=FR" List="Rue Nationale,Boulevard Vauban,Rue des Stations,Boulevard de la Liberté" />
-          <!--- fallback when nothing matches; MUST be the last one --->
-          <Replacement Selector="" List="Bedford Gardens,Sheffield Terrace,Kensington Palace Gardens" />
-        </ListOfPossibleReplacements>
-    </FieldMask>          
-    <FieldMask>
-      <FieldName>CustomerCity</FieldName>
-      <MaskType>Query</MaskType>
-      <QueryReplacement 
-        SelectorField="CustomerCountry" 
-        GroupField="cityCountryName" 
-        ValueField="cityName" 
-        Query="SELECT cityName, cityCountryName FROM cities" />
-    </FieldMask>  
-  </FieldMasks>
-  <DataSource>Database</DataSource>
-  <DataDestination>Database</DataDestination>
-  <ConnectionString>Server=DBSRV1;Database=appdb;Trusted_Connection=yes;</ConnectionString>
-  <!-- Currently Microsoft.Data.SqlClient and System.Data.OleDb are supported, but if needed, adding more is trivial -->
-  <ConnectionType>Microsoft.Data.SqlClient</ConnectionType>
-  <SqlSelect>SELECT ID, CustomerFullname, CustomerCity, CustomerCountry FROM customers</SqlSelect>
-  <!-- Note that the parameter character is @ for Sql Server, $ elsewhere -->
-  <SqlCommand>INSERT INTO customers_anonymous (ID, CustomerFullname, CustomerCity, CustomerCountry) VALUES (@ID, @CustomerFullname, @CustomerCity, @CustomerCountry)</SqlCommand>
-</MaskConfig> 
-```
-
-**Sample config file for JSON source and destination using an Expression and a List**
-
-```
-<?xml version="1.0"?>
-<MaskConfig xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-  <FieldMasks>
-    <FieldMask>
-      <FieldName>name</FieldName>
-      <MaskType>Expression</MaskType>
-      <Expression>Customer {{$.id}}</Expression>
-    </FieldMask>
-    <FieldMask>
-      <FieldName>salary</FieldName>
-      <MaskType>Random</MaskType>
-    </FieldMask>  
-    <FieldMask>
-      <FieldName>spouse</FieldName>
-      <MaskType>List</MaskType>
-		<ListOfPossibleReplacements>
-			<Replacement Selector="" List="Eleni Koufaki,Athina Lefkogianaki,Mihaela Papadomanolaki" />
-		</ListOfPossibleReplacements>
-	</FieldMask>	  
-  </FieldMasks>
-  <InputFile>C:\temp\Zorotests\data2.json</InputFile>
-  <OutputFile>C:\temp\Zorotests\maskedata2.json</OutputFile>
-  <DataSource>JsonFile</DataSource>
-  <DataDestination>JsonFile</DataDestination>
-</MaskConfig>
-```
-
-The above config file can process for example the following JSON:
-
-```
-{
-    "employees": [
-        {
-            "id": "1",
-            "name": "Aleksander Singh",
-            "salary": 105000,
-            "spouse": "Ingrid Díaz"
-        },
-        {
-            "id": "2",
-            "name": "Alicja Bakshi",
-            "salary": 142500,
-            "spouse": "Ellinore Alvarez"
-        }
-    ]
-}
-```
-
-and the result will be something like the following:
-
-```
-{
-    "employees": [
-        {
-            "id": "1",
-            "name": "Customer-1",
-            "salary": 902473,
-            "spouse": "Mihaela Papadomanolaki"
-        },
-        {
-            "id": "2",
-            "name": "Customer-2",
-            "salary": 046795,
-            "spouse": "Eleni Koufaki"
-        }
-    ]
-}
-```
-
-**Sample config file using a List to replace IBANs in a document (.docx)**
-
-```
-<?xml version="1.0"?>
-<MaskConfig xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-  <FieldMasks>
-    <FieldMask>
-      <FieldName>IBAN</FieldName>
-      <MaskType>List</MaskType>
-      <RegExMatch>\b([A-Za-z]{2}\w{16})\b</RegExMatch>
-      <RegExGroupToReplace>1</RegExGroupToReplace>         
-		<ListOfPossibleReplacements>
-			<Replacement Selector="" List="NL1111111111111111,GR2222222222222222,CH3333333333333333" />
-		</ListOfPossibleReplacements>
-	</FieldMask>	  
-  </FieldMasks>
-  <InputFile>C:\temp\Zorotests\report.docx</InputFile>
-  <OutputFile>C:\temp\Zorotests\report_masked.docx</OutputFile>
-  <DataSource>DocXFile</DataSource>
-  <DataDestination>DocXFile</DataDestination>
-</MaskConfig>
-```
-
-That will replace all words starting with 2 letters and followed by 16 letters or numbers (which is a simplified version of what an IBAN looks like) with one replacement from the list.
+Sample configurations for CSV, database, JSON, Word, Excel and PowerPoint files are in the [configuration samples](https://github.com/dandraka/Zoro/blob/master/ZoroConfigSamples.md).
 
 ### Note:
 

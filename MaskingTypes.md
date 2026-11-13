@@ -49,7 +49,8 @@ Two concrete examples (here using MaskType=Asterisk for simplicity, but Random, 
   That replaces all words that start with coffee with ****** (as many asterisks as the word being replaced).
 
 A few more points about Office documents:
-- Text is matched per paragraph (Word) or per cell (Excel), so it is found even if formatting splits it in several parts, e.g. a name that is partly bold. The replacement gets the formatting of the part where the match starts. A tab, a line break or a field ends the text being matched, so words on its two sides are never glued together.
+- Text is matched per paragraph (Word and PowerPoint) or per cell (Excel), so it is found even if formatting splits it in several parts, e.g. a name that is partly bold. The replacement gets the formatting of the part where the match starts. A tab, a line break or a field ends the text being matched, so words on its two sides are never glued together.
+- In PowerPoint files, the text of all slides (hidden ones too), of the layouts and masters they use and of the speaker notes is masked. Charts and SmartArt are not masked.
 - Only the text of the regex group (RegExGroupToReplace) is replaced, and every match is masked on its own; the rest of the match is kept.
 
 ## Masking types reference

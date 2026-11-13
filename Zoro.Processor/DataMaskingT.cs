@@ -38,6 +38,7 @@ namespace Dandraka.Zoro.Processor
                 DataDestination.Database => new DbWriter(config),
                 DataDestination.DocXFile => new DocxFileWriter(config),
                 DataDestination.XlsXFile => new XlsxFileWriter(config),
+                DataDestination.PptXFile => new PptxFileWriter(config),
                 _ => throw new NotSupportedException(),
             };
 

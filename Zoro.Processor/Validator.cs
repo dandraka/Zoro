@@ -14,8 +14,10 @@ namespace Dandraka.Zoro.Processor
             {
                 case DataSource.DocXFile:
                 case DataSource.XlsXFile:
+                case DataSource.PptXFile:
                     if (config.DataSource == DataSource.DocXFile && config.DataDestination != DataDestination.DocXFile) { throw new NotSupportedException("For docx source, only docx destination is supported."); }
                     if (config.DataSource == DataSource.XlsXFile && config.DataDestination != DataDestination.XlsXFile) { throw new NotSupportedException("For xlsx source, only xlsx destination is supported."); }
+                    if (config.DataSource == DataSource.PptXFile && config.DataDestination != DataDestination.PptXFile) { throw new NotSupportedException("For pptx source, only pptx destination is supported."); }
                     foreach (var m in config.FieldMasks)
                     {
                         if (m.MaskType == MaskType.Expression) { throw new NotSupportedException("For Office file types, the Expression mask type is not supported."); }

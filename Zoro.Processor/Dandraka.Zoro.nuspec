@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
   <metadata>
     <id>Dandraka.Zoro</id>
-    <version>4.0.0</version>
+    <version>4.1.0</version>
     <authors>Jim (Dimitrios) Andrakakis</authors>
     <requireLicenseAcceptance>true</requireLicenseAcceptance>
     <icon>icon.png</icon>
@@ -19,14 +19,19 @@
     [3.0.0] Added Office documents (.docx) support.
     [3.1.0] Added Office spreadsheets (.xlsx) support. Renamed mask type Similar to Random (more intuitive) but kept Similar for backwards compatibility.
     [4.0.0] BREAKING: DataMasking is now abstract, create instances with DataMasking.Create(config) instead of new DataMasking(config). Added new masking types ReplacementList and ReplacementQuery for consistent masking (pseudonymisation), where the same original value always gets the same replacement. The mappings of ReplacementList can be read from a csv file using ReplacementCSV. Fixed List masks never picking the last item, Random masks never generating the digit 9, and rich-text cells in .xlsx files not being masked.
+    [4.1.0] Added PowerPoint (.pptx) support (DataSource and DataDestination PptXFile): the text of all slides (hidden ones too), of the layouts and masters they use and of the speaker notes is masked; charts and SmartArt are not. Added configuration samples (ZoroConfigSamples.md) with new Excel and PowerPoint examples. The package now lists all its dependencies (DocumentFormat.OpenXml, Newtonsoft.Json and others were missing) with the versions the library is built with.
 	</releaseNotes>
     <copyright>Copyright (c) 2017 Jim (Dimitrios) Andrakakis</copyright>
-    <tags>data anonymization masking gdpr sql csv json</tags>
+    <tags>data anonymization pseudonymisation masking gdpr sql csv json docx xlsx pptx</tags>
     <dependencies>
       <group targetFramework=".netstandard2.1">
+        <dependency id="DocumentFormat.OpenXml" version="3.5.1" />
         <dependency id="GenericParsing" version="1.6.0" />
-        <dependency id="Microsoft.Data.SqlClient" version="7.0.2" />   
-        <dependency id="System.Data.OleDb" version="10.0.9" />   
+        <dependency id="Microsoft.Data.SqlClient" version="7.1.2" />
+        <dependency id="Microsoft.Data.SqlClient.Extensions.Azure" version="7.1.2" />
+        <dependency id="Newtonsoft.Json" version="13.0.4" />
+        <dependency id="System.Data.OleDb" version="11.0.0" />
+        <dependency id="System.Security.Cryptography.Pkcs" version="11.0.0" />
       </group>
     </dependencies>
   </metadata>

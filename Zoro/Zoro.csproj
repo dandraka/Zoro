@@ -9,7 +9,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <ApplicationIcon>icon.ico</ApplicationIcon>
     <Authors>Jim (Dimitrios) Andrakakis</Authors>
-    <Version>4.0.0</Version>    
+    <Version>4.1.0</Version>    
   </PropertyGroup>
 
 </Project>

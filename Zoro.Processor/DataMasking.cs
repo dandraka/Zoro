@@ -50,6 +50,8 @@ namespace Dandraka.Zoro.Processor
                 DataSource.DocXFile => new DataMaskingDocxData(config),
                 // Spreadsheets
                 DataSource.XlsXFile => new DataMaskingXlsxData(config),
+                // Presentations
+                DataSource.PptXFile => new DataMaskingPptxData(config),
                 _ => throw new NotImplementedException($"{Enum.GetName(typeof(DataSource), config.DataSource)} is not implemented"),
             };
         }

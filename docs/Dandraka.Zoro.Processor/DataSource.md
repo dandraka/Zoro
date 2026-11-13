@@ -15,6 +15,7 @@ public enum DataSource
 | JsonFile | `2` | The data comes from a JSON file. |
 | DocXFile | `3` | The data comes from a DOCX file. |
 | XlsXFile | `4` | The data comes from an XLSX file. |
+| PptXFile | `5` | The data comes from a PPTX file. |
 
 ## See Also
 
