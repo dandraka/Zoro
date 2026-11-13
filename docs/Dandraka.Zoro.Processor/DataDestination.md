@@ -15,6 +15,7 @@ public enum DataDestination
 | JsonFile | `2` | The data will be written to a JSON file. |
 | DocXFile | `3` | The data will be written to a DOCX file. |
 | XlsXFile | `4` | The data will be written to an XLSX file. |
+| PptXFile | `5` | The data will be written to a PPTX file. |
 
 ## See Also
 

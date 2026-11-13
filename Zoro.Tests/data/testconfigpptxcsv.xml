@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<!-- Manual test for PowerPoint files with the mappings in a csv file. From this folder run: Zoro.exe testconfigpptxcsv.xml
+     The output file must not exist yet, delete it before running again. -->
+<MaskConfig xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <FieldMasks>
+    <FieldMask>
+      <FieldName>all</FieldName>
+      <MaskType>ReplacementList</MaskType>
+      <ListOfPossibleReplacements>
+        <ReplacementCSV CSVFileName="cavafy_mapping.csv" FromFieldName="original" ToFieldName="pseudonym" />
+      </ListOfPossibleReplacements>
+    </FieldMask>
+  </FieldMasks>
+  <InputFile>cavafy.pptx</InputFile>
+  <OutputFile>cavafy_masked_csv.pptx</OutputFile>
+  <DataSource>PptXFile</DataSource>
+  <DataDestination>PptXFile</DataDestination>
+</MaskConfig>

@@ -28,6 +28,11 @@
         /// <summary>
         /// The data comes from an XLSX file.
         /// </summary>
-        XlsXFile        
+        XlsXFile,
+
+        /// <summary>
+        /// The data comes from a PPTX file.
+        /// </summary>
+        PptXFile
     }
 }

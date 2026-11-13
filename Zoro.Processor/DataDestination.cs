@@ -29,6 +29,11 @@
         /// <summary>
         /// The data will be written to an XLSX file.
         /// </summary>
-        XlsXFile                       
+        XlsXFile,
+
+        /// <summary>
+        /// The data will be written to a PPTX file.
+        /// </summary>
+        PptXFile
     }
 }
