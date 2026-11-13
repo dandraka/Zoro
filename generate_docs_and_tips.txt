@@ -1,0 +1,14 @@
+# docs generation
+dotnet tool install -g xmldocmd
+dotnet build
+xmldocmd .\bin\Debug\netstandard2.1\Zoro.Processor.dll ..\docs --clean
+
+# package updates
+dotnet tool install --global dotnet-outdated-tool
+dotnet outdated 
+dotnet outdated -u
+
+# release
+- Update version
+- PR to master
+- Run "Build test and publish"
